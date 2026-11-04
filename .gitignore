@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Environment and secrets (never commit real values)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Test and coverage
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Prisma local artifacts
+*.db
+*.db-journal
+
+# Docker local overrides and data
+docker-compose.override.yml
+.docker/
+pgdata/
+
+# Caches
+.cache/
+.turbo/
+.eslintcache
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Tooling output
+graphify-out/
