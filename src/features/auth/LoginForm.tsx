@@ -1,14 +1,16 @@
 'use client';
-import { useRef, useState, type FormEvent } from 'react';
-import { ArrowRight, LoaderCircle } from 'lucide-react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { CircleCheck, LockKeyhole, Mail, Zap } from 'lucide-react';
 import { LoginSchema, type LoginDto } from '@scalesquad/shared';
 import { FormField } from '@/components/shared/FormField';
 import { PasswordInput } from '@/components/shared/PasswordInput';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api } from '@/lib/api/client';
 import { useHydrated } from '@/lib/useHydrated';
+import { cn } from '@/lib/utils';
+import { LoginSubmitButton, type LoginState } from './LoginSubmitButton';
 import styles from './auth.module.css';
+import motion from './login.module.css';
 
 type Field = keyof LoginDto;
 type FieldErrors = Partial<Record<Field, string>>;
@@ -20,11 +22,35 @@ const messages: Record<Field, string> = {
 export function LoginForm() {
   const hydrated = useHydrated();
   const submitting = useRef(false);
+  const mounted = useRef(true);
+  const navigationTimer = useRef<number | undefined>(undefined);
   const errorMessage = useRef<HTMLParagraphElement>(null);
   const [values, setValues] = useState<LoginDto>({ email: '', password: '' });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [state, setState] = useState<LoginState>('idle');
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [capsLock, setCapsLock] = useState(false);
+  const busy = state !== 'idle';
+  const emailValid = emailTouched && LoginSchema.shape.email.safeParse(values.email).success;
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      window.clearTimeout(navigationTimer.current);
+    };
+  }, []);
+
+  function validateEmail() {
+    setEmailTouched(true);
+    setErrors((previous) => {
+      const next = { ...previous };
+      if (LoginSchema.shape.email.safeParse(values.email).success) delete next.email;
+      else next.email = messages.email;
+      return next;
+    });
+  }
 
   function change(field: Field, value: string) {
     setValues((previous) => ({ ...previous, [field]: value }));
@@ -53,54 +79,75 @@ export function LoginForm() {
       return;
     }
     submitting.current = true;
-    setBusy(true);
+    setState('loading');
     setErrors({});
     setServerError('');
     try {
       await api('/auth/login', parsed.data);
+      if (!mounted.current) return;
       setValues((previous) => ({ ...previous, password: '' }));
-      // Load the authenticated server page using the new session cookie.
-      window.location.assign('/play');
+      setState('success');
+      // Briefly confirm success, then reload server-rendered pages with the new cookie.
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      navigationTimer.current = window.setTimeout(
+        () => window.location.assign('/play'),
+        reducedMotion ? 0 : 350,
+      );
     } catch {
+      if (!mounted.current) return;
       setServerError('Could not sign in with those details. Check your email and password.');
       submitting.current = false;
-      setBusy(false);
-      requestAnimationFrame(() => errorMessage.current?.focus());
+      setState('idle');
+      requestAnimationFrame(() => {
+        if (mounted.current) errorMessage.current?.focus();
+      });
     }
   }
 
   const disabled = !hydrated || busy;
   return (
     <>
-      <div className={styles.formHeader}>
-        <span className={styles.badge}>Back to the control room</span>
+      <div className={cn(styles.formHeader, motion.header)}>
+        <span className={cn(styles.badge, motion.badge)}>
+          <Zap aria-hidden="true" />
+          Back to the control room
+        </span>
         <h1 className={styles.formHeading}>Sign in</h1>
         <p className={styles.formDescription}>Your next incident starts here.</p>
       </div>
       <form
-        className={styles.form}
+        className={cn(styles.form, motion.form)}
         onSubmit={(event) => void submit(event)}
         noValidate
         aria-busy={busy}
       >
         <FormField id="login-email" label="Email address" error={errors.email}>
-          <Input
-            id="login-email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            autoCapitalize="none"
-            spellCheck={false}
-            placeholder="you@example.com"
-            required
-            maxLength={254}
-            className={styles.input}
-            value={values.email}
-            disabled={disabled}
-            aria-invalid={Boolean(errors.email)}
-            aria-describedby={errors.email ? 'login-email-error' : undefined}
-            onChange={(event) => change('email', event.target.value)}
-          />
+          <div className={motion.control} data-valid={emailValid}>
+            <span className={motion.leading} aria-hidden="true">
+              <Mail />
+            </span>
+            <Input
+              id="login-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder="you@example.com"
+              required
+              maxLength={254}
+              className={cn(styles.input, motion.input)}
+              value={values.email}
+              disabled={disabled}
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? 'login-email-error' : undefined}
+              onChange={(event) => change('email', event.target.value)}
+              onBlur={validateEmail}
+            />
+            <span className={motion.validIcon} aria-hidden="true">
+              <CircleCheck />
+            </span>
+          </div>
         </FormField>
         <FormField id="login-password" label="Password" error={errors.password}>
           <PasswordInput
@@ -110,32 +157,51 @@ export function LoginForm() {
             placeholder="Enter your password"
             required
             maxLength={128}
-            className={styles.input}
+            className={cn(styles.input, motion.input)}
+            wrapperClassName={motion.control}
+            leadingIcon={<LockKeyhole />}
             value={values.password}
             disabled={disabled}
             aria-invalid={Boolean(errors.password)}
-            aria-describedby={errors.password ? 'login-password-error' : undefined}
+            aria-describedby={
+              [errors.password && 'login-password-error', capsLock && 'login-caps-lock']
+                .filter(Boolean)
+                .join(' ') || undefined
+            }
             onChange={(event) => change('password', event.target.value)}
+            onKeyUp={(event) => setCapsLock(event.getModifierState('CapsLock'))}
+            onBlur={() => setCapsLock(false)}
           />
+          {capsLock && (
+            <p id="login-caps-lock" className={motion.capsLock} role="status">
+              Caps Lock is on
+            </p>
+          )}
         </FormField>
         {serverError && (
           <p ref={errorMessage} className={styles.serverError} role="alert" tabIndex={-1}>
             {serverError}
           </p>
         )}
-        <Button type="submit" className={styles.submit} disabled={disabled}>
-          {busy ? (
-            <>
-              Signing in <LoaderCircle className={styles.spinner} aria-hidden="true" />
-            </>
-          ) : (
-            <>
-              Sign in <ArrowRight aria-hidden="true" />
-            </>
-          )}
-        </Button>
+        <LoginSubmitButton state={state} disabled={disabled} />
+        <p className="sr-only" role="status">
+          {state === 'loading'
+            ? 'Signing in. Please wait.'
+            : state === 'success'
+              ? 'Signed in. Opening your control room.'
+              : ''}
+        </p>
         <p className={styles.signin}>
-          New to ScaleSquad? <a href="/register">Create account</a>
+          New to ScaleSquad?{' '}
+          <a
+            href="/register"
+            aria-disabled={busy}
+            onClick={(event) => {
+              if (busy) event.preventDefault();
+            }}
+          >
+            Create account
+          </a>
         </p>
       </form>
     </>

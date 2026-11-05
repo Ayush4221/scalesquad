@@ -33,6 +33,15 @@ entered values remain available for retry. Success clears the password and loads
 `/play` with the server-issued session cookie. Password-manager autocomplete,
 keyboard submission and the show/hide control remain available.
 
+The approved login uses matte icon fields and selective glass accents on its
+buttons, badge and role cards. All colors derive from the shared palette.
+`LoginSubmitButton` keeps its size through idle, request-loading and confirmed
+success states. Loading follows the real request; success shows a check for
+350 ms before the authenticated page reload (immediate with reduced motion).
+Fields, reveal and duplicate submission stay locked until navigation. Unmount
+cancels pending navigation, and failures restore retry with generic feedback.
+CSS entrances, role-card tilt and connected signals respect reduced motion.
+
 The signup form reuses the shared registration schema, displays field errors,
 focuses the first invalid field and guards duplicate submissions. Inputs lock
 while a request is pending. Failed requests keep entered values for retry;

@@ -1,9 +1,10 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent } from '@testing-library/react';
+import { act, cleanup, createEvent, render, screen, fireEvent } from '@testing-library/react';
 import { LoginForm } from '../../src/features/auth/LoginForm';
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   history.replaceState(null, '', '/');
@@ -99,5 +100,113 @@ describe('password forms', () => {
       '/register',
     );
     expect(screen.queryByRole('link', { name: /forgot|verify/i })).not.toBeInTheDocument();
+  });
+
+  it('confirms real success, clears the password and keeps every control locked until navigation', async () => {
+    vi.useFakeTimers();
+    let finish!: (response: Response) => void;
+    const fetch = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    vi.stubGlobal('fetch', fetch);
+    const view = render(<LoginForm />);
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'player@example.invalid' },
+    });
+    fireEvent.change(screen.getByLabelText('Password', { exact: true }), {
+      target: { value: 'Existing password' },
+    });
+    const form = screen.getByRole('button', { name: 'Sign in' }).closest('form')!;
+    fireEvent.submit(form);
+    expect(screen.getByRole('button', { name: 'Signing in' })).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('link', { name: 'Create account' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    await act(async () => {
+      finish(new Response('{}'));
+    });
+    expect(screen.getByRole('button', { name: 'Welcome back' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Welcome back' })).toHaveAttribute(
+      'aria-busy',
+      'false',
+    );
+    expect(screen.getByLabelText('Password', { exact: true })).toHaveValue('');
+    expect(screen.getByRole('status')).toHaveTextContent('Signed in. Opening your control room.');
+    fireEvent.submit(form);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBeGreaterThan(0);
+    view.unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('does not navigate after a pending form unmounts', async () => {
+    vi.useFakeTimers();
+    let finish!: (response: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            finish = resolve;
+          }),
+      ),
+    );
+    const view = render(<LoginForm />);
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'player@example.invalid' },
+    });
+    fireEvent.change(screen.getByLabelText('Password', { exact: true }), {
+      target: { value: 'Existing password' },
+    });
+    fireEvent.submit(screen.getByRole('button', { name: 'Sign in' }).closest('form')!);
+    view.unmount();
+    await act(async () => {
+      finish(new Response('{}'));
+    });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('reports email format on blur and handles Caps Lock without changing password-manager fields', () => {
+    render(<LoginForm />);
+    const email = screen.getByLabelText('Email address');
+    fireEvent.change(email, { target: { value: 'invalid' } });
+    fireEvent.blur(email);
+    expect(email).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid email address.');
+    fireEvent.change(email, { target: { value: 'player@example.invalid' } });
+    fireEvent.blur(email);
+    expect(email).toHaveAttribute('aria-invalid', 'false');
+    const password = screen.getByLabelText('Password', { exact: true });
+    const capsEvent = createEvent.keyUp(password, { key: 'A' });
+    Object.defineProperty(capsEvent, 'getModifierState', {
+      value: (key: string) => key === 'CapsLock',
+    });
+    fireEvent(password, capsEvent);
+    expect(screen.getByText('Caps Lock is on')).toBeVisible();
+    expect(password).toHaveAttribute('aria-describedby', 'login-caps-lock');
+    fireEvent.blur(password);
+    expect(screen.queryByText('Caps Lock is on')).not.toBeInTheDocument();
+  });
+
+  it('recovers from a network failure with generic feedback and restores retry', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('private network failure')));
+    render(<LoginForm />);
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'player@example.invalid' },
+    });
+    fireEvent.change(screen.getByLabelText('Password', { exact: true }), {
+      target: { value: 'Existing password' },
+    });
+    fireEvent.submit(screen.getByRole('button', { name: 'Sign in' }).closest('form')!);
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not sign in with those details',
+    );
+    expect(screen.queryByText('private network failure')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeEnabled();
+    expect(screen.getByLabelText('Email address')).toBeEnabled();
   });
 });

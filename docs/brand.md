@@ -25,6 +25,11 @@ Components must use these tokens or their Tailwind equivalents (`bg-primary`,
 Opacity and hover states must derive from shared tokens too. Cobalt outlines
 the lobby cards and marks Join; lime marks Create and primary game actions.
 
+The login uses restrained glass highlights on buttons, its badge and role cards.
+Keep the form background and input fills opaque. Its pending sign-in action uses
+cobalt with readable foreground text; success returns to lime. Animation and tilt
+must respect reduced motion and never block typing or cover labels.
+
 Viewport and manifest colors import the same palette. `npm run pwa:build`
 generates `public/offline.html` from the template in `src/pwa/offline.html`.
 Static SVG/PNG assets contain resolved colors so they work independently of

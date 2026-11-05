@@ -1,15 +1,25 @@
 'use client';
-import { useState, type ComponentProps } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import styles from './PasswordInput.module.css';
 
-export function PasswordInput({ className, ...props }: Omit<ComponentProps<'input'>, 'type'>) {
+type Props = Omit<ComponentProps<'input'>, 'type'> & {
+  leadingIcon?: ReactNode;
+  wrapperClassName?: string | undefined;
+};
+
+export function PasswordInput({ className, leadingIcon, wrapperClassName, ...props }: Props) {
   const [visible, setVisible] = useState(false);
   return (
-    <div className={styles.control}>
+    <div className={cn(styles.control, leadingIcon && styles.withIcon, wrapperClassName)}>
+      {leadingIcon && (
+        <span className={styles.leading} aria-hidden="true">
+          {leadingIcon}
+        </span>
+      )}
       <Input
         {...props}
         type={visible ? 'text' : 'password'}

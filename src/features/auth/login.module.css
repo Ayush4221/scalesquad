@@ -1,0 +1,473 @@
+/* The approved glass accents use only the shared semantic palette. */
+.header,
+.form {
+  animation: login-enter 650ms 180ms both;
+}
+
+.form {
+  animation-delay: 240ms;
+}
+
+.badge {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--foreground) 24%, transparent);
+}
+
+.badge > svg {
+  width: 14px;
+  height: 14px;
+  color: var(--primary);
+}
+
+.badge::before {
+  content: '';
+  position: absolute;
+  inset: -180px;
+  z-index: -2;
+  background: conic-gradient(
+    transparent 0deg 270deg,
+    var(--secondary) 305deg,
+    var(--foreground) 330deg,
+    transparent 360deg
+  );
+  animation: login-spin 7s linear infinite;
+}
+
+.badge::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--foreground) 9%, var(--card)),
+    var(--background)
+  );
+}
+
+.story .line {
+  display: block;
+  color: var(--foreground);
+  animation: login-title-enter 800ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
+}
+
+.story .line:nth-child(2) {
+  animation-delay: 140ms;
+}
+.story .line:last-child {
+  animation-delay: 280ms;
+  color: var(--primary);
+}
+.roleStage {
+  position: relative;
+  perspective: 900px;
+}
+.roles {
+  position: relative;
+}
+.roles::before {
+  display: none;
+}
+
+.connection {
+  position: absolute;
+  inset-inline: 24px;
+  top: 50%;
+  height: 2px;
+  overflow: hidden;
+  background: var(--secondary);
+}
+
+.connection::after {
+  content: '';
+  position: absolute;
+  width: 30%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  animation: login-signal 4s linear infinite;
+}
+
+.roles .role {
+  --role-rotate-x: 0deg;
+  --role-rotate-y: 0deg;
+  --role-light-x: 50%;
+  --role-light-y: 0%;
+  z-index: 1;
+  border-color: color-mix(in srgb, var(--foreground) 25%, var(--card));
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--foreground) 10%, var(--card)),
+    var(--card) 50%,
+    color-mix(in srgb, var(--foreground) 4%, var(--card))
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--foreground) 35%, transparent),
+    0 8px 20px color-mix(in srgb, var(--background) 50%, transparent);
+  transform: rotateX(var(--role-rotate-x)) rotateY(var(--role-rotate-y));
+  transform-style: preserve-3d;
+  transition:
+    transform 250ms ease,
+    border-color 250ms,
+    box-shadow 250ms;
+}
+
+.role::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  background: radial-gradient(
+    circle at var(--role-light-x) var(--role-light-y),
+    color-mix(in srgb, var(--foreground) 16%, transparent),
+    transparent 66%
+  );
+  transition: opacity 250ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .roles .role:hover {
+    border-color: var(--secondary);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--foreground) 50%, transparent),
+      0 12px 32px color-mix(in srgb, var(--secondary) 13%, transparent);
+  }
+  .role:hover::after {
+    opacity: 1;
+  }
+}
+
+.control {
+  position: relative;
+  min-width: 0;
+}
+
+.form .input {
+  height: 56px;
+  padding-inline-start: 46px;
+  padding-inline-end: 50px;
+  border-radius: 13px;
+  border-color: color-mix(in srgb, var(--input) 65%, var(--card));
+  font-size: 16px;
+  background: var(--background);
+  transition:
+    border-color 200ms,
+    box-shadow 250ms;
+}
+
+.form .input:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.form .input[aria-invalid='true'] {
+  border-color: var(--destructive);
+}
+
+.leading,
+.validIcon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  display: flex;
+  z-index: 1;
+}
+
+.leading {
+  inset-inline-start: 16px;
+  color: var(--muted-foreground);
+  transition: color 200ms;
+}
+.leading svg,
+.validIcon svg {
+  width: 18px;
+  height: 18px;
+}
+.control:focus-within .leading {
+  color: var(--primary);
+}
+.validIcon {
+  inset-inline-end: 16px;
+  color: var(--primary);
+  opacity: 0;
+  transition: opacity 200ms;
+}
+.control[data-valid='true'] .validIcon {
+  opacity: 1;
+}
+
+.control button {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transition:
+    background 200ms,
+    border-color 200ms;
+}
+
+.control button:hover,
+.control button[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--foreground) 7%, var(--background));
+  border-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.control button[aria-pressed='true'] {
+  color: var(--primary);
+}
+.capsLock {
+  margin: 0;
+  color: var(--warning);
+  font-size: 13px;
+}
+
+.submit {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  height: 58px;
+  margin-top: 4px;
+  padding: 0;
+  border-radius: 15px;
+  border: 1px solid color-mix(in srgb, var(--primary) 65%, var(--foreground));
+  color: var(--primary-foreground);
+  font-size: 15px;
+  font-weight: 700;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--primary) 78%, var(--foreground)),
+    var(--primary) 44%,
+    color-mix(in srgb, var(--primary) 80%, var(--secondary))
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--foreground) 75%, transparent),
+    0 5px 16px color-mix(in srgb, var(--primary) 10%, transparent);
+  transition:
+    transform 200ms,
+    box-shadow 250ms,
+    border-color 300ms,
+    background 300ms,
+    color 300ms;
+}
+
+.submit::before {
+  content: '';
+  position: absolute;
+  inset: -40px;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    color-mix(in srgb, var(--foreground) 65%, transparent) 49%,
+    transparent 61%
+  );
+  transform: translateX(-120%);
+  transition: transform 750ms;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .submit:not(:disabled):hover::before {
+    transform: translateX(120%);
+  }
+  .submit:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 var(--foreground),
+      0 9px 25px color-mix(in srgb, var(--primary) 20%, transparent);
+  }
+  .submit:not(:disabled):hover .arrowDisc svg {
+    transform: translateX(3px);
+  }
+}
+
+.submit:not(:disabled):active {
+  transform: translateY(0) scale(0.99);
+}
+.submit:disabled {
+  opacity: 1;
+  transform: none;
+}
+.submit:disabled[data-state='idle'] {
+  opacity: 0.55;
+}
+
+.idleLayer,
+.loadingLayer,
+.successLayer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition:
+    opacity 200ms,
+    transform 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 200ms;
+}
+
+.idleLayer {
+  justify-content: space-between;
+  padding: 0 9px 0 24px;
+}
+.loadingLayer,
+.successLayer {
+  opacity: 0;
+  transform: translateY(16px);
+  filter: blur(3px);
+  pointer-events: none;
+}
+.arrowDisc {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary-foreground) 9%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--foreground) 40%, transparent);
+}
+.arrowDisc svg {
+  transition: transform 250ms;
+}
+.submit .loader {
+  width: 22px;
+  height: 22px;
+}
+
+.submit[data-state='loading'] .loader {
+  animation: login-spin 900ms linear infinite;
+}
+.successMark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary-foreground) 11%, transparent);
+}
+
+.submit[data-state='loading'] {
+  color: var(--secondary-foreground);
+  background: linear-gradient(145deg, var(--secondary), var(--secondary-hover));
+  border-color: color-mix(in srgb, var(--secondary) 65%, var(--foreground));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--foreground) 40%, transparent),
+    0 6px 20px color-mix(in srgb, var(--secondary) 20%, transparent);
+}
+
+.submit[data-state='loading'] .idleLayer,
+.submit[data-state='success'] .idleLayer {
+  opacity: 0;
+  transform: translateY(-16px);
+  filter: blur(3px);
+  pointer-events: none;
+}
+.submit[data-state='loading'] .loadingLayer,
+.submit[data-state='success'] .successLayer {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+.submit[data-state='success'] .loadingLayer {
+  transform: translateY(-16px);
+}
+.submit[data-state='success'] .successMark {
+  animation: login-check-pop 350ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.form a[aria-disabled='true'] {
+  opacity: 0.5;
+}
+
+.providerButton {
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--foreground) 15%, transparent);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--foreground) 6%, var(--card)),
+    var(--background)
+  );
+}
+
+@keyframes login-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes login-title-enter {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+@keyframes login-signal {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(440%);
+  }
+}
+@keyframes login-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes login-check-pop {
+  from {
+    transform: scale(0.45) rotate(-20deg);
+  }
+  to {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header,
+  .form,
+  .story .line,
+  .badge::before,
+  .connection::after,
+  .submit[data-state='loading'] .loader,
+  .submit[data-state='success'] .successMark {
+    animation: none;
+  }
+  .roles .role {
+    transform: none;
+  }
+  .roles .role,
+  .role::after,
+  .form .input,
+  .leading,
+  .validIcon,
+  .control button,
+  .submit,
+  .submit::before,
+  .idleLayer,
+  .loadingLayer,
+  .successLayer,
+  .arrowDisc svg {
+    transition: none;
+  }
+  .submit:not(:disabled):hover,
+  .submit:not(:disabled):active {
+    transform: none;
+  }
+}

@@ -3,6 +3,7 @@ import { AuthLayout } from '@/features/auth/AuthLayout';
 import { LoginForm } from '@/features/auth/LoginForm';
 import { Button } from '@/components/ui/button';
 import styles from '@/features/auth/auth.module.css';
+import motion from '@/features/auth/login.module.css';
 export const dynamic = 'force-dynamic';
 export default async function SignIn({
   searchParams,
@@ -30,7 +31,7 @@ export default async function SignIn({
                 await signIn('google', { redirectTo: '/play' });
               }}
             >
-              <Button variant="outline" size="lg" type="submit">
+              <Button className={motion.providerButton} variant="outline" size="lg" type="submit">
                 Continue with Google
               </Button>
             </form>
@@ -42,7 +43,7 @@ export default async function SignIn({
                 await signIn('github', { redirectTo: '/play' });
               }}
             >
-              <Button className="w-full" variant="outline" size="lg" type="submit">
+              <Button className={motion.providerButton} variant="outline" size="lg" type="submit">
                 Continue with GitHub
               </Button>
             </form>
