@@ -1,7 +1,7 @@
 import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { AppError } from '@scalesquad/shared';
+import { AppError, NewPasswordSchema, PASSWORD_REQUIREMENTS } from '@scalesquad/shared';
 import { Semaphore } from '../lib/semaphore';
 export interface PasswordHasher {
   hash(plain: string): Promise<string>;
@@ -64,14 +64,14 @@ export function validatePassword(plain: string, email: string): string {
   );
   const local = email.split('@')[0]?.toLowerCase() ?? '';
   if (
-    [...value].length < 12 ||
+    !NewPasswordSchema.safeParse(value).success ||
     common.has(value.toLowerCase()) ||
     (local.length > 0 && value.toLowerCase().includes(local))
   )
     throw new AppError(
       'VALIDATION',
       400,
-      'Use 12–128 characters, avoiding common passwords and your email name',
+      `${PASSWORD_REQUIREMENTS} Avoid common passwords and your email name.`,
     );
   return value;
 }

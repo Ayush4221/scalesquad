@@ -1,4 +1,4 @@
-export const CACHE_NAME = 'scalesquad-static-v1';
+export const CACHE_NAME = 'scalesquad-static-v3';
 export const OFFLINE_URL = '/offline';
 export const notificationText = {
   MATCH_STARTED: 'Your squad has started a match.',
@@ -31,7 +31,10 @@ export function shouldCache(
   return (
     url.search === '' &&
     (/^\/_next\/static\//.test(url.pathname) ||
-      /^\/icons\/(icon-192|icon-512|maskable-512|apple-touch-icon)\.png$/.test(url.pathname) ||
+      /^\/icons\/(icon-192|icon-512|maskable-512|apple-touch-icon|favicon-32)\.png$/.test(
+        url.pathname,
+      ) ||
+      url.pathname === '/icons/squad-link.svg' ||
       /^\/fonts\/[a-zA-Z0-9_.-]+\.woff2$/.test(url.pathname))
   );
 }

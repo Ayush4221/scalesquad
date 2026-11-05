@@ -46,6 +46,8 @@ scalesquad/
   src/
     app/                       Next.js App Router pages, layouts and Auth.js route
     components/ui/             shadcn/ui components
+    components/shared/         reusable branding, form fields and password controls
+    styles/                    shared color palette and semantic CSS tokens
     features/                  lobby, briefs, repair, results and chat
     lib/                       browser API, WebSocket and Nexconn clients
     auth/                      server-only Auth.js configuration

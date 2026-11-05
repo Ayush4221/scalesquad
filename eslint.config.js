@@ -77,7 +77,7 @@ export default tseslint.config(
     files: [
       'src/server/**/*.ts',
       'src/{sim,scenario,shared,db,nexconn}/**/*.ts',
-      'src/{app,auth,components,features,lib,pwa}/**/*.{ts,tsx}',
+      'src/{app,auth,components,features,lib,pwa,styles}/**/*.{ts,tsx}',
     ],
     ignores: ['**/*.test.ts', '**/*.test.tsx', 'src/server/main.ts'],
     plugins: { boundaries },
@@ -97,7 +97,7 @@ export default tseslint.config(
         })),
         {
           type: 'web',
-          pattern: 'src/{app,auth,components,features,lib,pwa}/**',
+          pattern: 'src/{app,auth,components,features,lib,pwa,styles}/**',
           partialMatch: false,
         },
       ],

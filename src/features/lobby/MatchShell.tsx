@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+import { BrandLogo } from '@/components/shared/BrandLogo';
 import { z } from 'zod';
 import { EvidenceCard, PublicMatchView } from '@scalesquad/shared';
 import { api } from '@/lib/api/client';
@@ -144,9 +145,7 @@ export function MatchShell({ matchId, userId }: { matchId: string; userId: strin
           connection={connection}
         />
         <header className="topbar">
-          <a href="/play" className="wordmark">
-            ▦ SCALE<span>SQUAD</span>
-          </a>
+          <BrandLogo />
           <div className="flex gap-3">
             <Badge variant="outline">{connection}</Badge>
             {view.ownRole && <Badge>{view.ownRole} ENGINEER</Badge>}

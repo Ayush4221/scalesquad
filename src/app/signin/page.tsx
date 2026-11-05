@@ -1,7 +1,8 @@
 import { signIn } from '@/auth';
-import { AuthForm } from '@/features/auth/AuthForm';
+import { AuthLayout } from '@/features/auth/AuthLayout';
+import { LoginForm } from '@/features/auth/LoginForm';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import styles from '@/features/auth/auth.module.css';
 export const dynamic = 'force-dynamic';
 export default async function SignIn({
   searchParams,
@@ -10,37 +11,18 @@ export default async function SignIn({
 }) {
   const error = (await searchParams).error;
   return (
-    <main className="entry">
-      <div className="wordmark">
-        ▦ SCALE<span>SQUAD</span>
-      </div>
-      <p className="eyebrow">THREE ENGINEERS. ONE SYSTEM. ZERO DUPLICATES.</p>
-      <h1>
-        Build together.
-        <br />
-        <span>Survive the incident.</span>
-      </h1>
-      <p className="intro">
-        Your squad has different pieces of the puzzle. Share what you know. Repair CampusPass. Prove
-        it works.
-      </p>
-      <Card className="entry-card">
-        <CardHeader>
-          <CardTitle>Join the control room</CardTitle>
-          <CardDescription>A three-player systems game.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {error && (
-            <p role="alert" className="error">
-              {error === 'OAuthAccountNotLinked'
-                ? 'Use your original sign-in method for this email.'
-                : 'Could not sign in. Try again.'}
-            </p>
-          )}
-          <AuthForm mode="login" />
-          {(process.env.AUTH_GOOGLE_ID || process.env.AUTH_GITHUB_ID) && (
-            <p className="muted text-center">or</p>
-          )}
+    <AuthLayout variant="login">
+      {error && (
+        <p role="alert" className={styles.serverError}>
+          {error === 'OAuthAccountNotLinked'
+            ? 'Use your original sign-in method for this email.'
+            : 'Could not sign in. Try again.'}
+        </p>
+      )}
+      <LoginForm />
+      {(process.env.AUTH_GOOGLE_ID || process.env.AUTH_GITHUB_ID) && (
+        <div className={styles.providers}>
+          <p className={styles.providerDivider}>or continue with</p>
           {process.env.AUTH_GOOGLE_ID && (
             <form
               action={async () => {
@@ -48,7 +30,7 @@ export default async function SignIn({
                 await signIn('google', { redirectTo: '/play' });
               }}
             >
-              <Button className="w-full" size="lg" type="submit">
+              <Button variant="outline" size="lg" type="submit">
                 Continue with Google
               </Button>
             </form>
@@ -65,9 +47,8 @@ export default async function SignIn({
               </Button>
             </form>
           )}
-        </CardContent>
-      </Card>
-      <p className="footnote">CampusPass · One pass, one admission.</p>
-    </main>
+        </div>
+      )}
+    </AuthLayout>
   );
 }

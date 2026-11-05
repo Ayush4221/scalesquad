@@ -32,7 +32,7 @@ describe('Postgres password sessions and push ownership', () => {
     async () => {},
   );
   const ctx = { ip: '203.0.113.1', userAgent: 'test', sessionToken: null };
-  const password = 'silent forests dancing slowly';
+  const password = 'Silent!42 forests dancing slowly';
   beforeAll(() => {
     if (!process.env.DATABASE_URL || !new URL(process.env.DATABASE_URL).pathname.endsWith('_test'))
       throw new Error('Use isolated *_test database');
@@ -86,7 +86,7 @@ describe('Postgres password sessions and push ownership', () => {
     expect(user.emailVerified).toBeNull();
     const current = await real.login(address, password, ctx);
     const other = await real.login(address, password, ctx);
-    await real.changePassword(user.id, password, 'river lantern marble cloud', {
+    await real.changePassword(user.id, password, 'River!12 lantern marble cloud', {
       ...ctx,
       sessionToken: current.token,
     });
@@ -96,7 +96,7 @@ describe('Postgres password sessions and push ownership', () => {
     await expect(real.login(address, password, ctx)).rejects.toMatchObject({
       code: 'UNAUTHENTICATED',
     });
-    expect((await real.login(address, 'river lantern marble cloud', ctx)).token).toBeTruthy();
+    expect((await real.login(address, 'River!12 lantern marble cloud', ctx)).token).toBeTruthy();
     expect(await db.emailToken.count({ where: { userId: user.id } })).toBe(0);
   }, 15000);
   it('OAuth email lookup preserves password accounts and their existing sessions', async () => {

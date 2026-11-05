@@ -78,7 +78,11 @@ export function PlayLobby({ name }: { name: string }) {
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
               />
-              <Button type="submit" disabled={!hydrated || busy || code.length !== 8}>
+              <Button
+                variant="secondary"
+                type="submit"
+                disabled={!hydrated || busy || code.length !== 8}
+              >
                 Join →
               </Button>
             </form>

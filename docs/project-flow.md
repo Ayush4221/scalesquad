@@ -25,12 +25,17 @@ ESLint checks the dependency direction.
 
 ## Signup and login
 
-`AuthForm → authController → AuthService → UserAuthRepository / SessionWriteRepository`
+`SignupForm / LoginForm / ChangePasswordForm → authController → AuthService → UserAuthRepository / SessionWriteRepository`
 
 Signup hashes the password and creates the account. Login checks the hash and
 creates a database session. No mail sender, token service or verification step
 sits between signup and play. Password change requires a session and the current
 password. Detailed policy and limits are in `auth.md`.
+
+Signup and login share `AuthLayout`, `AuthStory` and scoped `auth.module.css`.
+`SignupForm` and `LoginForm` reuse `FormField`/`PasswordInput` controls and shared
+request schemas. Client validation is a usability check; the controller and
+service still validate and enforce policy.
 
 ## Game and live updates
 

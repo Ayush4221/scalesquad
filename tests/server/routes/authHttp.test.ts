@@ -113,7 +113,7 @@ describe('password HTTP boundaries', () => {
       (
         await f.post(
           'change-password',
-          { currentPassword: f.password, newPassword: 'silent forests dancing slowly' },
+          { currentPassword: f.password, newPassword: 'Silent!42 forests dancing slowly' },
           cookie.split(';')[0],
         )
       ).status,

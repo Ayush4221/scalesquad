@@ -19,7 +19,27 @@ registration response; a duplicate registration cannot replace a password.
 
 ## Code flow
 
-`AuthForm` sends a request to `/api/game/auth`. The HTTP router checks Origin,
+Signup and login share the owner-selected split-screen design through
+`AuthLayout`, `AuthStory` and `auth.module.css`. `SignupPage` composes `SignupForm`;
+the sign-in route composes `LoginForm` and optional configured OAuth providers.
+On phones, the form takes priority. Shared `FormField` and `PasswordInput`
+components own labels, error descriptions and the accessible reveal control.
+Every color comes from the shared palette. Account settings uses `ChangePasswordForm`.
+
+Login uses the shared `LoginSchema` for normalized email/password inputs, shows
+field errors and focuses the first invalid field. A synchronous guard blocks
+repeat submissions. Request failures stay generic and focus the error message;
+entered values remain available for retry. Success clears the password and loads
+`/play` with the server-issued session cookie. Password-manager autocomplete,
+keyboard submission and the show/hide control remain available.
+
+The signup form reuses the shared registration schema, displays field errors,
+focuses the first invalid field and guards duplicate submissions. Inputs lock
+while a request is pending. Failed requests keep entered values for retry;
+success clears the password and offers a direct sign-in link. The generic
+registration outcome is the same for new and existing addresses.
+
+The auth forms send requests to `/api/game/auth`. The HTTP router checks Origin,
 limits and session access. `authController` validates shared DTO schemas, then
 calls `AuthService`. The service applies password/session rules and calls
 repositories. Only repositories access Prisma. See `project-flow.md` for the map.
@@ -32,8 +52,13 @@ the same database Session table and cookies. There is no JWT credentials path.
 Built-in scrypt uses N=32768, r=8, p=3, random 16-byte salts and 32-byte derived
 keys. Two hashes run together and at most 16 wait. Unsupported parameters fail
 closed; supported older hashes upgrade after login. Passwords normalize NFKC,
-allow spaces/Unicode, require 12–128 characters and reject common values and the
-email local-part. Pepper and CAPTCHA remain off by owner choice.
+allow spaces/Unicode, and new passwords require 8–128 characters with at least
+one uppercase letter, one punctuation/symbol character and one number (owner
+update, 2026-11-05). Spaces do not count as special characters. The shared
+`NewPasswordSchema` enforces this for signup and password changes; both screens
+show a live requirements checklist. Existing passwords still work for login.
+Common values and the email local-part remain rejected. Pepper and CAPTCHA
+remain off by owner choice.
 
 Unknown users, OAuth-only users and wrong passwords get the same login failure.
 Failures receive progressive delays and per-IP/per-email limits. Passwords and

@@ -82,7 +82,7 @@ export function authFixture() {
   const pause = vi.fn(async () => {});
   const auth = new AuthService(userRepo, sessionRepo, audit, hasher, clock, revoked, pause);
   const ctx: AuthContext = { ip: '203.0.113.44', userAgent: 'test', sessionToken: null };
-  const password = 'river lantern marble cloud';
+  const password = 'River!12';
   async function registered() {
     await auth.register({ email: 'ada@example.invalid', name: 'Ada', password }, ctx);
     return [...users.values()][0]!;

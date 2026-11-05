@@ -1,4 +1,4 @@
-import { AuthPage } from '@/features/auth/AuthPage';
+import { SignupPage } from '@/features/auth/SignupPage';
 export default function Register() {
-  return <AuthPage mode="register" />;
+  return <SignupPage />;
 }

@@ -5,6 +5,12 @@ import { fixture } from '../fakes';
 import { authControllers } from '../../../src/server/controllers/authController';
 
 describe('password accounts without email delivery', () => {
+  it('keeps existing password login working after new-password requirements change', async () => {
+    const f = authFixture();
+    const user = await f.registered();
+    user.passwordHash = 'hash:old lowercase passphrase';
+    expect((await f.auth.login(user.email, 'old lowercase passphrase', f.ctx)).token).toBeTruthy();
+  });
   it('the default runtime delays repeated bad-password attempts', async () => {
     vi.useFakeTimers();
     try {
@@ -40,9 +46,9 @@ describe('password accounts without email delivery', () => {
     expect(user.email).toBe('ada@example.invalid');
     expect(user.emailVerified).toBeNull();
     expect(user.passwordHash).not.toBe(f.password);
-    expect(await f.auth.register({ ...input, password: 'different long password' }, f.ctx)).toEqual(
-      REGISTERED,
-    );
+    expect(
+      await f.auth.register({ ...input, password: 'Different!42 long password' }, f.ctx),
+    ).toEqual(REGISTERED);
     expect(f.users.size).toBe(1);
     expect(user.passwordHash).toBe(`hash:${f.password}`);
     expect((await f.auth.login(user.email, f.password, f.ctx)).token).toMatch(/^[\w-]{43}$/);
@@ -88,7 +94,7 @@ describe('password accounts without email delivery', () => {
     });
     vi.spyOn(f.userRepo, 'change').mockResolvedValue(false);
     await expect(
-      f.auth.changePassword(user.id, f.password, 'silent forests dancing slowly', {
+      f.auth.changePassword(user.id, f.password, 'Silent!42 forests dancing slowly', {
         ...f.ctx,
         sessionToken: 'lost',
       }),
@@ -106,9 +112,9 @@ describe('password accounts without email delivery', () => {
       }),
     ).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
     await expect(
-      f.auth.changePassword(user.id, f.password, 'silent forests dancing slowly', f.ctx),
+      f.auth.changePassword(user.id, f.password, 'Silent!42 forests dancing slowly', f.ctx),
     ).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
-    await f.auth.changePassword(user.id, f.password, 'silent forests dancing slowly', {
+    await f.auth.changePassword(user.id, f.password, 'Silent!42 forests dancing slowly', {
       ...f.ctx,
       sessionToken: 'current',
     });
@@ -116,7 +122,7 @@ describe('password accounts without email delivery', () => {
     expect(f.revoked.user).toHaveBeenCalledWith(user.id, 'current');
     await expect(f.auth.login(user.email, f.password, f.ctx)).rejects.toThrow();
     expect(
-      (await f.auth.login(user.email, 'silent forests dancing slowly', f.ctx)).token,
+      (await f.auth.login(user.email, 'Silent!42 forests dancing slowly', f.ctx)).token,
     ).toBeTruthy();
   });
   it('logout scopes revocation and rejects anonymous operations', async () => {

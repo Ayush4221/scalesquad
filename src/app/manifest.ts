@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { palette } from '@/styles/palette';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
@@ -9,8 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    theme_color: '#0d1117',
-    background_color: '#0d1117',
+    theme_color: palette.ink,
+    background_color: palette.ink,
     categories: ['games', 'education'],
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },

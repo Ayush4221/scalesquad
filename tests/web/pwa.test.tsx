@@ -40,11 +40,14 @@ describe('safe static cache policy', () => {
     for (const path of [
       '/_next/static/chunks/a-hash.js',
       '/icons/icon-192.png',
+      '/icons/squad-link.svg',
+      '/icons/favicon-32.png',
       '/fonts/mono-hash.woff2',
     ])
       expect(shouldCache(request(path), response(), 'https://game.example')).toBe(true);
     for (const path of [
       '/api/game/me',
+      '/icons/unapproved.svg',
       '/api/auth/session',
       '/ws',
       '/match/a',

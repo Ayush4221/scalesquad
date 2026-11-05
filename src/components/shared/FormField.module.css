@@ -1,0 +1,27 @@
+.field {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.label {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.hint,
+.error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.hint {
+  color: var(--muted-foreground);
+}
+
+.error {
+  color: var(--destructive);
+}

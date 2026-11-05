@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ResponsiveDialog } from '@/components/shared/ResponsiveDialog';
-import { AuthForm } from './AuthForm';
+import { ChangePasswordForm } from './ChangePasswordForm';
 import { SignOutButton } from './SignOutButton';
 import { NotificationSettings } from '@/pwa/NotificationSettings';
 export function AccountSettings() {
@@ -13,7 +13,7 @@ export function AccountSettings() {
         Settings
       </Button>
       <ResponsiveDialog title="Account settings" open={open} onOpenChange={setOpen}>
-        <AuthForm mode="change-password" />
+        <ChangePasswordForm />
         <NotificationSettings />
         <SignOutButton all />
       </ResponsiveDialog>

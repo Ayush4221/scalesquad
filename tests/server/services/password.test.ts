@@ -6,12 +6,24 @@ import {
 import { DUMMY_HASH } from '../../../src/server/services/authService';
 import { Semaphore } from '../../../src/server/lib/semaphore';
 describe('scrypt password protection', () => {
-  it('applies Unicode policy without composition rules', () => {
-    for (const value of ['short', 'x'.repeat(129), 'Ada walks over river stones', 'unbelievable'])
+  it('applies the eight-character composition policy and preserves Unicode normalization', () => {
+    for (const value of [
+      'short',
+      'x'.repeat(129),
+      'Ada!1234',
+      'unbelievable',
+      'river!12',
+      'River!!!',
+      'River123',
+      'River 12',
+    ])
       expect(() => validatePassword(value, 'ada@example.invalid')).toThrow();
-    expect(validatePassword('é'.repeat(12), 'ada@example.invalid')).toBe('é'.repeat(12));
-    expect(validatePassword('e\u0301'.repeat(12), 'ada@example.invalid')).toBe('é'.repeat(12));
-    expect(validatePassword('slow rivers drift in silence', 'ada@example.invalid')).toContain(' ');
+    expect(validatePassword('River!12', 'ada@example.invalid')).toBe('River!12');
+    expect(validatePassword('Élan!123', 'ada@example.invalid')).toBe('Élan!123');
+    expect(validatePassword('E\u0301lan!123', 'ada@example.invalid')).toBe('Élan!123');
+    expect(validatePassword('Slow rivers!12 drift in silence', 'ada@example.invalid')).toContain(
+      ' ',
+    );
   });
   it('uses random salts, valid dummy work and bounded encoded parameters', async () => {
     const h = new ScryptPasswordHasher(),

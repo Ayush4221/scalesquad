@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { BrandLogo } from '@/components/shared/BrandLogo';
 import { getCurrentUser } from '@/auth';
 import { PlayLobby } from '@/features/lobby/PlayLobby';
 import { SignOutButton } from '@/features/auth/SignOutButton';
@@ -9,9 +10,7 @@ export default async function Play() {
   return (
     <main className="page-shell">
       <header className="topbar">
-        <a className="wordmark" href="/play">
-          ▦ SCALE<span>SQUAD</span>
-        </a>
+        <BrandLogo />
         <div className="flex gap-2">
           <AccountSettings />
           <SignOutButton />
