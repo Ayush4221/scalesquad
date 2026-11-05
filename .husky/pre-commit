@@ -1,0 +1,2 @@
+npx lint-staged --config lint-staged.config.js --max-arg-length 6000 --concurrent false --verbose
+npm run typecheck

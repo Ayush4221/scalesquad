@@ -26,6 +26,7 @@ coverage/
 .nyc_output/
 playwright-report/
 test-results/
+tests/e2e/credentials.js
 
 # Prisma local artifacts
 *.db

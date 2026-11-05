@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.server.json",
+  "compilerOptions": { "declaration": false },
+  "include": ["src/sim/**/*.ts"],
+  "exclude": ["src/sim/cli", "dist", "tests"]
+}
