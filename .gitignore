@@ -52,3 +52,4 @@ Thumbs.db
 
 # Tooling output
 graphify-out/
+.hallmark/

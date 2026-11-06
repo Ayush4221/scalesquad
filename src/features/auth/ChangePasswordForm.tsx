@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useHydrated } from '@/lib/useHydrated';
+import { useHydrated } from '@/hooks/useHydrated';
 import {
   ChangePasswordSchema,
   PASSWORD_MIN_LENGTH,

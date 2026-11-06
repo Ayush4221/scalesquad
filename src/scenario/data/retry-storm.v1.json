@@ -1,0 +1,183 @@
+{
+  "scenarioId": "retry-storm",
+  "scenarioVersion": "1",
+  "engineCompat": ["1.0.0"],
+  "title": "Retry Storm: the missing confirmation",
+  "deadlineSeconds": 60,
+  "graceSeconds": 10,
+  "requiredValidAdmissions": 3000,
+  "totalPasses": 10000,
+  "timeoutMs": 800,
+  "raceWindowMs": 20,
+  "trafficSeries": {
+    "normal": [
+      60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60,
+      60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60,
+      60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60
+    ],
+    "incident": [
+      85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85,
+      85, 85, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+      40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40
+    ]
+  },
+  "tiers": {
+    "app": {
+      "LOW": {
+        "capacityRps": 50,
+        "baseLatencyMs": 30,
+        "cost": 15
+      },
+      "MEDIUM": {
+        "capacityRps": 180,
+        "baseLatencyMs": 20,
+        "cost": 35
+      },
+      "HIGH": {
+        "capacityRps": 350,
+        "baseLatencyMs": 10,
+        "cost": 65
+      }
+    },
+    "db": {
+      "LOW": {
+        "capacityRps": 45,
+        "baseLatencyMs": 40,
+        "cost": 20
+      },
+      "MEDIUM": {
+        "capacityRps": 160,
+        "baseLatencyMs": 25,
+        "cost": 40
+      },
+      "HIGH": {
+        "capacityRps": 320,
+        "baseLatencyMs": 15,
+        "cost": 65
+      }
+    }
+  },
+  "cache": {
+    "cost": 8,
+    "readLatencyMs": 5,
+    "staleReadProbabilityRule": "NON_AUTHORITATIVE_ONLY"
+  },
+  "queue": {
+    "enabled": false,
+    "maxBacklog": 1000,
+    "workerRate": 150,
+    "cost": 5
+  },
+  "latency": {
+    "overloadStartUtil": 0.7,
+    "steepStartUtil": 0.9,
+    "linearPenaltyMs": 50,
+    "steepPenaltyMs": 600,
+    "maxPenaltyMs": 2000
+  },
+  "budgetLimit": 85,
+  "budgetDisplayRange": [75, 95],
+  "gates": [
+    {
+      "id": "A"
+    },
+    {
+      "id": "B"
+    },
+    {
+      "id": "C"
+    },
+    {
+      "id": "D"
+    }
+  ],
+  "profiles": {
+    "normal": {
+      "version": "normal-1",
+      "retryAfterTimeoutRate": 0.5,
+      "outage": null,
+      "offlineGateIds": [],
+      "committedTimeoutPassIds": [],
+      "staleReplica": false
+    },
+    "incident": {
+      "version": "incident-1",
+      "retryAfterTimeoutRate": 1,
+      "outage": null,
+      "offlineGateIds": [],
+      "committedTimeoutPassIds": [
+        "P-1",
+        "P-2",
+        "P-3",
+        "P-4",
+        "P-5",
+        "P-6",
+        "P-7",
+        "P-8",
+        "P-9",
+        "P-10",
+        "P-11",
+        "P-12",
+        "P-13",
+        "P-14",
+        "P-15",
+        "P-16",
+        "P-17",
+        "P-18",
+        "P-19",
+        "P-20",
+        "P-21",
+        "P-22",
+        "P-23",
+        "P-24",
+        "P-25",
+        "P-26",
+        "P-27",
+        "P-28",
+        "P-29",
+        "P-30",
+        "P-31",
+        "P-32",
+        "P-33",
+        "P-34",
+        "P-35",
+        "P-36",
+        "P-37",
+        "P-38",
+        "P-39",
+        "P-40"
+      ],
+      "staleReplica": false
+    }
+  },
+  "simultaneousScan": {
+    "enabled": true,
+    "second": 0,
+    "passIds": ["RACE-1"],
+    "gateIds": ["A", "B"],
+    "profiles": ["incident"]
+  },
+  "presetConfiguration": {
+    "appCapacity": "MEDIUM",
+    "dbCapacity": "MEDIUM",
+    "atomicCheckin": false,
+    "retryPolicy": "RETRY_NEW_IDENTITY",
+    "cache": "OFF"
+  },
+  "referenceRepair": {
+    "appCapacity": "MEDIUM",
+    "dbCapacity": "MEDIUM",
+    "atomicCheckin": true,
+    "retryPolicy": "RETRY_SAME_KEY",
+    "cache": "OFF"
+  },
+  "match": {
+    "joinCodeTtlMs": 1800000,
+    "briefDurationMs": 120000,
+    "incidentDurationMs": 120000,
+    "compareDurationMs": 300000,
+    "lockLeaseMs": 120000,
+    "reclaimAfterMs": 15000,
+    "runTimeoutMs": 15000
+  }
+}

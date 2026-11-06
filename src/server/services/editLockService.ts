@@ -15,7 +15,8 @@ export class EditLockService {
       member(m, target);
       m.lock = {
         holderUserId: target,
-        expiresAt: this.clock.now() + loadScenario().match.lockLeaseMs,
+        expiresAt:
+          this.clock.now() + loadScenario(m.scenarioId, m.scenarioVersion).match.lockLeaseMs,
         configurationVersion: currentConfig(m).version,
       };
       audit(m, userId!, 'lock.pass', { target });
@@ -36,7 +37,7 @@ export class EditLockService {
         m.lock.expiresAt > now &&
         (disconnected === null ||
           disconnected === undefined ||
-          now - disconnected < loadScenario().match.reclaimAfterMs)
+          now - disconnected < loadScenario(m.scenarioId, m.scenarioVersion).match.reclaimAfterMs)
       )
         throw new AppError(
           'CONFLICT',
@@ -45,7 +46,7 @@ export class EditLockService {
         );
       m.lock = {
         holderUserId: userId!,
-        expiresAt: now + loadScenario().match.lockLeaseMs,
+        expiresAt: now + loadScenario(m.scenarioId, m.scenarioVersion).match.lockLeaseMs,
         configurationVersion: currentConfig(m).version,
       };
       audit(m, userId!, 'lock.reclaim');
@@ -67,7 +68,7 @@ export class EditLockService {
       userId,
       now,
       connected,
-      renew ? now + loadScenario().match.lockLeaseMs : null,
+      renew ? now + loadScenario(state.scenarioId, state.scenarioVersion).match.lockLeaseMs : null,
     );
   }
 }

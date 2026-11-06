@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ConfigurationValues } from '@scalesquad/shared';
+import { ConfigurationValues, ScenarioId } from '@scalesquad/shared';
 
 const positive = z.number().finite().positive();
 const count = z.number().int().nonnegative();
@@ -21,7 +21,7 @@ const profile = z
   .strict();
 export const ScenarioConfigSchema = z
   .object({
-    scenarioId: z.literal('campuspass'),
+    scenarioId: ScenarioId,
     scenarioVersion: z.string().max(30),
     engineCompat: z.array(z.string()).min(1).max(10),
     title: z.string().max(100),

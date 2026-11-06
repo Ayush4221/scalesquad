@@ -59,4 +59,4 @@ export const ServerEvent = z.discriminatedUnion('type', [
   envelope('error', z.object({ code: ErrorCode, message: z.string().max(200) }).strict()),
 ]);
 export type ServerEvent = z.infer<typeof ServerEvent>;
-export const MAX_MESSAGE_BYTES = 16_384;
+export { MAX_MESSAGE_BYTES } from '../constants/protocol';

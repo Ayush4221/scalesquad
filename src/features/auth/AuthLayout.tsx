@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { BrandLogo } from '@/components/shared/BrandLogo';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/classNames';
 import { AuthStory } from './AuthStory';
 import styles from './auth.module.css';
 

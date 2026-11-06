@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import { LandingPage } from '../../src/features/landing/LandingPage';
-import { MissionPreview } from '../../src/features/landing/MissionPreview';
+import { GameWalkthrough } from '../../src/features/landing/GameWalkthrough';
 
 vi.mock('next/link', () => ({
   default: ({
@@ -27,42 +27,59 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('public Incident Brief home', () => {
+describe('Hallmark public home', () => {
+  it('advances the walkthrough, pauses on a selected scene, and cleans up playback', async () => {
+    vi.useFakeTimers();
+    const view = render(<LandingPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play the walkthrough' }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(4200);
+    });
+    expect(screen.getByRole('heading', { name: 'Make the call together.' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Compare' }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(12000);
+    });
+    expect(screen.getByRole('heading', { name: 'Same incident. New evidence.' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Replay walkthrough' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Replay walkthrough' }));
+    view.unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
   it('explains the game and points guests to real signup and sign-in pages', () => {
     render(<LandingPage />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveAccessibleName(
-      'System under load. Squad up.',
-    );
-    expect(screen.getByText(/ScaleSquad is a three-player system design game/)).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Create your squad' })).toHaveAttribute(
+    expect(screen.getByRole('heading', { level: 1 })).toHaveAccessibleName('Think as a squad.');
+    expect(screen.getByText(/A system design game for three engineers/)).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Build your squad' })).toHaveAttribute(
       'href',
       '/register',
     );
-    expect(screen.getAllByRole('link', { name: 'Sign in' })).toHaveLength(2);
+    expect(screen.getByRole('link', { name: /Sign in/ })).toHaveAttribute('href', '/signin');
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Traffic' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Data' }));
+    expect(screen.getByText(/Follow the correctness risks/)).toBeVisible();
   });
   it('can pause, finish and replay the mission preview without leaving timers behind', async () => {
     vi.useFakeTimers();
-    const view = render(<MissionPreview />);
-    fireEvent.click(screen.getByRole('button', { name: 'Watch the preview' }));
+    const view = render(<GameWalkthrough />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play the walkthrough' }));
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(2400);
+      await vi.advanceTimersByTimeAsync(4200);
     });
-    expect(screen.getByRole('heading', { name: 'A surge hits the gates.' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Pause preview' }));
+    expect(screen.getByRole('heading', { name: 'Make the call together.' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Pause walkthrough' }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(7200);
     });
-    expect(screen.getByRole('heading', { name: 'A surge hits the gates.' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Continue preview' }));
+    expect(screen.getByRole('heading', { name: 'Make the call together.' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Play the walkthrough' }));
     for (let index = 0; index < 4; index++)
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(2400);
+        await vi.advanceTimersByTimeAsync(4200);
       });
-    expect(screen.getByRole('heading', { name: 'Let the next run decide.' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Replay preview' }));
-    expect(screen.getByRole('heading', { name: 'One pass. One admission.' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Same incident. New evidence.' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Replay walkthrough' }));
+    expect(screen.getByRole('heading', { name: 'Nobody has the whole picture.' })).toBeVisible();
     view.unmount();
     expect(vi.getTimerCount()).toBe(0);
   });
@@ -78,13 +95,13 @@ describe('public Incident Brief home', () => {
       removeListener: vi.fn(),
       dispatchEvent: () => true,
     }));
-    render(<MissionPreview />);
+    render(<GameWalkthrough />);
     fireEvent.click(screen.getByRole('button', { name: 'Next scene' }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(50000);
     });
-    expect(screen.getByRole('heading', { name: 'A surge hits the gates.' })).toBeVisible();
-    expect(screen.queryByRole('button', { name: 'Pause preview' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Make the call together.' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Pause walkthrough' })).not.toBeInTheDocument();
   });
   it('stops autoplay when the motion preference changes while watching', async () => {
     vi.useFakeTimers();
@@ -96,8 +113,8 @@ describe('public Incident Brief home', () => {
       removeListener: vi.fn(),
     });
     vi.spyOn(window, 'matchMedia').mockReturnValue(media);
-    render(<MissionPreview />);
-    fireEvent.click(screen.getByRole('button', { name: 'Watch the preview' }));
+    render(<GameWalkthrough />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play the walkthrough' }));
     act(() => {
       media.matches = true;
       media.dispatchEvent(new Event('change'));
@@ -105,8 +122,8 @@ describe('public Incident Brief home', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(24000);
     });
-    expect(screen.getByRole('heading', { name: 'One pass. One admission.' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Nobody has the whole picture.' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Next scene' }));
-    expect(screen.getByRole('heading', { name: 'A surge hits the gates.' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Make the call together.' })).toBeVisible();
   });
 });

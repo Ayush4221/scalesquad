@@ -1,1 +1,1 @@
-export { RateLimiter } from '../lib/rateLimit';
+export { RateLimiter } from '../utils/rateLimit';

@@ -8,9 +8,9 @@ import type {
   UserAuthRepository,
 } from '../lib/authPorts';
 import type { Clock } from '../lib/ports';
-import { SESSION_SECONDS } from '../lib/sessionCookie';
-import { ipPrefix } from '../lib/clientIp';
-import { RateLimiter } from '../lib/rateLimit';
+import { SESSION_SECONDS } from '../../constants/auth';
+import { ipPrefix } from '../utils/clientIp';
+import { RateLimiter } from '../utils/rateLimit';
 import { validatePassword, type PasswordHasher } from './passwordService';
 
 export const REGISTERED = Object.freeze({ message: 'Registration complete. You can sign in now.' });

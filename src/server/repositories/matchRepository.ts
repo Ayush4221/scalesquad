@@ -31,6 +31,7 @@ export function mapMatch(row: Row): MatchRecord {
     hostUserId: row.hostUserId,
     phase: row.phase,
     scenarioVersion: row.scenarioVersion,
+    scenarioId: row.scenarioId,
     engineVersion: row.engineVersion,
     revision: row.revision,
     simulationLocked: row.simulationLocked,
@@ -203,6 +204,7 @@ export class PrismaMatchRepository implements GameRepository {
           joinCodeExpiresAt: new Date(m.joinCodeExpiresAt),
           hostUserId: m.hostUserId,
           scenarioVersion: m.scenarioVersion,
+          scenarioId: m.scenarioId,
           engineVersion: m.engineVersion,
           ...fields(m),
         },
@@ -274,11 +276,23 @@ export class PrismaMatchRepository implements GameRepository {
   async presenceState(matchId: string, userId: string) {
     const row = await this.client.matchMember.findUnique({
       where: { matchId_userId: { matchId, userId } },
-      select: { match: { select: { phase: true, simulationLocked: true, editLock: true } } },
+      select: {
+        match: {
+          select: {
+            scenarioId: true,
+            scenarioVersion: true,
+            phase: true,
+            simulationLocked: true,
+            editLock: true,
+          },
+        },
+      },
     });
     if (!row) return null;
     const m = row.match;
     return {
+      scenarioId: m.scenarioId,
+      scenarioVersion: m.scenarioVersion,
       phase: m.phase,
       simulationLocked: m.simulationLocked,
       lock: m.editLock

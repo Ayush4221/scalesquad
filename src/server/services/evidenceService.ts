@@ -3,7 +3,7 @@ import { AppError, MatchPhase, requireUser, type EvidencePhase } from '@scalesqu
 import type { GameRepository, EvidenceRepository, MatchRecord } from '../lib/models';
 import { member } from './guards';
 export function ensureEvidence(m: MatchRecord, phase: EvidencePhase) {
-  const s = loadScenario('campuspass', m.scenarioVersion);
+  const s = loadScenario(m.scenarioId, m.scenarioVersion);
   for (const user of m.members)
     if (!m.evidence.some((e) => e.userId === user.userId && e.phase === phase)) {
       m.evidence.push({ userId: user.userId, phase, card: buildEvidenceCard(user.role, phase, s) });

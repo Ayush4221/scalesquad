@@ -8,9 +8,9 @@ import { audit, currentConfig, host, member, phase } from './guards';
 import { canTransition } from './matchStateMachine';
 import { assignRoles } from './roles';
 import { ensureEvidence } from './evidenceService';
-import { normalizeCode, uniqueJoinCode } from '../lib/joinCode';
-import { runtimePolicy } from '../lib/policy';
-import { KeyedQueue } from '../lib/keyedQueue';
+import { normalizeCode, uniqueJoinCode } from '../utils/joinCode';
+import { runtimePolicy } from '../constants/runtimePolicy';
+import { KeyedQueue } from '../utils/keyedQueue';
 
 export class MatchService {
   private readonly creations = new KeyedQueue();
@@ -24,8 +24,9 @@ export class MatchService {
     private readonly events: DomainEvents,
     private readonly id: () => string,
   ) {}
-  async createMatch(userId: string | null) {
+  async createMatch(userId: string | null, scenarioId = 'campuspass') {
     requireUser(userId);
+    loadScenario(scenarioId);
     return this.creations.run(userId, async () => {
       if ((await this.repo.countMemberships(userId)) >= runtimePolicy.maxActiveMembershipsPerUser)
         throw new AppError('RATE_LIMITED', 429, 'Match limit reached');
@@ -35,13 +36,13 @@ export class MatchService {
         counts.recent >= runtimePolicy.maxMatchesPerDay
       )
         throw new AppError('RATE_LIMITED', 429, 'Match creation limit reached');
-      return this.createReservedMatch(userId);
+      return this.createReservedMatch(userId, scenarioId);
     });
   }
-  private async createReservedMatch(userId: string) {
+  private async createReservedMatch(userId: string, scenarioId: string) {
     const user = await this.users.find(userId);
     if (!user) throw new AppError('UNAUTHENTICATED', 401);
-    const s = loadScenario(),
+    const s = loadScenario(scenarioId),
       id = this.id(),
       now = this.clock.now();
     const code = await uniqueJoinCode(async (c) => (await this.repo.findByCode(c)) !== null);
@@ -53,6 +54,7 @@ export class MatchService {
       hostUserId: userId,
       phase: 'LOBBY',
       scenarioVersion: s.scenarioVersion,
+      scenarioId: s.scenarioId,
       engineVersion: ENGINE_VERSION,
       revision: 0,
       simulationLocked: false,
@@ -180,7 +182,7 @@ export class MatchService {
     if (!canTransition(m.phase, to, { members: m.members, timerElapsed }))
       throw new AppError('PHASE_INVALID', 409, 'Squad is not ready');
     m.phase = to;
-    const s = loadScenario('campuspass', m.scenarioVersion),
+    const s = loadScenario(m.scenarioId, m.scenarioVersion),
       now = this.clock.now();
     m.deadlineAt =
       to === 'BRIEFING'
@@ -310,7 +312,7 @@ export class MatchService {
       ownRole: m.phase === 'LOBBY' ? null : own.role,
       configuration: { version: config.version, values: config.values },
       lock: m.lock ? { holderUserId: m.lock.holderUserId, expiresAt: m.lock.expiresAt } : null,
-      scenario: toPublicScenario(loadScenario('campuspass', m.scenarioVersion)),
+      scenario: toPublicScenario(loadScenario(m.scenarioId, m.scenarioVersion)),
       runs: m.runs
         .map((r) => ({ runNumber: r.runNumber, result: r.result }))
         .sort((a, b) => a.runNumber - b.runNumber),

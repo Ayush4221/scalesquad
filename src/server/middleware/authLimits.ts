@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { EmailSchema } from '@scalesquad/shared';
-import { RateLimiter } from '../lib/rateLimit';
+import { RateLimiter } from '../utils/rateLimit';
 const per = (capacity: number, seconds: number) => new RateLimiter(capacity, capacity / seconds);
 export class AuthLimits {
   private readonly registerIp = per(5, 3600);

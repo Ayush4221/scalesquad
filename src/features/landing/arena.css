@@ -1,0 +1,970 @@
+.arenaPage {
+  --qa-ink: var(--palette-ink);
+  --qa-surface: var(--palette-surface);
+  --qa-raised: var(--palette-raised);
+  --qa-line: var(--palette-line);
+  --qa-text: var(--palette-text);
+  --qa-muted: var(--palette-muted);
+  --qa-blue: var(--palette-cobalt);
+  --qa-lime: var(--palette-lime);
+  --qa-radius: 14px;
+  --qa-speed: 1;
+  --qa-glow: 0.14;
+  background: var(--qa-ink);
+  color: var(--qa-text);
+  font-family: Inter, Arial, sans-serif;
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  border-radius: 18px;
+}
+.arenaPage * {
+  box-sizing: border-box;
+}
+.arenaPage [hidden] {
+  display: none !important;
+}
+.arenaPage :is(h1, h2, h3, p) {
+  margin: 0;
+}
+.arenaPage button,
+.arenaPage a {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.arenaPage button {
+  color: inherit;
+}
+.arenaPage a {
+  text-decoration: none;
+  color: inherit;
+}
+.arenaPage svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.arenaPage button {
+  touch-action: manipulation;
+}
+.arenaPage :is(.qa-nav, .qa-mission, .qa-how, .qa-final, .qa-footer) {
+  margin-inline: 5.5%;
+}
+.arenaPage .qa-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 27px 0 24px;
+  padding-right: 60px;
+  border-bottom: 1px solid var(--qa-line);
+}
+.arenaPage .qa-brand {
+  font-size: 19px;
+  font-weight: 850;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.arenaPage .qa-brand img {
+  margin-right: 10px;
+}
+.arenaPage .qa-brand > span {
+  color: var(--qa-lime);
+}
+.arenaPage nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 12px;
+}
+.arenaPage nav > a {
+  color: var(--qa-muted);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.arenaPage nav > a:hover {
+  color: var(--qa-text);
+}
+.arenaPage .qa-login {
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0;
+}
+.arenaPage .qa-eyebrow {
+  font: 11px/1.6 monospace;
+  letter-spacing: 1.5px;
+  color: var(--qa-muted);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.arenaPage .qa-hero {
+  position: relative;
+  padding: 69px 24px 24px;
+  text-align: center;
+}
+.arenaPage .qa-horizon {
+  pointer-events: none;
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 20%,
+    color-mix(in srgb, var(--qa-blue) 16%, transparent),
+    transparent 65%
+  );
+}
+.arenaPage .qa-hero .qa-eyebrow {
+  justify-content: center;
+}
+.arenaPage .qa-live {
+  height: 6px;
+  width: 6px;
+  background: var(--qa-lime);
+  border-radius: 50%;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--qa-lime) 30%, transparent);
+}
+.arenaPage h1 {
+  font-size: clamp(40px, 6.8vw, 76px);
+  letter-spacing: -3.7px;
+  line-height: 1.04;
+  font-weight: 850;
+  margin-top: 22px;
+}
+.arenaPage .qa-title-line {
+  display: block;
+}
+.arenaPage .qa-lime {
+  color: var(--qa-lime);
+}
+.arenaPage .qa-intro {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--qa-muted);
+  margin-top: 23px;
+}
+.arenaPage .qa-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+.arenaPage .qa-primary,
+.arenaPage .qa-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  min-height: 51px;
+  padding: 14px 22px;
+  border-radius: var(--qa-radius);
+  font-size: 13px;
+  font-weight: 650;
+  transition:
+    transform 220ms,
+    box-shadow 220ms,
+    border-color 220ms;
+  position: relative;
+  overflow: hidden;
+}
+.arenaPage .qa-primary {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--qa-text) 17%, var(--qa-lime)),
+    var(--qa-lime)
+  );
+  color: var(--qa-ink);
+  border: 1px solid color-mix(in srgb, var(--qa-text) 35%, var(--qa-lime));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--qa-text) 50%, transparent),
+    0 6px 30px color-mix(in srgb, var(--qa-lime) 8%, transparent);
+}
+.arenaPage .qa-primary::after {
+  content: '';
+  position: absolute;
+  inset: -80% auto -80% -60%;
+  width: 27%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--qa-text) 50%, transparent),
+    transparent
+  );
+  transform: rotate(25deg);
+  transition: left 550ms;
+  pointer-events: none;
+}
+.arenaPage .qa-primary:hover::after {
+  left: 140%;
+}
+.arenaPage .qa-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--qa-lime) 14%, transparent);
+}
+.arenaPage .qa-primary svg {
+  transition: transform 220ms;
+}
+.arenaPage .qa-primary:hover svg {
+  transform: translate(2px, -2px);
+}
+.arenaPage .qa-primary:active {
+  transform: translateY(1px);
+}
+.arenaPage .qa-secondary {
+  background: var(--qa-surface);
+  border: 1px solid var(--qa-line);
+  gap: 9px;
+}
+.arenaPage .qa-secondary:hover {
+  border-color: var(--qa-blue);
+  transform: translateY(-2px);
+}
+.arenaPage .qa-secondary svg {
+  width: 15px;
+  color: var(--qa-lime);
+}
+.arenaPage .qa-note {
+  font-size: 11px;
+  color: var(--qa-muted);
+  margin-top: 15px;
+}
+.arenaPage .qa-scrollhint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--qa-muted);
+  font: 11px monospace;
+  letter-spacing: 1.6px;
+  margin-top: 37px;
+}
+.arenaPage .qa-scrollhint > span {
+  width: 25px;
+  height: 1px;
+  background: var(--qa-blue);
+}
+.arenaPage .qa-mission {
+  border: 1px solid var(--qa-line);
+  border-radius: 20px;
+  background: var(--qa-surface);
+  padding: 25px;
+  position: relative;
+}
+.arenaPage .qa-mission-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 22px;
+}
+.arenaPage .qa-mission-head h2 {
+  font-size: 24px;
+  letter-spacing: -0.8px;
+  margin-top: 7px;
+}
+.arenaPage .qa-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  border: 1px solid var(--qa-line);
+  border-radius: 100px;
+  padding: 7px 10px;
+  background: linear-gradient(135deg, var(--qa-raised), var(--qa-surface));
+  white-space: nowrap;
+}
+.arenaPage .qa-chip svg {
+  width: 14px;
+  color: var(--qa-lime);
+}
+.arenaPage .qa-stage {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 24px;
+}
+.arenaPage .qa-system {
+  background: var(--qa-ink);
+  border-radius: 13px;
+  position: relative;
+  overflow: hidden;
+  min-height: 267px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 19px 17px;
+}
+.arenaPage .qa-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--qa-line) 20%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--qa-line) 20%, transparent) 1px, transparent 1px);
+  background-size: 26px 26px;
+  pointer-events: none;
+}
+.arenaPage .qa-stage-heading {
+  display: flex;
+  justify-content: space-between;
+  font: 11px monospace;
+  letter-spacing: 0.9px;
+  color: var(--qa-muted);
+  position: relative;
+  gap: 10px;
+}
+.arenaPage .qa-stage-mark {
+  color: var(--qa-lime);
+  font-size: 11px;
+}
+.arenaPage .qa-flow {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  margin: 35px 0 24px;
+  gap: 0;
+}
+.arenaPage .qa-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 80px;
+  text-align: center;
+  font-size: 11px;
+  position: relative;
+}
+.arenaPage .qa-node-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--qa-surface);
+  border: 1px solid var(--qa-line);
+  border-radius: 13px;
+  height: 62px;
+  width: 62px;
+  transition:
+    background 400ms,
+    border-color 400ms,
+    transform 400ms;
+}
+.arenaPage .qa-node-icon svg {
+  width: 26px;
+  height: 26px;
+}
+.arenaPage .qa-core .qa-node-icon {
+  border-color: var(--qa-blue);
+  color: var(--qa-lime);
+  box-shadow: 0 0 32px color-mix(in srgb, var(--qa-blue) 14%, transparent);
+}
+.arenaPage .qa-core-label {
+  position: absolute;
+  top: 105px;
+  white-space: nowrap;
+  font: 11px monospace;
+  color: var(--qa-muted);
+  letter-spacing: 0.6px;
+}
+.arenaPage .qa-connection {
+  flex: 1;
+  height: 1px;
+  background: var(--qa-line);
+  margin-top: 31px;
+  position: relative;
+  overflow: hidden;
+}
+.arenaPage .qa-connection b {
+  position: absolute;
+  inset: 0 auto 0 -25%;
+  width: 25%;
+  background: var(--qa-lime);
+  opacity: 0;
+}
+.arenaPage .qa-mission-caption {
+  font-size: 11px;
+  color: var(--qa-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 25px;
+  position: relative;
+}
+.arenaPage .qa-mission-caption svg {
+  width: 13px;
+  color: var(--qa-lime);
+}
+.arenaPage .qa-story {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px 0 0;
+  min-width: 0;
+}
+.arenaPage .qa-scene-copy h3 {
+  font-size: 25px;
+  letter-spacing: -0.7px;
+  line-height: 1.16;
+  margin-top: 11px;
+}
+.arenaPage .qa-scene-copy > p:last-child {
+  font-size: 12px;
+  color: var(--qa-muted);
+  line-height: 1.75;
+  margin-top: 13px;
+  min-height: 84px;
+}
+.arenaPage .qa-scene-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+.arenaPage .qa-play {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 0;
+  padding: 10px 0;
+  color: var(--qa-lime);
+  font-size: 12px;
+  min-height: 44px;
+}
+.arenaPage .qa-play svg {
+  width: 15px;
+}
+.arenaPage #qa-count {
+  font: 11px monospace;
+  color: var(--qa-muted);
+}
+.arenaPage .qa-scene-tabs {
+  display: flex;
+  gap: 7px;
+  margin-top: 4px;
+}
+.arenaPage .qa-scene-tabs button {
+  background: none;
+  border: 0;
+  border-top: 2px solid var(--qa-line);
+  flex: 1;
+  padding: 10px 0;
+  font-size: 11px;
+  color: var(--qa-muted);
+  text-align: left;
+  transition:
+    color 250ms,
+    border-color 250ms;
+  min-height: 44px;
+}
+.arenaPage .qa-scene-tabs button[aria-pressed='true'] {
+  border-color: var(--qa-lime);
+  color: var(--qa-text);
+}
+.arenaPage .qa-role-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-top: 26px;
+  padding-top: 23px;
+  border-top: 1px solid var(--qa-line);
+}
+.arenaPage .qa-role-heading > span {
+  font-size: 11px;
+  color: var(--qa-muted);
+}
+.arenaPage .qa-role-heading .qa-eyebrow {
+  font-size: 11px;
+}
+.arenaPage .qa-roles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 11px;
+  margin-top: 15px;
+}
+.arenaPage .qa-role {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  background: var(--qa-ink);
+  border: 1px solid var(--qa-line);
+  border-radius: 12px;
+  padding: 16px;
+  transition:
+    transform 220ms,
+    border-color 220ms,
+    background 220ms;
+  min-width: 0;
+}
+.arenaPage .qa-role:hover {
+  transform: translateY(-3px);
+  border-color: var(--qa-blue);
+}
+.arenaPage .qa-role[aria-pressed='true'] {
+  border-color: var(--qa-blue);
+  background: var(--qa-raised);
+}
+.arenaPage .qa-role-top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  font: 11px monospace;
+  color: var(--qa-muted);
+}
+.arenaPage .qa-role-top > svg:first-child {
+  color: var(--qa-lime);
+  width: 19px;
+}
+.arenaPage .qa-role-arrow {
+  margin-left: auto;
+  width: 13px;
+  opacity: 0.5;
+  transition:
+    transform 220ms,
+    opacity 220ms;
+}
+.arenaPage .qa-role:hover .qa-role-arrow {
+  transform: translate(2px, -2px);
+  opacity: 1;
+}
+.arenaPage .qa-role strong {
+  font-size: 15px;
+  letter-spacing: -0.3px;
+  margin-top: 15px;
+}
+.arenaPage .qa-role > span:last-child {
+  font-size: 11px;
+  color: var(--qa-muted);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.arenaPage .qa-role-detail {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--qa-muted);
+  margin-top: 17px;
+  font-size: 11px;
+  line-height: 1.6;
+  min-height: 36px;
+}
+.arenaPage .qa-role-detail svg {
+  color: var(--qa-lime);
+  width: 16px;
+}
+.arenaPage .qa-how {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  padding-block: 53px;
+}
+.arenaPage .qa-section-heading h2 {
+  font-size: 28px;
+  letter-spacing: -1px;
+  line-height: 1.2;
+  margin-top: 13px;
+}
+.arenaPage .qa-how ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 24px;
+}
+.arenaPage .qa-how li {
+  display: flex;
+  gap: 18px;
+}
+.arenaPage .qa-how li > span {
+  color: var(--qa-lime);
+  font: 11px monospace;
+  padding-top: 3px;
+}
+.arenaPage .qa-how h3 {
+  font-size: 15px;
+}
+.arenaPage .qa-how li p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--qa-muted);
+  margin-top: 5px;
+}
+.arenaPage .qa-final {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  border-block: 1px solid var(--qa-line);
+  padding: 32px 0;
+}
+.arenaPage .qa-final h2 {
+  font-size: 28px;
+  letter-spacing: -1px;
+  margin-top: 10px;
+}
+.arenaPage .qa-final p:last-child {
+  font-size: 12px;
+  color: var(--qa-muted);
+  margin-top: 11px;
+}
+.arenaPage .qa-final button {
+  flex-shrink: 0;
+}
+.arenaPage .qa-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding-block: 24px;
+  font-size: 11px;
+  color: var(--qa-muted);
+}
+.arenaPage .qa-footer > span {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--qa-text);
+}
+.arenaPage .qa-replay {
+  background: none;
+  border: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  font-size: 11px;
+}
+.arenaPage .qa-replay svg {
+  width: 14px;
+}
+.arenaPage .qa-account {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--qa-ink) 85%, transparent);
+  padding: 140px 24px 24px;
+  backdrop-filter: blur(9px);
+}
+.arenaPage .qa-account-panel {
+  position: relative;
+  background: var(--qa-surface);
+  border: 1px solid var(--qa-line);
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 38px 30px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 19px;
+}
+.arenaPage .qa-account-panel h2 {
+  font-size: 30px;
+  letter-spacing: -1px;
+  line-height: 1.15;
+}
+.arenaPage .qa-account-panel > p:not(.qa-eyebrow) {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--qa-muted);
+}
+.arenaPage .qa-close {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  background: none;
+  border: 0;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+}
+@media (max-width: 760px) {
+  .arenaPage .qa-nav {
+    padding-right: 0;
+  }
+  .arenaPage nav {
+    gap: 16px;
+  }
+  .arenaPage h1 {
+    font-size: 58px;
+    letter-spacing: -2.8px;
+  }
+  .arenaPage .qa-stage {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .arenaPage .qa-system {
+    min-height: 240px;
+  }
+  .arenaPage .qa-flow {
+    max-width: 420px;
+    width: 100%;
+    align-self: center;
+    margin-block: 25px;
+  }
+  .arenaPage .qa-story {
+    padding: 0;
+  }
+  .arenaPage .qa-scene-copy > p:last-child {
+    min-height: 0;
+  }
+  .arenaPage .qa-role-top {
+    flex-wrap: wrap;
+    font-size: 11px;
+    gap: 6px;
+  }
+  .arenaPage .qa-role-arrow {
+    display: none;
+  }
+  .arenaPage .qa-role-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  .arenaPage .qa-role {
+    padding: 13px;
+  }
+  .arenaPage .qa-role strong {
+    font-size: 14px;
+  }
+  .arenaPage .qa-final {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .arenaPage .qa-how {
+    gap: 25px;
+  }
+  .arenaPage .qa-section-heading h2 {
+    font-size: 25px;
+  }
+}
+@media (max-width: 510px) {
+  .arenaPage {
+    border-radius: 12px;
+  }
+  .arenaPage .qa-nav {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-top: 21px;
+    padding-bottom: 10px;
+  }
+  .arenaPage nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .arenaPage .qa-hero {
+    padding: 38px 20px 22px;
+  }
+  .arenaPage h1 {
+    font-size: 45px;
+    letter-spacing: -2.2px;
+    line-height: 1.08;
+  }
+  .arenaPage .qa-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.8px;
+  }
+  .arenaPage .qa-intro {
+    font-size: 13px;
+  }
+  .arenaPage .qa-intro br {
+    display: none;
+  }
+  .arenaPage .qa-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .arenaPage .qa-scrollhint {
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-top: 29px;
+  }
+  .arenaPage .qa-mission {
+    padding: 17px;
+    border-radius: 16px;
+  }
+  .arenaPage .qa-mission-head {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .arenaPage .qa-mission-head h2 {
+    font-size: 22px;
+  }
+  .arenaPage .qa-system {
+    padding: 15px 10px;
+  }
+  .arenaPage .qa-node {
+    flex-basis: 65px;
+    font-size: 11px;
+  }
+  .arenaPage .qa-node-icon {
+    width: 49px;
+    height: 49px;
+  }
+  .arenaPage .qa-connection {
+    margin-top: 24px;
+  }
+  .arenaPage .qa-core-label {
+    top: 95px;
+    font-size: 11px;
+  }
+  .arenaPage .qa-stage-heading {
+    font-size: 11px;
+    letter-spacing: 0.2px;
+  }
+  .arenaPage .qa-stage-mark {
+    font-size: 11px;
+  }
+  .arenaPage .qa-mission-caption {
+    font-size: 11px;
+    gap: 5px;
+  }
+  .arenaPage .qa-scene-copy h3 {
+    font-size: 26px;
+  }
+  .arenaPage .qa-roles {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .arenaPage .qa-role {
+    padding: 15px;
+  }
+  .arenaPage .qa-role-top {
+    font-size: 11px;
+  }
+  .arenaPage .qa-role strong {
+    margin-top: 8px;
+    font-size: 16px;
+  }
+  .arenaPage .qa-role > span:last-child {
+    margin-top: 4px;
+  }
+  .arenaPage .qa-role-arrow {
+    display: block;
+  }
+  .arenaPage .qa-how {
+    grid-template-columns: 1fr;
+    padding-block: 36px;
+    gap: 27px;
+  }
+  .arenaPage .qa-section-heading h2 br {
+    display: none;
+  }
+  .arenaPage .qa-final h2 {
+    font-size: 28px;
+  }
+  .arenaPage .qa-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .arenaPage .qa-footer > p {
+    order: 3;
+    width: 100%;
+    padding-bottom: 10px;
+  }
+  .arenaPage .qa-account {
+    padding: 80px 15px 20px;
+  }
+  .arenaPage .qa-account-panel {
+    padding: 35px 22px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arenaPage *,
+  .arenaPage *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .arenaPage button:hover,
+  .arenaPage button:active {
+    transform: none;
+  }
+}
+.arenaPage .qa-core-label {
+  position: relative;
+  top: auto;
+  text-align: center;
+  display: block;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0 0 4px;
+  white-space: normal;
+}
+.arenaPage .qa-mission-caption {
+  margin-top: 12px;
+}
+.arenaPage .qa-flow {
+  margin-bottom: 16px;
+}
+
+.arenaPage .arenaSkip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+  padding: 12px;
+  background: var(--qa-lime);
+  color: var(--qa-ink);
+  transform: translateY(-200%);
+}
+.arenaPage .arenaSkip:focus {
+  transform: none;
+}
+.arenaPage .qa-title-line {
+  animation: arenaReveal 0.8s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+}
+.arenaPage .qa-title-line:nth-child(2) {
+  animation-delay: 120ms;
+}
+.arenaPage .qa-enter {
+  animation: arenaReveal 0.7s ease both;
+}
+.arenaPage .qa-scene-copy {
+  animation: arenaReveal 0.4s ease both;
+}
+.arenaPage .qa-system[data-playing='true'] .qa-connection b {
+  animation: arenaSignal 1.8s ease 2;
+}
+.arenaPage .qa-scene-copy h3 {
+  white-space: pre-line;
+}
+@keyframes arenaReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes arenaSignal {
+  from {
+    left: -25%;
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    left: 100%;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arenaPage * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

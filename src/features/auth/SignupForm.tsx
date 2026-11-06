@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/FormField';
 import { PasswordInput } from '@/components/shared/PasswordInput';
 import { api } from '@/lib/api/client';
-import { useHydrated } from '@/lib/useHydrated';
+import { useHydrated } from '@/hooks/useHydrated';
 import styles from './auth.module.css';
 import { PasswordRequirements } from './PasswordRequirements';
 

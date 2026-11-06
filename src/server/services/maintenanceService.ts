@@ -1,7 +1,7 @@
 import type { GameRepository } from '../lib/models';
 import type { Clock, DomainEvents } from '../lib/ports';
 import type { ChatProvider } from '@scalesquad/nexconn';
-import { runtimePolicy } from '../lib/policy';
+import { runtimePolicy } from '../constants/runtimePolicy';
 export class MaintenanceService {
   constructor(
     private readonly repo: GameRepository,

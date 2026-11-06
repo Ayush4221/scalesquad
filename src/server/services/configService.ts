@@ -30,7 +30,8 @@ export class ConfigService {
       };
       m.configurations.push(next);
       lock.configurationVersion = next.version;
-      lock.expiresAt = this.clock.now() + loadScenario().match.lockLeaseMs;
+      lock.expiresAt =
+        this.clock.now() + loadScenario(m.scenarioId, m.scenarioVersion).match.lockLeaseMs;
       audit(m, userId!, 'config.update', { version: next.version });
       return { version: next.version, values: next.values };
     });

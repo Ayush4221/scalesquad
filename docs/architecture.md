@@ -31,7 +31,7 @@ Companion to `scalesquad-deep-design.md` (game rules, Version 2 revision). Where
 ## 2. Principles
 
 Owner home-page update (2026-11-06): unauthenticated visitors at `/` see the
-public Incident Brief page before signup/sign-in. Authenticated visitors still
+public Hallmark landing page before signup/sign-in. Authenticated visitors still
 redirect to `/play`. The `src/features/landing` view uses palette tokens and CSS
 motion; its illustrative mission preview never calls the simulator or game APIs.
 Protected pages, private evidence and API authorization keep their existing rules.
@@ -503,3 +503,46 @@ this code, with every test and helper in the root `tests` tree.
 4. Neon vs Supabase final pick (Prisma works with either).
 5. CI provider resolved: GitHub Actions; first remote run awaits owner push.
 6. Whether Redis is needed for rate limiting. Default: in-memory limiter, sufficient for a single instance.
+
+Owner-approved Hallmark implementation: the public landing page now uses locally
+hosted Bungee and Chivo fonts (licenses under `public/fonts/landing`), palette
+tokens, separate role and walkthrough components, and real signup navigation
+with pending feedback. Walkthrough pauses when hidden and respects reduced motion.
+
+### Authenticated squad dashboard
+
+`src/app/play/page.tsx` retains the server-side sign-in gate. Its client view,
+`src/features/lobby/PlayLobby.tsx`, owns Create/Join request state and uses the
+shared `JoinMatchSchema`; it does not add game logic. Dashboard styling is scoped
+to `dashboard.module.css`, using the central palette. Local font declarations
+are shared through `src/styles/fonts.css`. Dashboard browser checks live in
+`tests/e2e/dashboard.spec.ts` alongside the existing lobby flow tests.
+
+### Versioned mission selection
+
+Owner expansion (2026-11-06): the dashboard exposes the public catalog in
+`src/constants/scenarios.ts`. Full scenario definitions remain in `src/scenario/data`
+and are resolved on the server by persisted `Match.scenarioId` and
+`scenarioVersion`. The defaulted migration preserves existing CampusPass matches.
+`CreateMatchSchema`/`CreateMatchDto` allow a known scenario ID only. Creation,
+evidence, execution and timing use the selected definition; joining inherits it.
+See `docs/scenarios.md` for sources, adaptation limits, migration and tests.
+
+### Shared utilities and constants
+
+Reusable, browser-safe helpers live in `src/utils/`: `classNames.ts` owns `cn`,
+and `hash.ts` owns canonical JSON, content hashing and deep freezing. Import the
+specific module; shared domain exports retain their existing hash API.
+
+`src/constants/` holds public scenario descriptions, join-code rules, protocol
+limits and the common session lifetime. React hooks live in `src/hooks/`.
+Server-only helpers (IP handling, join-code generation, cookies, rate limiting
+and concurrency queues) live in `src/server/utils/`. Server runtime policy lives
+in `src/server/constants/`. Infrastructure adapters and port/model contracts
+stay in `src/server/lib/`; API/chat/socket clients stay in `src/lib/`.
+
+ESLint applies layer rules to the new folders. Browser code cannot import server
+utilities; generic utilities cannot import application services or browser state.
+Validation schemas, game rules and palette tokens retain their dedicated homes.
+Tests and test helpers remain under root `tests/`. New helpers belong beside the
+layer that owns them; promote them here when multiple consumers need them.

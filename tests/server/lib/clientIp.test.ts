@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { IncomingMessage } from 'node:http';
-import { clientIp, normalizeIp, ipPrefix } from '../../../src/server/lib/clientIp';
+import { clientIp, normalizeIp, ipPrefix } from '../../../src/server/utils/clientIp';
 import { RateLimiter } from '../../../src/server/middleware/rateLimit';
 
 const request = (peer: string, forwarded?: string | string[]) =>

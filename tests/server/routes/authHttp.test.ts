@@ -8,7 +8,8 @@ import { gameControllers } from '../../../src/server/controllers/gameController'
 import { createHttpHandler } from '../../../src/server/routes/http';
 import { SessionService } from '../../../src/server/services/sessionService';
 import { createLogger } from '../../../src/server/lib/logger';
-import { sessionCookie, SESSION_SECONDS } from '../../../src/server/lib/sessionCookie';
+import { sessionCookie } from '../../../src/server/utils/sessionCookie';
+import { SESSION_SECONDS } from '../../../src/constants/auth';
 import { RegisterSchema, LoginSchema, ChangePasswordSchema } from '@scalesquad/shared';
 const servers: Server[] = [];
 afterEach(async () => {

@@ -1,9 +1,12 @@
 import { randomInt } from 'node:crypto';
 import { AppError } from '@scalesquad/shared';
-export const JOIN_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+import { JOIN_ALPHABET, JOIN_CODE_LENGTH } from '../../constants/joinCode';
 export const normalizeCode = (code: string) => code.trim().toUpperCase();
 export function generateJoinCode(rng: (max: number) => number = randomInt) {
-  return Array.from({ length: 8 }, () => JOIN_ALPHABET[rng(JOIN_ALPHABET.length)]).join('');
+  return Array.from(
+    { length: JOIN_CODE_LENGTH },
+    () => JOIN_ALPHABET[rng(JOIN_ALPHABET.length)],
+  ).join('');
 }
 export async function uniqueJoinCode(
   exists: (code: string) => Promise<boolean>,

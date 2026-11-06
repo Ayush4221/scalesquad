@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/classNames';
 import { AuthRoleCards } from './AuthRoleCards';
 import styles from './auth.module.css';
 import motion from './login.module.css';

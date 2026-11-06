@@ -30,6 +30,7 @@ export interface MatchRecord {
   joinCodeExpiresAt: number;
   hostUserId: string;
   phase: MatchPhase;
+  scenarioId: string;
   scenarioVersion: string;
   engineVersion: string;
   revision: number;
@@ -64,7 +65,13 @@ export interface GameRepository {
   presenceState(
     matchId: string,
     userId: string,
-  ): Promise<{ phase: MatchPhase; simulationLocked: boolean; lock: MatchRecord['lock'] } | null>;
+  ): Promise<{
+    scenarioId: string;
+    scenarioVersion: string;
+    phase: MatchPhase;
+    simulationLocked: boolean;
+    lock: MatchRecord['lock'];
+  } | null>;
   recordPresence(
     matchId: string,
     userId: string,

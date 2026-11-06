@@ -29,7 +29,7 @@ import { createHttpHandler } from './routes/http';
 import { attachGateway } from './ws/gateway';
 import { Rooms } from './ws/rooms';
 import { securityHeaders } from './middleware/security';
-import { clientIp } from './lib/clientIp';
+import { clientIp } from './utils/clientIp';
 import { AuthService } from './services/authService';
 import { ScryptPasswordHasher } from './services/passwordService';
 import { PrismaUserAuthRepository } from './repositories/userAuthRepository';

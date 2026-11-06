@@ -2,7 +2,7 @@ import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { AppError, NewPasswordSchema, PASSWORD_REQUIREMENTS } from '@scalesquad/shared';
-import { Semaphore } from '../lib/semaphore';
+import { Semaphore } from '../utils/semaphore';
 export interface PasswordHasher {
   hash(plain: string): Promise<string>;
   verify(hash: string, plain: string): Promise<boolean>;

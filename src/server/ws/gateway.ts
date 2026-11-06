@@ -6,7 +6,7 @@ import { parseJson } from '../middleware/bodyParser';
 import type { SessionService } from '../services/sessionService';
 import type { createWsController } from '../controllers/wsController';
 import { Rooms, type Peer } from './rooms';
-import { clientIp } from '../lib/clientIp';
+import { clientIp } from '../utils/clientIp';
 
 export function attachGateway(
   server: Server,

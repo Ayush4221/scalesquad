@@ -4,7 +4,7 @@ import { BriefPanel } from '../../src/features/brief/BriefPanel';
 import { RepairPanel } from '../../src/features/repair/RepairPanel';
 import { ResultsPanel } from '../../src/features/results/ResultsPanel';
 import { ChatPanel } from '../../src/features/chat/ChatPanel';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/classNames';
 import { allowedSignIn, publicSession } from '@/auth/callbacks';
 import { fixture } from '../server/fakes';
 afterEach(cleanup);

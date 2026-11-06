@@ -34,7 +34,9 @@ export function buildEvidenceCard(
       .join('/')} requests/s.`,
     atomic_status: `Preset atomic check-in: ${s.presetConfiguration.atomicCheckin ? 'ON' : 'OFF'}. Atomic compare-and-set prevents repeated admission. Capacity does not make a write atomic.`,
     race_test: `At second ${s.simultaneousScan.second}, gates ${s.simultaneousScan.gateIds.join(', ')} scan ${s.simultaneousScan.passIds.join(', ')} inside a ${s.raceWindowMs}ms window.`,
-    committed_timeout: `Passes ${p.committedTimeoutPassIds.join(', ')} commit before the response times out. Reuse the original idempotency key to recover the result.`,
+    committed_timeout: p.committedTimeoutPassIds.length
+      ? `Passes ${p.committedTimeoutPassIds.join(', ')} commit before the response times out. Reuse the original idempotency key to recover the result.`
+      : 'No committed-response losses are injected in this incident. Capacity timeouts may still occur.',
     stale_replica: `Stale replica during incident: ${p.staleReplica}. Cache may speed up reads but cannot authorize admission.`,
     budget_total: `Hard budget: ${s.budgetLimit} credits.`,
     component_prices: `App LOW/MEDIUM/HIGH: ${Object.values(s.tiers.app)
@@ -42,7 +44,10 @@ export function buildEvidenceCard(
       .join('/')}; DB: ${Object.values(s.tiers.db)
       .map((t) => t.cost)
       .join('/')}; cache: ${s.cache.cost}; queue: ${s.queue.enabled ? s.queue.cost : 0} credits.`,
-    outage_window: `Gates ${p.offlineGateIds.join(', ')} offline from second ${p.outage?.from ?? 0} until ${p.outage?.to ?? 0}.`,
+    outage_window:
+      p.outage && p.offlineGateIds.length
+        ? `Gates ${p.offlineGateIds.join(', ')} offline from second ${p.outage.from} until ${p.outage.to}.`
+        : 'All gates remain connected during this incident.',
     recovery_policy: `Offline scans stay pending; replay original keys when connected. Confirmations after ${s.deadlineSeconds}s do not meet the target.`,
   };
   return {

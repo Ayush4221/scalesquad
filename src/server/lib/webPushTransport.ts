@@ -1,7 +1,7 @@
 import webpush from 'web-push';
 import { PushSubscriptionSchema, PushPayload, type PushSubscriptionDto } from '@scalesquad/shared';
 import type { PushTransport } from './push';
-import { Semaphore } from './semaphore';
+import { Semaphore } from '../utils/semaphore';
 const sending = new Semaphore(4, 64);
 export class WebPushTransport implements PushTransport {
   constructor(

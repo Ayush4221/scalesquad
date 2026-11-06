@@ -1,3 +1,4 @@
+import { JOIN_ALPHABET } from '../../../src/constants/joinCode';
 import { describe, it, expect, vi } from 'vitest';
 import { MatchPhase, Role, AppError, contentHash } from '@scalesquad/shared';
 import { fixture } from '../fakes';
@@ -7,8 +8,7 @@ import {
   generateJoinCode,
   normalizeCode,
   uniqueJoinCode,
-  JOIN_ALPHABET,
-} from '../../../src/server/lib/joinCode';
+} from '../../../src/server/utils/joinCode';
 import { RunService } from '../../../src/server/services/runService';
 import { silentEvents } from '../../../src/server/lib/ports';
 import { runSimulation } from '@scalesquad/sim';

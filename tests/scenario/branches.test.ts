@@ -16,7 +16,7 @@ describe('scenario boundaries and evidence variants', () => {
     ).toBe(true);
     expect(
       buildEvidenceCard('OPS', 'INCIDENT_EVIDENCE', s).facts.some((f) =>
-        f.text.includes('second 0'),
+        f.text.includes('All gates remain connected'),
       ),
     ).toBe(true);
   });

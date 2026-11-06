@@ -7,11 +7,11 @@ import { safeError } from '../middleware/errorHandler';
 import { RateLimiter } from '../middleware/rateLimit';
 import { originCheck, requestId, securityHeaders } from '../middleware/security';
 import type { Logger } from 'pino';
-import { clientIp } from '../lib/clientIp';
+import { clientIp } from '../utils/clientIp';
 import type { authControllers, AuthOutput } from '../controllers/authController';
 import type { pushControllers } from '../controllers/pushController';
 import { AuthLimits } from '../middleware/authLimits';
-import { sessionCookie } from '../lib/sessionCookie';
+import { sessionCookie } from '../utils/sessionCookie';
 
 const gameRoutes = [
   ['GET', '/api/game/me', 'me'],

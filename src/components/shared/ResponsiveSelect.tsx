@@ -9,7 +9,7 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { ResponsiveDialog } from './ResponsiveDialog';
-import { useMediaQuery } from './useMediaQuery';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 export function ResponsiveSelect({
   label,
   value,

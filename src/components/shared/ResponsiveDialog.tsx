@@ -1,7 +1,7 @@
 'use client';
 import type { ReactNode } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useMediaQuery } from './useMediaQuery';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 export function ResponsiveDialog({
   open,
   onOpenChange,

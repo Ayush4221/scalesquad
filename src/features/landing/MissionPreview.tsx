@@ -12,7 +12,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useMediaQuery } from '@/components/shared/useMediaQuery';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import styles from './landing.module.css';
 
 const scenes = [

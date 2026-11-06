@@ -127,6 +127,7 @@ model Match {
   host User @relation(fields:[hostUserId],references:[id])
   phase MatchPhase @default(LOBBY)
   scenarioVersion String
+  scenarioId String @default("campuspass")
   engineVersion String
   revision Int @default(0)
   simulationLocked Boolean @default(false)

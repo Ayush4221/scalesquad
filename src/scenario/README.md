@@ -35,3 +35,8 @@ pass state. No source reads the wall clock or random generator.
 `referenceRepair`, exact traffic, capacities, prices and outage details are
 server-only. Evidence facts are rendered from actual config fields, with unique
 fact IDs across roles. The public entry point never exports the reference repair.
+
+The registry now includes research-inspired Retry Storm, Split Gates and Flash
+Crowd missions. See `docs/scenarios.md` for source links and limits. Public
+catalog text lives separately in `src/constants/scenarios.ts`; never import full rule data into
+a client component. Match persistence stores scenario ID plus version.

@@ -1,6 +1,7 @@
 import {
   parse,
   EmptyBodySchema,
+  CreateMatchSchema,
   JoinMatchSchema,
   ReadySchema,
   ConfigUpdateSchema,
@@ -42,8 +43,8 @@ export function gameControllers(s: GameServices) {
   return {
     me: async (c: Context) => ({ userId: c.userId, name: c.name }),
     create: async (c: Context): Promise<MatchDto> => {
-      parse(EmptyBodySchema, c.body);
-      return s.match.createMatch(c.userId);
+      const body = parse(CreateMatchSchema, c.body);
+      return s.match.createMatch(c.userId, body.scenarioId);
     },
     join: async (c: Context): Promise<MatchDto> => {
       const b: JoinMatchDto = parse(JoinMatchSchema, c.body);

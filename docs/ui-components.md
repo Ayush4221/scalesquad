@@ -59,3 +59,48 @@ Disable the injecting extension for local development and reload, or verify in
 an extension-free browser. The supplied extension identifier points to Urban VPN.
 The React DevTools console hook in the stack is where the warning is printed.
 No blanket hydration suppression or client-only page rendering is used.
+
+## Refined Squad Arena
+
+The approved refined Arena replaces the Incident Brief home view. `LandingPage`
+uses the shared palette, Lucide icons, a three-scene illustrative mission,
+interactive role descriptions and real signup/sign-in links. Scene playback
+pauses when the document is hidden. Reduced motion uses manual advancement.
+Account dialogs in the design preview are replaced by actual app navigation.
+
+Owner-approved Hallmark implementation: the public landing page now uses locally
+hosted Bungee and Chivo fonts (licenses under `public/fonts/landing`), palette
+tokens, separate role and walkthrough components, and real signup navigation
+with pending feedback. Walkthrough pauses when hidden and respects reduced motion.
+
+Hallmark validation (2026-11-06): production build, typecheck, lint and formatting
+passed. Five component tests and twelve browser checks passed across desktop,
+Android and iPhone profiles, including 320px fit, guest account navigation,
+signed-in routing, role changes and reduced-motion keyboard use. Actual app
+screenshots were inspected with locally served fonts. Hallmark reported no Floor
+failures; its short-hero finding is waived for the approved Banner composition,
+which deliberately reveals the CampusPass section in the first viewport. The
+single-sentence introduction qualifies for the shorter lede measure. Generated
+Hallmark audit files are ignored by Git.
+
+## Squad dashboard
+
+The authenticated `/play` screen uses the same Hallmark palette as the public
+home, with scoped styles in `features/lobby/dashboard.module.css`. Create and
+Join stay the primary actions; CampusPass and its three roles sit below them.
+All fonts are now declared once in `styles/fonts.css` and loaded by the app.
+
+Join codes use the existing shared schema. Invalid input receives an inline
+message and focus; request failures stay beside the failed action. A synchronous
+request guard prevents duplicate submissions. Both actions remain disabled
+through successful navigation, and failures allow retry. Loading buttons retain
+their width. Motion is limited to button feedback and a request spinner, with
+reduced-motion support. No new dependencies or game rules were introduced.
+
+Validation: production build, typecheck and lint passed. The twelve existing
+lobby browser checks passed on desktop, Android and iPhone. Three new dashboard
+checks cover validation, loading, retry and 320px layouts; all passed. Five
+landing component tests passed after sharing font declarations. Desktop and
+phone screenshots were inspected. Hallmark static audit: no findings; its render
+runner cannot authenticate this route, so visual checks used authenticated
+Playwright sessions instead.

@@ -69,7 +69,13 @@ export class MemoryRepository implements GameRepository {
   async presenceState(id: string, userId: string) {
     const m = this.data.get(id);
     return m?.members.some((u) => u.userId === userId)
-      ? { phase: m.phase, simulationLocked: m.simulationLocked, lock: structuredClone(m.lock) }
+      ? {
+          scenarioId: m.scenarioId,
+          scenarioVersion: m.scenarioVersion,
+          phase: m.phase,
+          simulationLocked: m.simulationLocked,
+          lock: structuredClone(m.lock),
+        }
       : null;
   }
   async recordPresence(

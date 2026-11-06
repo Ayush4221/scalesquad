@@ -4,14 +4,15 @@ import { getCurrentUser } from '@/auth';
 import { PlayLobby } from '@/features/lobby/PlayLobby';
 import { SignOutButton } from '@/features/auth/SignOutButton';
 import { AccountSettings } from '@/features/auth/AccountSettings';
+import styles from '@/features/lobby/dashboard.module.css';
 export default async function Play() {
   const user = await getCurrentUser();
   if (!user) redirect('/signin');
   return (
-    <main className="page-shell">
-      <header className="topbar">
+    <main className={styles.shell}>
+      <header className={styles.topbar}>
         <BrandLogo />
-        <div className="flex gap-2">
+        <div className={styles.account}>
           <AccountSettings />
           <SignOutButton />
         </div>

@@ -67,7 +67,7 @@ export class RunService {
       this.authorizeRunner(m, userId);
       phase(m, runNumber === 1 ? 'REPAIR_1' : 'REPAIR_2');
       if (m.simulationLocked) throw new AppError('CONFLICT', 409);
-      const s = loadScenario('campuspass', m.scenarioVersion),
+      const s = loadScenario(m.scenarioId, m.scenarioVersion),
         config = currentConfig(m);
       const inputs =
         runNumber === 1
@@ -136,7 +136,7 @@ export class RunService {
     }
   }
   private finish(m: MatchRecord, runNumber: 1 | 3) {
-    const scenario = loadScenario('campuspass', m.scenarioVersion);
+    const scenario = loadScenario(m.scenarioId, m.scenarioVersion);
     m.simulationLocked = false;
     m.runStartedAt = null;
     m.runError = false;

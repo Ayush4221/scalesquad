@@ -28,7 +28,11 @@ const allowed = {
   db: ['db'],
   nexconn: ['nexconn', 'shared'],
   web: ['web', 'shared'],
+  utils: ['utils'],
+  constants: ['constants', 'shared'],
 };
+// Shared helpers are browser-safe. Server helpers remain within the server layer.
+for (const types of Object.values(allowed)) types.push('utils', 'constants');
 export default tseslint.config(
   {
     ignores: [
@@ -76,8 +80,8 @@ export default tseslint.config(
   {
     files: [
       'src/server/**/*.ts',
-      'src/{sim,scenario,shared,db,nexconn}/**/*.ts',
-      'src/{app,auth,components,features,lib,pwa,styles}/**/*.{ts,tsx}',
+      'src/{sim,scenario,shared,db,nexconn,utils,constants}/**/*.ts',
+      'src/{app,auth,components,features,lib,hooks,pwa,styles}/**/*.{ts,tsx}',
     ],
     ignores: ['**/*.test.ts', '**/*.test.tsx', 'src/server/main.ts'],
     plugins: { boundaries },
@@ -85,6 +89,12 @@ export default tseslint.config(
       'import/resolver': { [resolve(import.meta.dirname, 'scripts/eslintResolver.cjs')]: {} },
       'boundaries/root-path': import.meta.dirname,
       'boundaries/elements': [
+        { type: 'lib', pattern: 'src/server/{utils,constants}/**', partialMatch: false },
+        ...['utils', 'constants'].map((type) => ({
+          type,
+          pattern: `src/${type}/**`,
+          partialMatch: false,
+        })),
         ...serverTypes.map((type) => ({
           type,
           pattern: `src/server/${type === 'route' ? 'routes' : type === 'lib' || type === 'config' || type === 'middleware' || type === 'ws' ? type : type + 's'}/**`,
@@ -97,7 +107,7 @@ export default tseslint.config(
         })),
         {
           type: 'web',
-          pattern: 'src/{app,auth,components,features,lib,pwa,styles}/**',
+          pattern: 'src/{app,auth,components,features,lib,hooks,pwa,styles}/**',
           partialMatch: false,
         },
       ],
@@ -116,7 +126,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/{app,auth,components,features,lib}/**/*.{ts,tsx}'],
+    files: ['src/{app,auth,components,features,lib,hooks}/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',

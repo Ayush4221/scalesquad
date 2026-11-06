@@ -4,7 +4,7 @@ import {
   validatePassword,
 } from '../../../src/server/services/passwordService';
 import { DUMMY_HASH } from '../../../src/server/services/authService';
-import { Semaphore } from '../../../src/server/lib/semaphore';
+import { Semaphore } from '../../../src/server/utils/semaphore';
 describe('scrypt password protection', () => {
   it('applies the eight-character composition policy and preserves Unicode normalization', () => {
     for (const value of [

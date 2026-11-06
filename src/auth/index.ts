@@ -1,3 +1,4 @@
+import { SESSION_SECONDS } from '../constants/auth';
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import GitHub from 'next-auth/providers/github';
@@ -15,7 +16,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
     adapter,
     secret: env.AUTH_SECRET,
     trustHost: true,
-    session: { strategy: 'database', maxAge: 60 * 60 * 8, updateAge: 60 * 15 },
+    session: { strategy: 'database', maxAge: SESSION_SECONDS, updateAge: 60 * 15 },
     cookies: {
       sessionToken: {
         name:

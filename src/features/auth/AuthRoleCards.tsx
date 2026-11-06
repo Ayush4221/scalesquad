@@ -1,7 +1,7 @@
 'use client';
 import { Database, Server, Settings } from 'lucide-react';
 import type { PointerEvent } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/classNames';
 import styles from './auth.module.css';
 import motion from './login.module.css';
 
