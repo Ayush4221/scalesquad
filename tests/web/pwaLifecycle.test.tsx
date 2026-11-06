@@ -3,12 +3,15 @@ import { act, cleanup, render, screen, fireEvent, waitFor } from '@testing-libra
 import { PwaBoot } from '../../src/pwa/PwaBoot';
 import { NotificationSettings } from '../../src/pwa/NotificationSettings';
 import { disableNotifications, purgeCaches } from '../../src/pwa/client';
+const route = vi.hoisted(() => ({ pathname: '/play' }));
+vi.mock('next/navigation', () => ({ usePathname: () => route.pathname }));
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
   localStorage.clear();
+  route.pathname = '/play';
 });
 function browser() {
   const unsubscribe = vi.fn(async () => true),
@@ -72,6 +75,25 @@ function browser() {
   };
 }
 describe('worker lifecycle and explicit notification permissions', () => {
+  it('keeps the first-visit home clear of install prompts and offers them in the app', async () => {
+    const b = browser();
+    route.pathname = '/';
+    b.mockNavigator.userAgent = 'iPhone';
+    b.mockNavigator.standalone = false;
+    vi.spyOn(window, 'matchMedia').mockReturnValue({
+      matches: false,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as unknown as MediaQueryList);
+    const view = render(<PwaBoot />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).not.toBeInTheDocument();
+    route.pathname = '/play';
+    view.rerender(<PwaBoot />);
+    expect(await screen.findByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
+  });
   it('registration and optional notification-status failures leave gameplay available', async () => {
     const b = browser();
     vi.stubEnv('NODE_ENV', 'production');

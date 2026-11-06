@@ -14,7 +14,7 @@ export function AuthLayout({
   return (
     <main className={cn(styles.page, variant === 'login' && styles.loginPage)}>
       <section className={styles.story} aria-label="Build together with ScaleSquad">
-        <BrandLogo href="/signin" />
+        <BrandLogo href="/" />
         <AuthStory variant={variant} />
         {variant === 'login' && (
           <p className={styles.storyFooter}>CampusPass / Incident simulation 01</p>

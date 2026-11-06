@@ -162,6 +162,28 @@ describe('password accounts without email delivery', () => {
     expect(audit).not.toContain('ada@example.invalid');
     expect(audit).not.toContain(f.password);
   });
+  it('bounds throttle audit writes per source and globally, then resumes after refill', async () => {
+    const f = authFixture();
+    await Promise.all(Array.from({ length: 100 }, () => f.auth.throttled(f.ctx)));
+    expect(f.audit.record).toHaveBeenCalledTimes(1);
+    f.clock.value += 60000;
+    await f.auth.throttled(f.ctx);
+    expect(f.audit.record).toHaveBeenCalledTimes(2);
+
+    const rotating = authFixture();
+    await Promise.all(
+      Array.from({ length: 100 }, (_, i) =>
+        rotating.auth.throttled({
+          ...rotating.ctx,
+          ip: `198.18.${i}.1`,
+        }),
+      ),
+    );
+    expect(rotating.audit.record).toHaveBeenCalledTimes(10);
+    rotating.clock.value += 1000;
+    await rotating.auth.throttled({ ...rotating.ctx, ip: '198.19.0.1' });
+    expect(rotating.audit.record).toHaveBeenCalledTimes(11);
+  });
   it('signed-in users can create and join without claiming verified email ownership', async () => {
     const f = fixture();
     vi.spyOn(f.users, 'find').mockImplementation(async (id) => ({

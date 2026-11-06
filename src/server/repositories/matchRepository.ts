@@ -11,7 +11,7 @@ import type { GameRepository, MatchRecord } from '../lib/models';
 import { withTransaction } from './unitOfWork';
 
 const include = {
-  members: { include: { user: true } },
+  members: { include: { user: { select: { name: true } } } },
   configurations: { orderBy: { version: 'asc' as const } },
   editLock: true,
   runs: true,

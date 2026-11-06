@@ -36,6 +36,8 @@ simulator, private scenario config or database. See `docs/architecture.md`.
 5. Run `npm run db:generate` then `npm run db:migrate` with those environment
    variables available. Prisma CLI reads a root `.env`.
 6. Run `npm run dev`. The custom server serves pages, `/api/game`, and `/ws`.
+   Guests see the public home at `/`, then choose signup or sign in.
+   Signed-in visitors continue to `/play`.
 7. OAuth callbacks: `/api/auth/callback/google` and `/api/auth/callback/github` on
    `APP_ORIGIN`. Google must supply a verified email; GitHub's primary verified
    email is checked server-side.

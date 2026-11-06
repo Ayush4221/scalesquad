@@ -33,3 +33,29 @@ The approved animated login is implemented in `LoginForm`, `LoginSubmitButton`,
 `AuthRoleCards` and scoped `login.module.css`. It uses native CSS transitions
 and Lucide icons, with no additional animation dependency. Glass stays on
 buttons, the badge and role cards; form fields and the page background stay matte.
+
+## Public home — Incident Brief
+
+`src/features/landing` implements the selected public home design. Headline
+reveals, the cobalt underline, action shine, card hover and the mission scan use
+CSS and the existing Lucide library. Panels remain matte; glass accents stay on
+the main actions and mission chip. Every color references the shared palette's
+semantic tokens. Layouts stack down to 320px.
+The public home does not show an install prompt; offline/update handling and
+install guidance on the other app screens remain available.
+
+`LandingAction` uses Next's link pending state with a fixed icon slot, so its
+loader does not move the label. `MissionPreview` is a short, scripted explanation
+of the game; it is independent of the real simulator and private clues. Reduced
+motion stops autoplay and offers a Next scene button. Its timers clear on pause
+and unmount.
+
+## Browser-extension hydration warnings
+
+Extra attributes such as `bis_skin_checked`, `bis_register` and `__processed_*`
+in a hydration diff come from a browser extension modifying the page before
+React starts. They are absent from the app's source and clean browser responses.
+Disable the injecting extension for local development and reload, or verify in
+an extension-free browser. The supplied extension identifier points to Urban VPN.
+The React DevTools console hook in the stack is where the warning is printed.
+No blanket hydration suppression or client-only page rendering is used.

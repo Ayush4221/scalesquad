@@ -42,3 +42,23 @@ test('leaving a lobby removes membership and host cannot leave', async ({ squad:
     403,
   );
 });
+test('a failed leave keeps the player in the room and allows retry', async ({ squad: s }) => {
+  await lobby(s);
+  const player = s.players[1];
+  await player.page.route(`**/api/game/matches/${s.matchId}/leave`, (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: { code: 'UPSTREAM_UNAVAILABLE', message: 'Chat is unavailable' },
+      }),
+    }),
+  );
+  await player.page.getByRole('button', { name: 'Leave', exact: true }).click();
+  await expect(player.page.locator('.error[role="alert"]')).toContainText('Chat is unavailable');
+  await expect(player.page).toHaveURL(new RegExp(`/match/${s.matchId}$`));
+  expect(await s.db.matchMember.count({ where: { matchId: s.matchId } })).toBe(3);
+  await player.page.unroute(`**/api/game/matches/${s.matchId}/leave`);
+  await player.page.getByRole('button', { name: 'Leave', exact: true }).click();
+  await expect(player.page).toHaveURL(/\/play$/);
+});

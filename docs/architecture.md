@@ -30,6 +30,12 @@ Companion to `scalesquad-deep-design.md` (game rules, Version 2 revision). Where
 
 ## 2. Principles
 
+Owner home-page update (2026-11-06): unauthenticated visitors at `/` see the
+public Incident Brief page before signup/sign-in. Authenticated visitors still
+redirect to `/play`. The `src/features/landing` view uses palette tokens and CSS
+motion; its illustrative mission preview never calls the simulator or game APIs.
+Protected pages, private evidence and API authorization keep their existing rules.
+
 1. **Server is authoritative.** Phase, configuration, edit lock, run inputs, evidence release. The client never decides.
 2. **The simulator is a pure function.** No I/O, no clock, no randomness. Same input bundle, same output.
 3. **Security by default.** Deny by default, validate every input, authorize in the service layer.
@@ -456,6 +462,19 @@ bounded due match IDs; a separate bounded sweep closes matches with no member
 activity for 30 minutes and retries deletion of finished Nexconn groups.
 Finished groups awaiting deletion still reserve a host quota slot, bounding
 external groups when provider cleanup is failing.
+
+Lobby joins, leaves and match starts share a per-match queue through upstream chat
+changes. A failed join releases membership only after chat removal succeeds;
+otherwise it keeps an unready reservation that can be repaired with a join retry.
+The browser serializes Nexconn engine lifecycle changes and binds disconnect to
+the current client owner. WS admission bounds queued frames before asynchronous
+session work; limiter storage rejects fresh keys at capacity without evicting
+active quotas. Completed simulation results are finalized during crash recovery;
+unfinished runs return to repair. See `CODE_REVIEW.md` for regression evidence.
+Throttle audit writes are sampled once per source network prefix per minute and
+bounded by a shared ten-event burst with one event per second refill. Rejected
+auth floods cannot create one database audit row per rejected request; normal
+registration/login/password/session events keep their per-action audit trail.
 
 Production simulation workers load compiled JavaScript. Development compiles
 the engine once per server process. Untraced runs privately own cumulative state;

@@ -11,6 +11,22 @@ afterEach(() => {
 });
 
 describe('password forms', () => {
+  it('focuses the committed error even when animation frames are paused', async () => {
+    vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(0);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('{}', { status: 401 })),
+    );
+    render(<LoginForm />);
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'ada@example.invalid' },
+    });
+    fireEvent.change(screen.getByLabelText('Password', { exact: true }), {
+      target: { value: 'existing password' },
+    });
+    fireEvent.submit(screen.getByRole('button', { name: 'Sign in' }).closest('form')!);
+    expect(await screen.findByRole('alert')).toHaveFocus();
+  });
   it('supports password managers, show/hide and generic sign-in errors', async () => {
     vi.stubGlobal(
       'fetch',

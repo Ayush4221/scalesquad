@@ -42,6 +42,10 @@ export function LoginForm() {
     };
   }, []);
 
+  useEffect(() => {
+    if (serverError) errorMessage.current?.focus();
+  }, [serverError]);
+
   function validateEmail() {
     setEmailTouched(true);
     setErrors((previous) => {
@@ -98,9 +102,6 @@ export function LoginForm() {
       setServerError('Could not sign in with those details. Check your email and password.');
       submitting.current = false;
       setState('idle');
-      requestAnimationFrame(() => {
-        if (mounted.current) errorMessage.current?.focus();
-      });
     }
   }
 

@@ -1,4 +1,7 @@
-# Implementation status — 2026-11-05
+# Implementation status — 2026-11-06
+
+Latest code review, fixes and validation are recorded in [CODE_REVIEW.md](CODE_REVIEW.md).
+The verification figures below record the original 2026-11-05 implementation run.
 
 Steps 01–09 are implemented. All ten review findings have code fixes and
 regressions. Steps 10–11 have implementations with email delivery removed by
@@ -114,3 +117,30 @@ reload socket connected with no browser errors. Added regression checks for CSP
 separation and development-upgrade routing, including wrong Host/Origin,
 unknown paths and production rejection. All 339 unit/UI/network tests and
 coverage gates passed, as did lint and typecheck.
+
+## Public home — Incident Brief (2026-11-06)
+
+The selected second design is implemented at `/` for guests. It explains the
+three-player game, playbook and roles before account creation. Signed-in visitors
+still redirect to `/play`. Signup/sign-in brand links return to the public home.
+
+The view uses the existing shared palette, Lucide icons and scoped CSS. It adds
+headline reveals, button transitions and real navigation loaders, card feedback,
+and a pausable five-scene mission preview. The preview has no game API or private
+scenario access. Reduced motion disables effects and uses manual scene controls.
+Layouts were checked from 320px to desktop. The skip link has an explicit tab stop
+for WebKit; the public home leaves installation guidance inside the app.
+
+The supplied hydration diff contains extension-injected attributes. Clean browser
+checks found no hydration errors and confirmed usable signup/sign-in fields.
+Disable Urban VPN for localhost and reload; no hydration warning suppression was
+added. See `ui-components.md` for the diagnosis.
+
+Verification: all **385 unit/UI/HTTP/WS tests** and coverage gates passed (39 files;
+90.04% instrumented lines, 84.06% branches). The final landing/PWA-focused checks
+passed all 16 tests after the WebKit skip-link adjustment. Lint, formatting, types,
+Next.js production build and server compilation passed.
+The focused home/auth/login browser run passed **39 checks** across desktop
+Chromium, Pixel 7 Chromium and iPhone 13 WebKit, using isolated test accounts and
+database. It covers guest navigation, signed-in routing, input hydration,
+keyboard/skip-link focus, reduced motion, loading, retry and password flows.

@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useInstallPrompt } from './useInstallPrompt';
 import { Button } from '@/components/ui/button';
 export function PwaBoot() {
+  const pathname = usePathname();
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null),
     [offline, setOffline] = useState(false),
     install = useInstallPrompt();
@@ -53,7 +55,7 @@ export function PwaBoot() {
           Update available. <Button onClick={update}>Reload</Button>
         </div>
       )}
-      {install.canInstall && (
+      {install.canInstall && pathname !== '/' && (
         <div className="pwa-banner">
           <span>
             {install.ios

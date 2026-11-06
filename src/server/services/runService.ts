@@ -6,7 +6,7 @@ import type { Clock, DomainEvents } from '../lib/ports';
 import { audit, currentConfig, member, phase } from './guards';
 
 export class RunService {
-  private readonly inFlight = new Map<string, Promise<void>>();
+  private readonly inFlight = new Map<string, { runNumber: 1 | 3; job: Promise<void> }>();
   constructor(
     private readonly repo: GameRepository,
     private readonly clock: Clock,
@@ -25,20 +25,28 @@ export class RunService {
     // Authorize even idempotent/concurrent requests before exposing any stored state.
     const m = await this.repo.find(id);
     if (!m) throw new AppError('NOT_FOUND', 404);
-    member(m, userId);
-    if (
-      userId !== m.hostUserId &&
-      !(userId === m.lock?.holderUserId && m.lock.expiresAt > this.clock.now())
-    )
-      throw new AppError('FORBIDDEN', 403);
-    if (m.runs.some((r) => r.runNumber === (runNumber === 1 ? 2 : 3))) return this.get(userId, id);
+    this.authorizeRunner(m, userId);
+    if (m.runs.some((r) => r.runNumber === (runNumber === 1 ? 2 : 3))) {
+      // Also repair records left by an earlier restart after results were saved.
+      const repairPhase = runNumber === 1 ? 'REPAIR_1' : 'REPAIR_2';
+      if (!m.simulationLocked && m.phase === repairPhase) {
+        await this.repo.mutate(id, (current) => {
+          this.authorizeRunner(current, userId);
+          if (!current.simulationLocked && current.phase === repairPhase)
+            this.finish(current, runNumber);
+        });
+        this.events.changed(id);
+      }
+      return this.get(userId, id);
+    }
     const existing = this.inFlight.get(id);
     if (existing) {
-      await existing;
+      if (existing.runNumber !== runNumber) throw new AppError('PHASE_INVALID', 409);
+      await existing.job;
       return this.get(userId, id);
     }
     const job = this.perform(userId!, id, runNumber);
-    this.inFlight.set(id, job);
+    this.inFlight.set(id, { runNumber, job });
     try {
       await job;
     } finally {
@@ -46,15 +54,18 @@ export class RunService {
     }
     return this.get(userId, id);
   }
+  private authorizeRunner(m: MatchRecord, userId: string | null) {
+    member(m, userId);
+    if (
+      userId !== m.hostUserId &&
+      !(userId === m.lock?.holderUserId && m.lock.expiresAt > this.clock.now())
+    )
+      throw new AppError('FORBIDDEN', 403);
+  }
   private async perform(userId: string, id: string, runNumber: 1 | 3) {
     const bundles = await this.repo.mutate(id, (m) => {
-      member(m, userId);
+      this.authorizeRunner(m, userId);
       phase(m, runNumber === 1 ? 'REPAIR_1' : 'REPAIR_2');
-      if (
-        userId !== m.hostUserId &&
-        !(userId === m.lock?.holderUserId && m.lock.expiresAt > this.clock.now())
-      )
-        throw new AppError('FORBIDDEN', 403);
       if (m.simulationLocked) throw new AppError('CONFLICT', 409);
       const s = loadScenario('campuspass', m.scenarioVersion),
         config = currentConfig(m);
@@ -101,30 +112,48 @@ export class RunService {
         this.events.runCompleted(id, n, result);
       }
       await this.repo.mutate(id, (m) => {
-        m.simulationLocked = false;
-        m.runStartedAt = null;
-        if (runNumber === 3) {
-          m.phase = 'COMPARE';
-          m.deadlineAt = this.clock.now() + loadScenario().match.compareDurationMs;
-        } else m.deadlineAt = this.clock.now() + loadScenario().match.incidentDurationMs;
+        this.finish(m, runNumber);
       });
       this.events.changed(id);
     } catch (error) {
+      let completed = false;
       await this.repo.mutate(id, (m) => {
+        completed = m.runs.some((r) => r.runNumber === (runNumber === 1 ? 2 : 3));
+        if (completed) {
+          this.finish(m, runNumber);
+          return;
+        }
         m.simulationLocked = false;
         m.runStartedAt = null;
         m.runError = true;
         m.phase = runNumber === 1 ? 'REPAIR_1' : 'REPAIR_2';
       });
       this.events.changed(id);
+      if (completed) return;
       throw error instanceof AppError
         ? error
         : new AppError('INTERNAL', 500, 'Simulation failed; retry is available');
     }
   }
+  private finish(m: MatchRecord, runNumber: 1 | 3) {
+    const scenario = loadScenario('campuspass', m.scenarioVersion);
+    m.simulationLocked = false;
+    m.runStartedAt = null;
+    m.runError = false;
+    m.phase = runNumber === 3 ? 'COMPARE' : 'RUNS_1_2';
+    m.deadlineAt =
+      this.clock.now() +
+      (runNumber === 3 ? scenario.match.compareDurationMs : scenario.match.incidentDurationMs);
+  }
   async recover(m: MatchRecord) {
     if (!m.simulationLocked) return;
     await this.repo.mutate(m.id, (current) => {
+      if (!current.simulationLocked) return;
+      const runNumber = current.phase === 'RUN_3' ? 3 : 1;
+      if (current.runs.some((r) => r.runNumber === (runNumber === 1 ? 2 : 3))) {
+        this.finish(current, runNumber);
+        return;
+      }
       current.simulationLocked = false;
       current.runStartedAt = null;
       current.runError = true;

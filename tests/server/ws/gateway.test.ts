@@ -60,6 +60,45 @@ async function setup(development = false) {
   return { ...f, id, rooms, connect, gateway, server };
 }
 describe('authenticated WebSocket gateway', () => {
+  it('rejects a frame flood while authorization is slow and drops queued actions', async () => {
+    const f = await setup(),
+      socket = f.connect();
+    await once(socket, 'open');
+    const peer = [...f.rooms.peers][0]!;
+    let release!: (valid: boolean) => void;
+    const pending = new Promise<boolean>((resolve) => {
+      release = resolve;
+    });
+    const authorize = vi.spyOn(peer, 'authorize').mockImplementationOnce(() => pending);
+    const dispatch = vi.spyOn(f.match, 'getPublicView');
+    socket.send(
+      JSON.stringify({
+        v: 1,
+        id: 'subscribe',
+        type: 'match.subscribe',
+        payload: { matchId: f.id },
+      }),
+    );
+    await vi.waitFor(() => expect(authorize).toHaveBeenCalled());
+    const closed = once(socket, 'close');
+    const limited = new Promise<void>((resolve) => {
+      socket.on('message', (raw) => {
+        const event = JSON.parse(String(raw)) as { type: string; payload: { code?: string } };
+        if (event.type === 'error' && event.payload.code === 'RATE_LIMITED') resolve();
+      });
+    });
+    try {
+      for (let i = 0; i < 200; i++)
+        socket.send(JSON.stringify({ v: 1, id: 'ping', type: 'ping', payload: {} }));
+      await limited;
+      expect((await closed)[0]).toBe(1008);
+    } finally {
+      release(true);
+    }
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(authorize).toHaveBeenCalledTimes(2);
+  });
   it('leaves only the same-origin development reload channel to Next', async () => {
     const f = await setup(true);
     const next = new WebSocketServer({ noServer: true });

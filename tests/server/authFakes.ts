@@ -4,6 +4,7 @@ import type {
   UserAuthRepository,
   SessionWriteRepository,
   AuthContext,
+  AuthEventRepository,
 } from '../../src/server/lib/authPorts';
 import { AuthService } from '../../src/server/services/authService';
 import { normalizeEmail } from '@scalesquad/shared';
@@ -77,7 +78,7 @@ export function authFixture() {
     ),
     needsRehash: vi.fn(() => false),
   };
-  const audit = { record: vi.fn(async () => {}) };
+  const audit = { record: vi.fn<AuthEventRepository['record']>(async () => {}) };
   const revoked = { session: vi.fn(), user: vi.fn() };
   const pause = vi.fn(async () => {});
   const auth = new AuthService(userRepo, sessionRepo, audit, hasher, clock, revoked, pause);

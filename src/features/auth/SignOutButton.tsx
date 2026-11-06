@@ -22,7 +22,9 @@ export function SignOutButton({ all = false }: { all?: boolean }) {
                 body: '{}',
               });
               if (!response.ok && response.status !== 401) throw new Error('logout failed');
-              await purgeCaches();
+              // Cache Storage may be blocked by browser privacy settings. The
+              // session is already revoked; still leave the signed-in page.
+              await purgeCaches().catch(() => {});
               window.location.assign('/signin');
             } catch {
               setError('Could not sign out. Try again.');

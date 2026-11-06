@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('sign-in loading keeps its size, locks controls, and restores a safe retry', async ({
   page,
-}) => {
+}, testInfo) => {
   let attempts = 0;
   let release!: () => void;
   const responseReady = new Promise<void>((resolve) => {
@@ -19,6 +19,7 @@ test('sign-in loading keeps its size, locks controls, and restores a safe retry'
   });
   try {
     await page.goto('/signin');
+    await page.bringToFront();
     const email = page.getByLabel('Email address', { exact: true });
     const password = page.getByLabel('Password', { exact: true });
     const submit = page.getByRole('button', { name: 'Sign in', exact: true });
@@ -51,7 +52,13 @@ test('sign-in loading keeps its size, locks controls, and restores a safe retry'
     await expect(submit).toBeEnabled();
     await expect(password).toHaveValue('Existing password');
     await expect(email).toBeEnabled();
-    await submit.click();
+    const response = page.waitForResponse(
+      (value) =>
+        value.url().endsWith('/api/game/auth/login') && value.request().method() === 'POST',
+    );
+    if (testInfo.project.use.hasTouch) await submit.tap();
+    else await submit.click();
+    expect((await response).status()).toBe(401);
     await expect(error).toBeVisible();
     await expect(submit).toBeEnabled();
     expect(attempts).toBe(2);
@@ -75,6 +82,7 @@ test('sign-in stays readable and usable with reduced motion and keyboard focus',
   });
   try {
     await page.goto('/signin');
+    await page.bringToFront();
     const email = page.getByLabel('Email address', { exact: true });
     const password = page.getByLabel('Password', { exact: true });
     await email.fill('player@example.invalid');

@@ -1,5 +1,5 @@
 import type { Server } from 'node:http';
-import { WebSocketServer } from 'ws';
+import { WebSocket, WebSocketServer } from 'ws';
 import { AppError, ClientEvent, MAX_MESSAGE_BYTES } from '@scalesquad/shared';
 import { RateLimiter } from '../middleware/rateLimit';
 import { parseJson } from '../middleware/bodyParser';
@@ -51,6 +51,8 @@ export function attachGateway(
           rooms.peers.add(peer);
           const limit = new RateLimiter(30, 5);
           let violations = 0;
+          let accepting = true;
+          let pending = 0;
           let messages = Promise.resolve();
           void rooms
             .sendAuthorized(peer, { type: 'hello', payload: { userId: user.userId } })
@@ -60,15 +62,34 @@ export function attachGateway(
           });
           ws.on('error', () => {});
           ws.on('message', (data) => {
+            if (!accepting || ws.readyState !== WebSocket.OPEN) return;
+            // Admit frames before adding asynchronous work. Slow session checks must
+            // not let a sender build an unbounded promise/data queue.
+            try {
+              limit.take(user.userId);
+              if (pending >= 30) throw new AppError('RATE_LIMITED', 429);
+            } catch {
+              accepting = false;
+              void rooms
+                .sendAuthorized(peer, {
+                  type: 'error',
+                  payload: { code: 'RATE_LIMITED', message: 'Too many requests' },
+                })
+                .then(() => ws.close(1008, 'Message limit exceeded'))
+                .catch(() => ws.close(1011, 'Connection failed'));
+              return;
+            }
+            pending++;
             messages = messages
               .then(async () => {
+                if (!accepting || ws.readyState !== WebSocket.OPEN) return;
                 try {
-                  limit.take(user.userId);
                   // Logout/expiry invalidates already-open sockets as well as new upgrades.
                   if (!(await peer.authorize())) {
                     ws.close(1008, 'Session expired');
                     return;
                   }
+                  if (!accepting || ws.readyState !== WebSocket.OPEN) return;
                   const parsed = ClientEvent.safeParse(parseJson(data.toString()));
                   if (!parsed.success) throw new AppError('VALIDATION', 400);
                   const event = parsed.data;
@@ -102,9 +123,13 @@ export function attachGateway(
               })
               .catch(() => {
                 ws.close(1011, 'Connection failed');
+              })
+              .finally(() => {
+                pending--;
               });
           });
           ws.on('close', () => {
+            accepting = false;
             rooms.peers.delete(peer);
             if (peer.room && !rooms.connected(peer.room, user.userId))
               void presence(user.userId, peer.room, false).catch(() => {});

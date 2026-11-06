@@ -109,15 +109,17 @@ export function MatchShell({ matchId, userId }: { matchId: string; userId: strin
     if (view?.phase === 'REPAIR_1' || view?.phase === 'REPAIR_2') setTab('Repair');
     if (view?.phase === 'COMPARE' || view?.phase === 'FINISHED') setTab('Results');
   }, [view?.phase]);
-  async function action(path: string, body: unknown = {}) {
+  async function action(path: string, body: unknown = {}, reload = true) {
     setBusy(true);
     setError('');
     try {
       await api(`${base}${path}`, body);
-      await refresh();
+      if (reload) await refresh();
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Request failed');
       await refresh().catch(() => {});
+      return false;
     } finally {
       setBusy(false);
     }
@@ -258,8 +260,8 @@ export function MatchShell({ matchId, userId }: { matchId: string; userId: strin
                           variant="ghost"
                           disabled={busy}
                           onClick={() => {
-                            void action('/leave').then(() => {
-                              window.location.href = '/play';
+                            void action('/leave', {}, false).then((ok) => {
+                              if (ok) window.location.href = '/play';
                             });
                           }}
                         >

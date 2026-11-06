@@ -64,6 +64,21 @@ async function setup(production = false) {
   return { ...f, post };
 }
 describe('password HTTP boundaries', () => {
+  it('rejects a login burst without one database audit write per rejected request', async () => {
+    const f = await setup();
+    const responses = await Promise.all(
+      Array.from({ length: 32 }, () =>
+        f.post('login', {
+          email: 'unknown@example.invalid',
+          password: 'incorrect value here',
+        }),
+      ),
+    );
+    expect(responses.filter((response) => response.status === 401)).toHaveLength(5);
+    expect(responses.filter((response) => response.status === 429)).toHaveLength(27);
+    expect(f.audit.record.mock.calls.filter(([type]) => type === 'THROTTLED')).toHaveLength(1);
+    expect(f.hasher.verify).toHaveBeenCalledTimes(5);
+  });
   it('production signup/login work without mail and issue only secure session cookies', async () => {
     const f = await setup(true);
     const email = 'production-mode@example.invalid';

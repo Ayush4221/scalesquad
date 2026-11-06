@@ -10,6 +10,7 @@ import type {
 import type { Clock } from '../lib/ports';
 import { SESSION_SECONDS } from '../lib/sessionCookie';
 import { ipPrefix } from '../lib/clientIp';
+import { RateLimiter } from '../lib/rateLimit';
 import { validatePassword, type PasswordHasher } from './passwordService';
 
 export const REGISTERED = Object.freeze({ message: 'Registration complete. You can sign in now.' });
@@ -18,6 +19,8 @@ export const DUMMY_HASH =
 const denied = () => new AppError('UNAUTHENTICATED', 401, 'Could not sign in with those details');
 export class AuthService {
   private readonly attempts = new Map<string, { failures: number; at: number }>();
+  private readonly throttledSources = new RateLimiter(1, 1 / 60, () => this.clock.now());
+  private readonly throttledTotal = new RateLimiter(10, 1, () => this.clock.now());
   constructor(
     private readonly users: UserAuthRepository,
     private readonly sessions: SessionWriteRepository,
@@ -36,6 +39,14 @@ export class AuthService {
     await this.audit.record(type, userId, prefix, ctx.userAgent.slice(0, 200));
   }
   async throttled(ctx: AuthContext) {
+    // Record the signal without letting rejected traffic become a database-write
+    // flood. Other auth events keep their normal per-action audit trail.
+    try {
+      this.throttledSources.take(ipPrefix(ctx.ip));
+      this.throttledTotal.take('all');
+    } catch {
+      return;
+    }
     await this.event('THROTTLED', null, ctx);
   }
   async register(input: RegisterDto, ctx: AuthContext) {

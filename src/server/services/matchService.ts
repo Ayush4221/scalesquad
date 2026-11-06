@@ -14,6 +14,8 @@ import { KeyedQueue } from '../lib/keyedQueue';
 
 export class MatchService {
   private readonly creations = new KeyedQueue();
+  // Keep lobby membership and upstream chat changes together before starting.
+  private readonly memberships = new KeyedQueue();
   constructor(
     private readonly repo: GameRepository,
     private readonly users: UserRepository,
@@ -99,43 +101,61 @@ export class MatchService {
     if (!user) throw new AppError('UNAUTHENTICATED', 401);
     const found = await this.repo.findByCode(normalizeCode(rawCode));
     if (!found) throw new AppError('NOT_FOUND', 404, 'Invalid join code');
-    if (
-      !found.members.some((m) => m.userId === userId) &&
-      (await this.repo.countMemberships(userId)) >= runtimePolicy.maxActiveMembershipsPerUser
-    )
-      throw new AppError('RATE_LIMITED', 429, 'Match limit reached');
-    let added = false;
-    await this.repo.mutate(found.id, (m) => {
-      phase(m, 'LOBBY');
-      if (m.joinCodeExpiresAt <= this.clock.now())
-        throw new AppError('NOT_FOUND', 404, 'Join code expired');
-      if (m.members.some((p) => p.userId === userId)) return;
-      if (m.members.length >= 3) throw new AppError('CONFLICT', 409, 'Squad is full');
-      const role = assignRoles(m.id).find((r) => !m.members.some((p) => p.role === r));
-      if (!role) throw new AppError('CONFLICT', 409);
-      m.members.push({
-        ...user,
-        role,
-        ready: false,
-        acknowledged: false,
-        lastSeenAt: this.clock.now(),
-        disconnectedAt: null,
-      });
-      added = true;
-      audit(m, userId, 'match.join');
-    });
-    if (added && found.groupRef) {
-      try {
-        await this.chat.addMember(found.groupRef, userId);
-      } catch (error) {
-        await this.repo.mutate(found.id, (m) => {
-          m.members = m.members.filter((p) => p.userId !== userId);
+    return this.memberships.run(found.id, async () => {
+      if (
+        !found.members.some((m) => m.userId === userId) &&
+        (await this.repo.countMemberships(userId)) >= runtimePolicy.maxActiveMembershipsPerUser
+      )
+        throw new AppError('RATE_LIMITED', 429, 'Match limit reached');
+      let added = false;
+      await this.repo.mutate(found.id, (m) => {
+        phase(m, 'LOBBY');
+        if (m.joinCodeExpiresAt <= this.clock.now())
+          throw new AppError('NOT_FOUND', 404, 'Join code expired');
+        if (m.members.some((p) => p.userId === userId)) return;
+        if (m.members.length >= 3) throw new AppError('CONFLICT', 409, 'Squad is full');
+        const role = assignRoles(m.id).find((r) => !m.members.some((p) => p.role === r));
+        if (!role) throw new AppError('CONFLICT', 409);
+        m.members.push({
+          ...user,
+          role,
+          ready: false,
+          acknowledged: false,
+          lastSeenAt: this.clock.now(),
+          disconnectedAt: null,
         });
-        throw error;
+        added = true;
+        audit(m, userId, 'match.join');
+      });
+      if (found.groupRef) {
+        try {
+          await this.chat.addMember(found.groupRef, userId);
+        } catch (error) {
+          if (added) {
+            // A timed-out response may still have added the upstream member. Only
+            // release the local membership after chat access is confirmed removed.
+            let removed = false;
+            try {
+              await this.chat.removeMember(found.groupRef, userId);
+              removed = true;
+            } catch {
+              /* Keep the reservation so upstream access still has an owner. */
+            }
+            await this.repo.mutate(found.id, (m) => {
+              if (removed) m.members = m.members.filter((p) => p.userId !== userId);
+              else {
+                const pending = m.members.find((p) => p.userId === userId);
+                if (pending) pending.ready = false;
+              }
+            });
+            this.events.changed(found.id);
+          }
+          throw error;
+        }
       }
-    }
-    this.events.changed(found.id);
-    return this.getPublicView(userId, found.id);
+      this.events.changed(found.id);
+      return this.getPublicView(userId, found.id);
+    });
   }
   async setReady(userId: string | null, id: string, ready: boolean) {
     await this.repo.mutate(id, (m) => {
@@ -146,12 +166,14 @@ export class MatchService {
     this.events.changed(id);
   }
   async startMatch(userId: string | null, id: string) {
-    await this.repo.mutate(id, (m) => {
-      host(m, userId);
-      phase(m, 'LOBBY');
-      this.transition(m, 'BRIEFING');
-      audit(m, userId!, 'match.start');
-    });
+    await this.memberships.run(id, () =>
+      this.repo.mutate(id, (m) => {
+        host(m, userId);
+        phase(m, 'LOBBY');
+        this.transition(m, 'BRIEFING');
+        audit(m, userId!, 'match.start');
+      }),
+    );
     await this.notifyPhase(id, 'BRIEFING');
   }
   private transition(m: MatchRecord, to: MatchRecord['phase'], timerElapsed = false) {
@@ -241,20 +263,27 @@ export class MatchService {
       await this.chat.sendSystemNotice(m.groupRef, `Phase: ${m.phase}`).catch(() => {});
   }
   async leaveMatch(userId: string | null, id: string) {
-    const m = await this.repo.find(id);
-    if (!m) throw new AppError('NOT_FOUND', 404);
-    member(m, userId);
-    phase(m, 'LOBBY');
-    if (m.hostUserId === userId)
-      throw new AppError('FORBIDDEN', 403, 'The host must stay in the lobby');
-    if (m.groupRef) await this.chat.removeMember(m.groupRef, userId!);
-    await this.repo.mutate(id, (current) => {
-      member(current, userId);
-      phase(current, 'LOBBY');
-      current.members = current.members.filter((u) => u.userId !== userId);
-      audit(current, userId!, 'match.leave');
+    return this.memberships.run(id, async () => {
+      const m = await this.repo.find(id);
+      if (!m) throw new AppError('NOT_FOUND', 404);
+      member(m, userId);
+      phase(m, 'LOBBY');
+      if (m.hostUserId === userId)
+        throw new AppError('FORBIDDEN', 403, 'The host must stay in the lobby');
+      if (m.groupRef) await this.chat.removeMember(m.groupRef, userId!);
+      try {
+        await this.repo.mutate(id, (current) => {
+          member(current, userId);
+          phase(current, 'LOBBY');
+          current.members = current.members.filter((u) => u.userId !== userId);
+          audit(current, userId!, 'match.leave');
+        });
+      } catch (error) {
+        if (m.groupRef) await this.chat.addMember(m.groupRef, userId!).catch(() => {});
+        throw error;
+      }
+      this.events.changed(id);
     });
-    this.events.changed(id);
   }
   async getPublicView(userId: string | null, id: string): Promise<PublicMatchView> {
     requireUser(userId);

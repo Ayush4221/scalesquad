@@ -65,6 +65,64 @@ describe('join code and roles', () => {
   });
 });
 describe('lobby and authorization', () => {
+  it('waits for chat provisioning before starting, then rejects a failed join', async () => {
+    const f = fixture();
+    const view = await f.match.createMatch('a');
+    await f.match.joinMatch('b', view.joinCode!);
+    for (const user of ['a', 'b']) await f.match.setReady(user, view.id, true);
+    let release!: () => void;
+    let entered!: () => void;
+    const enteredChat = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    const pendingChat = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    vi.spyOn(f.chat, 'addMember').mockImplementationOnce(async () => {
+      await f.match.setReady('c', view.id, true);
+      entered();
+      await pendingChat;
+      throw new AppError('UPSTREAM_UNAVAILABLE', 503);
+    });
+    const joinResult = f.match.joinMatch('c', view.joinCode!).catch((error: unknown) => error);
+    await enteredChat;
+    const startResult = f.match.startMatch('a', view.id).catch((error: unknown) => error);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    expect((await f.repo.find(view.id))?.phase).toBe('LOBBY');
+    release();
+    expect(await joinResult).toMatchObject({ code: 'UPSTREAM_UNAVAILABLE' });
+    expect(await startResult).toMatchObject({ code: 'PHASE_INVALID' });
+    expect((await f.repo.find(view.id))?.members.map((m) => m.userId)).toEqual(['a', 'b']);
+  });
+  it('finishes a pending leave before evaluating whether the squad can start', async () => {
+    const f = fixture(),
+      id = await f.lobby();
+    for (const user of ['a', 'b', 'c']) await f.match.setReady(user, id, true);
+    let release!: () => void;
+    let entered!: () => void;
+    const enteredChat = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    const pendingChat = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const remove = f.chat.removeMember.bind(f.chat);
+    vi.spyOn(f.chat, 'removeMember').mockImplementationOnce(async (...args) => {
+      entered();
+      await pendingChat;
+      await remove(...args);
+    });
+    const leaving = f.match.leaveMatch('c', id);
+    await enteredChat;
+    const startResult = f.match.startMatch('a', id).catch((error: unknown) => error);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    expect((await f.repo.find(id))?.phase).toBe('LOBBY');
+    release();
+    await leaving;
+    expect(await startResult).toMatchObject({ code: 'PHASE_INVALID' });
+    expect((await f.repo.find(id))?.members).toHaveLength(2);
+    expect(f.chat.groups.get(id)?.has('c')).toBe(false);
+  });
   it('create/join idempotency, role privacy, ready and start guards', async () => {
     const f = fixture();
     await expect(f.match.createMatch(null)).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
@@ -119,6 +177,39 @@ describe('lobby and authorization', () => {
     expect((await f.repo.find(v.id))?.members).toHaveLength(1);
     await expect(f.match.chatToken('b', v.id)).rejects.toMatchObject({ code: 'FORBIDDEN' });
     expect((await f.match.chatToken('a', v.id)).token).toBe('test-a');
+  });
+  it('revokes a join that succeeded upstream before its response failed', async () => {
+    const f = fixture(),
+      view = await f.match.createMatch('a');
+    const add = f.chat.addMember.bind(f.chat);
+    vi.spyOn(f.chat, 'addMember').mockImplementationOnce(async (...args) => {
+      await add(...args);
+      throw new AppError('UPSTREAM_UNAVAILABLE', 503);
+    });
+    await expect(f.match.joinMatch('b', view.joinCode!)).rejects.toThrow();
+    expect(f.chat.groups.get(view.id)?.has('b')).toBe(false);
+    expect((await f.repo.find(view.id))?.members).toHaveLength(1);
+  });
+  it('retains a failed cleanup reservation and can repair it with a join retry', async () => {
+    const f = fixture(),
+      view = await f.match.createMatch('a');
+    vi.spyOn(f.chat, 'addMember').mockRejectedValueOnce(new AppError('UPSTREAM_UNAVAILABLE', 503));
+    vi.spyOn(f.chat, 'removeMember').mockRejectedValueOnce(
+      new AppError('UPSTREAM_UNAVAILABLE', 503),
+    );
+    await expect(f.match.joinMatch('b', view.joinCode!)).rejects.toThrow();
+    expect((await f.repo.find(view.id))?.members.find((m) => m.userId === 'b')?.ready).toBe(false);
+    await f.match.joinMatch('b', view.joinCode!);
+    expect(f.chat.groups.get(view.id)?.has('b')).toBe(true);
+    expect((await f.repo.find(view.id))?.members).toHaveLength(2);
+  });
+  it('restores chat membership if saving a leave fails', async () => {
+    const f = fixture(),
+      id = await f.lobby();
+    vi.spyOn(f.repo, 'mutate').mockRejectedValueOnce(new Error('Database unavailable'));
+    await expect(f.match.leaveMatch('b', id)).rejects.toThrow('Database unavailable');
+    expect((await f.repo.find(id))?.members).toHaveLength(3);
+    expect(f.chat.groups.get(id)?.has('b')).toBe(true);
   });
   it('timers persist and recover briefing and incident deadlines', async () => {
     const f = fixture(),

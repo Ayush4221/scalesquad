@@ -23,6 +23,18 @@ root as Next.js expects. No nested packages or repeated source roots.
 Views never import repositories or Prisma. Services do not know about HTTP/WS.
 ESLint checks the dependency direction.
 
+## Public home
+
+Guests arriving at `/` see the public Incident Brief home page before any account
+form. It explains the game, roles and playbook; its main actions lead to
+`/register` and `/signin`. Authenticated visitors still continue to `/play`.
+The account pages' brand link returns to the home URL.
+
+`src/features/landing` owns the server-rendered page, navigation action and small
+client mission preview. The preview has fixed initial content, cancellable
+timers, pause/replay controls and manual scenes for reduced-motion users. It does
+not run the simulator, call game APIs or expose private scenario evidence.
+
 ## Signup and login
 
 `SignupForm / LoginForm / ChangePasswordForm → authController → AuthService → UserAuthRepository / SessionWriteRepository`

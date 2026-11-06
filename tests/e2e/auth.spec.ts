@@ -98,6 +98,21 @@ test('three signed-in players create and join without email verification', async
   expect(users.every((user) => user.emailVerified === null)).toBe(true);
   await expect(s.players[0].page.locator('.roster li')).toHaveCount(3);
 });
+test('sign out leaves the private page even when browser cache storage is blocked', async ({
+  squad: s,
+}) => {
+  const host = s.players[0];
+  await host.page.goto('/play');
+  await host.page.evaluate(() => {
+    Object.defineProperty(window, 'caches', {
+      configurable: true,
+      value: { keys: () => Promise.reject(new Error('Storage blocked')) },
+    });
+  });
+  await host.page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await expect(host.page).toHaveURL(/\/signin$/);
+  expect(await s.db.session.count({ where: { sessionToken: host.token } })).toBe(0);
+});
 
 test('email verification and recovery pages and endpoints are removed', async ({ squad: s }) => {
   for (const path of ['/verify', '/resend-verification', '/forgot-password', '/reset-password'])

@@ -43,6 +43,10 @@ export function ChatPanel({
     return () => viewport?.removeEventListener('resize', resize);
   }, []);
   useEffect(() => {
+    setMessages([]);
+    setText('');
+    setReady(false);
+    setStatus('Connecting');
     if (!available) return;
     let stopped = false;
     let instance: ChatClient | null = null;
@@ -79,6 +83,7 @@ export function ChatPanel({
         setStatus('Chat unavailable. You can still play.');
         setReady(false);
       }
+      void instance?.close().catch(() => {});
     });
     function notifyIncoming() {
       incoming.current?.();
@@ -86,7 +91,7 @@ export function ChatPanel({
     return () => {
       stopped = true;
       client.current = null;
-      void instance?.close();
+      void instance?.close().catch(() => {});
     };
   }, [matchId, available]);
   async function send() {

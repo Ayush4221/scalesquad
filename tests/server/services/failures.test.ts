@@ -37,6 +37,129 @@ describe('missing records fail closed', () => {
   });
 });
 describe('run authorization, crash recovery and input integrity', () => {
+  it('rechecks editor authority when repairing a saved completion', async () => {
+    const f = fixture(),
+      id = await f.repair();
+    await f.run.start('a', id, 1);
+    await f.repo.mutate(id, (m) => {
+      m.phase = 'REPAIR_1';
+      m.runError = true;
+    });
+    await f.lock.passControl('a', id, 'b');
+    const find = f.repo.find.bind(f.repo);
+    vi.spyOn(f.repo, 'find').mockImplementationOnce(async (matchId) => {
+      const snapshot = await find(matchId);
+      await f.lock.passControl('b', id, 'c');
+      return snapshot;
+    });
+    await expect(f.run.start('b', id, 1)).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect((await f.repo.find(id))?.phase).toBe('REPAIR_1');
+  });
+  it('finishes saved results after a restart instead of stranding the match in repair', async () => {
+    const f = fixture(),
+      id = await f.repair();
+    await f.run.start('a', id, 1);
+    await f.repo.mutate(id, (m) => {
+      m.simulationLocked = true;
+      m.deadlineAt = null;
+    });
+    await f.run.recover((await f.repo.find(id))!);
+    expect(await f.repo.find(id)).toMatchObject({
+      phase: 'RUNS_1_2',
+      simulationLocked: false,
+      runError: false,
+    });
+    await f.match.advance('a', id);
+    for (const user of ['a', 'b', 'c']) await f.match.acknowledge(user, id);
+    await f.run.start('a', id, 3);
+    await f.repo.mutate(id, (m) => {
+      m.phase = 'RUN_3';
+      m.simulationLocked = true;
+      m.deadlineAt = null;
+    });
+    await f.run.recover((await f.repo.find(id))!);
+    const finished = (await f.repo.find(id))!;
+    expect(finished).toMatchObject({ phase: 'COMPARE', simulationLocked: false, runError: false });
+    expect(finished.deadlineAt).toBeGreaterThan(f.clock.now());
+    expect(finished.runs).toHaveLength(3);
+  });
+  it('returns an unfinished crashed run to repair and permits retry of an older saved completion', async () => {
+    const f = fixture(),
+      id = await f.repair();
+    await f.repo.mutate(id, (m) => {
+      m.phase = 'RUNS_1_2';
+      m.simulationLocked = true;
+    });
+    await f.run.recover((await f.repo.find(id))!);
+    expect(await f.repo.find(id)).toMatchObject({
+      phase: 'REPAIR_1',
+      simulationLocked: false,
+      runError: true,
+    });
+    await f.run.start('a', id, 1);
+    await f.repo.mutate(id, (m) => {
+      m.phase = 'REPAIR_1';
+      m.runError = true;
+      m.deadlineAt = null;
+    });
+    await f.run.start('a', id, 1);
+    expect(await f.repo.find(id)).toMatchObject({
+      phase: 'RUNS_1_2',
+      simulationLocked: false,
+      runError: false,
+    });
+    expect((await f.repo.find(id))?.runs).toHaveLength(2);
+  });
+  it('keeps completed results when the first final-state save fails', async () => {
+    const f = fixture(),
+      id = await f.repair();
+    const mutate = f.repo.mutate.bind(f.repo);
+    let failed = false;
+    vi.spyOn(f.repo, 'mutate').mockImplementation((matchId, fn) =>
+      mutate(matchId, (m) => {
+        const result = fn(m);
+        if (!failed && m.phase === 'RUNS_1_2' && !m.simulationLocked && m.runs.length === 2) {
+          failed = true;
+          throw new Error('Save interrupted');
+        }
+        return result;
+      }),
+    );
+    await f.run.start('a', id, 1);
+    expect(failed).toBe(true);
+    expect(await f.repo.find(id)).toMatchObject({
+      phase: 'RUNS_1_2',
+      simulationLocked: false,
+      runError: false,
+    });
+    expect((await f.repo.find(id))?.runs).toHaveLength(2);
+  });
+  it('does not treat a repair request as a duplicate of a running baseline', async () => {
+    const f = fixture(),
+      id = await f.repair();
+    let release!: () => void;
+    let entered!: () => void;
+    const started = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const run = new RunService(f.repo, f.clock, silentEvents, async (bundle) => {
+      entered();
+      await pending;
+      return runSimulation(bundle);
+    });
+    const baseline = run.start('a', id, 1);
+    await started;
+    try {
+      await expect(run.start('a', id, 3)).rejects.toMatchObject({ code: 'PHASE_INVALID' });
+    } finally {
+      release();
+    }
+    await baseline;
+    expect((await f.repo.find(id))?.runs.map((r) => r.runNumber)).toEqual([1, 2]);
+  });
   it('only host or editor can start, and wrong phase/locked/missing baseline reject', async () => {
     const f = fixture(),
       id = await f.repair();
@@ -72,7 +195,7 @@ describe('run authorization, crash recovery and input integrity', () => {
       m.simulationLocked = true;
     });
     await run.recover((await f.repo.find(id))!);
-    expect((await f.repo.find(id))?.phase).toBe('REPAIR_1');
+    expect((await f.repo.find(id))?.phase).toBe('RUNS_1_2');
   });
   it('a worker with the wrong result hash cannot save a run', async () => {
     const f = fixture(),

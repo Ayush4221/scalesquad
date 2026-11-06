@@ -76,6 +76,20 @@ describe('HTTP integrity and limits', () => {
     r.take('new');
     expect(r.size).toBe(1);
   });
+  it('bounds fresh keys without resetting active quotas or rescanning on every rejection', () => {
+    let time = 0;
+    const limiter = new RateLimiter(1, 1, () => time, 2);
+    const cleanup = vi.spyOn(limiter, 'cleanup');
+    limiter.take('a');
+    limiter.take('b');
+    for (let i = 0; i < 100; i++) expect(() => limiter.take(`new-${i}`)).toThrow();
+    expect(limiter.size).toBe(2);
+    expect(cleanup).toHaveBeenCalledOnce();
+    expect(() => limiter.take('a')).toThrow();
+    time = 60000;
+    limiter.take('new');
+    expect(limiter.size).toBe(1);
+  });
   it('safe errors expose neither internal exceptions nor their causes', () => {
     expect(safeError(new Error('secret SQL'), 'req')).toEqual({
       status: 500,
