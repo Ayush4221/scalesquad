@@ -34,7 +34,7 @@ self.addEventListener('fetch', (event) => {
       fetch(request).catch(
         async () =>
           (await caches.match(OFFLINE_URL)) ??
-          new Response('Offline. Reconnect to play.', {
+          new Response(pwaStrings.offlineReconnectToPlay, {
             status: 503,
             headers: { 'Content-Type': 'text/plain' },
           }),
@@ -72,7 +72,7 @@ self.addEventListener('push', (event) => {
   if (!message) return;
   const { kind, matchId } = message;
   event.waitUntil(
-    self.registration.showNotification('ScaleSquad', {
+    self.registration.showNotification(commonStrings.scalesquad, {
       body: notificationText[kind],
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',

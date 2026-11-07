@@ -1,3 +1,4 @@
+import { commonStrings } from '@/constants/strings/common';
 import type { Role } from '@scalesquad/shared';
 export interface ChatMember {
   userId: string;
@@ -9,7 +10,7 @@ export interface ChatDraft {
   id: number;
 }
 export const roleLabels: Record<Role, string> = {
-  TRAFFIC: 'Traffic',
-  DATA: 'Data',
-  OPS: 'Operations',
+  TRAFFIC: commonStrings.traffic,
+  DATA: commonStrings.data,
+  OPS: commonStrings.operations,
 };

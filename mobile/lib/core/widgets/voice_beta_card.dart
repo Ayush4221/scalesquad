@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../constants/app_strings.dart';
+
 import '../theme/app_colors.g.dart';
 import 'app_icon.dart';
 import 'squad_button.dart';
@@ -16,7 +18,7 @@ class VoiceBetaCard extends StatelessWidget {
           SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Squad voice',
+              AppStrings.squadVoice,
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
@@ -27,19 +29,19 @@ class VoiceBetaCard extends StatelessWidget {
             ),
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Text('BETA', style: TextStyle(fontSize: 11)),
+              child: Text(AppStrings.beta, style: TextStyle(fontSize: 11)),
             ),
           ),
         ],
       ),
       const SizedBox(height: 8),
       const Text(
-        'Coming soon. Text chat will stay at the heart of your squad.',
+        AppStrings.comingSoonTextChatWillStay,
         style: TextStyle(color: AppColors.muted, fontSize: 12),
       ),
       const SizedBox(height: 12),
       const SquadButton(
-        label: 'Join voice',
+        label: AppStrings.joinVoice,
         secondary: true,
         glyph: AppGlyph.mic,
       ),

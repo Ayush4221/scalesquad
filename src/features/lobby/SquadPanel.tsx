@@ -1,14 +1,20 @@
+import { commonStrings } from '@/constants/strings/common';
+import { lobbyStrings } from '@/constants/strings/lobby';
 import { layoutClassName } from '@/styles/layout';
 import type { PublicMatchView } from '@scalesquad/shared';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-const roleLabels = { TRAFFIC: 'Traffic', DATA: 'Data', OPS: 'Operations' } as const;
+const roleLabels = {
+  TRAFFIC: commonStrings.traffic,
+  DATA: commonStrings.data,
+  OPS: commonStrings.operations,
+} as const;
 export function SquadPanel({ view }: { view: PublicMatchView }) {
   const reading = ['BRIEFING', 'INCIDENT_EVIDENCE'].includes(view.phase);
   return (
     <div className={layoutClassName('tab-squad')}>
       <Card>
         <CardHeader>
-          <CardTitle>Your squad</CardTitle>
+          <CardTitle>{commonStrings.yourSquad}</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="roster list-none p-0">
@@ -26,7 +32,11 @@ export function SquadPanel({ view }: { view: PublicMatchView }) {
                   )}
                 </span>
                 <span>
-                  {reading ? (member.acknowledged ? 'Acknowledged' : 'Reading') : 'In squad'}
+                  {reading
+                    ? member.acknowledged
+                      ? lobbyStrings.acknowledged
+                      : lobbyStrings.reading
+                    : lobbyStrings.inSquad}
                 </span>
               </li>
             ))}

@@ -1,3 +1,5 @@
+import { commonStrings } from '@/constants/strings/common';
+import { resultsStrings } from '@/constants/strings/results';
 import { layoutClassName } from '@/styles/layout';
 import type {
   Comparison,
@@ -19,36 +21,40 @@ import {
   TableRow,
 } from '@/components/ui/table';
 const labels: Record<string, string> = {
-  duplicateAdmissions: 'Duplicate admissions',
-  validAdmissions: 'Valid admissions by deadline',
-  p95LatencyMs: 'P95 latency (ms)',
-  queuePeak: 'Peak queue backlog',
-  appUtilizationPeak: 'Peak app utilization',
-  dbUtilizationPeak: 'Peak DB utilization',
-  totalCost: 'Cost (credits)',
-  correctnessPassed: 'No duplicates',
-  throughputPassed: 'Admission target',
-  budgetMet: 'Within budget',
+  duplicateAdmissions: resultsStrings.duplicateAdmissions,
+  validAdmissions: resultsStrings.validAdmissionsByDeadline,
+  p95LatencyMs: resultsStrings.p95LatencyMs,
+  queuePeak: resultsStrings.peakQueueBacklog,
+  appUtilizationPeak: resultsStrings.peakAppUtilization,
+  dbUtilizationPeak: resultsStrings.peakDbUtilization,
+  totalCost: resultsStrings.costCredits,
+  correctnessPassed: resultsStrings.noDuplicates,
+  throughputPassed: resultsStrings.admissionTarget,
+  budgetMet: resultsStrings.withinBudget,
 };
 const configLabels: Record<keyof ConfigurationValues, string> = {
-  appCapacity: 'App capacity',
-  dbCapacity: 'Database capacity',
-  atomicCheckin: 'Atomic check-in',
-  retryPolicy: 'Retry policy',
-  cache: 'Cache',
+  appCapacity: commonStrings.appCapacity,
+  dbCapacity: commonStrings.databaseCapacity,
+  atomicCheckin: commonStrings.atomicCheckIn,
+  retryPolicy: commonStrings.retryPolicy,
+  cache: resultsStrings.cache,
 };
 const configValues: Record<string, string> = {
-  LOW: 'Low',
-  MEDIUM: 'Medium',
-  HIGH: 'High',
-  NO_RETRY: 'No retry',
-  RETRY_SAME_KEY: 'Retry with the same key',
-  RETRY_NEW_IDENTITY: 'Retry with a new identity',
-  OFF: 'Off',
-  ON_READS_ONLY: 'Read-only cache',
+  LOW: resultsStrings.low,
+  MEDIUM: resultsStrings.medium,
+  HIGH: resultsStrings.high,
+  NO_RETRY: resultsStrings.noRetry,
+  RETRY_SAME_KEY: resultsStrings.retryWithTheSameKey,
+  RETRY_NEW_IDENTITY: resultsStrings.retryWithANewIdentity,
+  OFF: resultsStrings.off,
+  ON_READS_ONLY: resultsStrings.readOnlyCache,
 };
 const formatConfiguration = (value: ConfigurationValues[keyof ConfigurationValues]) =>
-  typeof value === 'boolean' ? (value ? 'On' : 'Off') : (configValues[value] ?? value);
+  typeof value === 'boolean'
+    ? value
+      ? resultsStrings.on
+      : resultsStrings.off
+    : (configValues[value] ?? value);
 function Direction({ metric, before, after }: { metric: string; before: number; after: number }) {
   const direction = metricDirection(metric, before, after);
   const Icon =
@@ -92,14 +98,12 @@ export function ResultsPanel({
         <Card>
           <CardHeader>
             <div className={styles.heading}>
-              <CardTitle>Same incident. A different design.</CardTitle>
+              <CardTitle>{resultsStrings.sameIncidentADifferentDesign}</CardTitle>
               <Badge variant={comparison.status === 'PASSED' ? 'secondary' : 'destructive'}>
                 {comparison.status}
               </Badge>
             </div>
-            <p className={styles.description}>
-              Run 2 → Run 3 · Identical traffic, outage and engine. Only your configuration changed.
-            </p>
+            <p className={styles.description}>{resultsStrings.run2Run3IdenticalTraffic}</p>
           </CardHeader>
           <CardContent className={styles.comparison}>
             <div className={layoutClassName('mobile-metrics')}>
@@ -118,10 +122,10 @@ export function ResultsPanel({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Metric</TableHead>
-                    <TableHead>Run 2 · Preset</TableHead>
-                    <TableHead>Run 3 · Repair</TableHead>
-                    <TableHead>Change</TableHead>
+                    <TableHead>{resultsStrings.metric}</TableHead>
+                    <TableHead>{resultsStrings.run2Preset}</TableHead>
+                    <TableHead>{resultsStrings.run3Repair}</TableHead>
+                    <TableHead>{resultsStrings.change}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -139,10 +143,13 @@ export function ResultsPanel({
               </Table>
             </div>
             {presetConfiguration && repairedConfiguration && (
-              <section className={styles.configDiff} aria-label="Configuration changes">
-                <h3>What you changed</h3>
+              <section
+                className={styles.configDiff}
+                aria-label={resultsStrings.configurationChanges}
+              >
+                <h3>{resultsStrings.whatYouChanged}</h3>
                 <p className={styles.description}>
-                  Preset configuration compared with the repair used in Run 3.
+                  {resultsStrings.presetConfigurationComparedWithTheRepair}
                 </p>
                 <ul className={styles.changes}>
                   {(Object.keys(configLabels) as (keyof ConfigurationValues)[])
@@ -159,7 +166,9 @@ export function ResultsPanel({
                 </ul>
                 {(Object.keys(configLabels) as (keyof ConfigurationValues)[]).every(
                   (key) => presetConfiguration[key] === repairedConfiguration[key],
-                ) && <p className={styles.empty}>No configuration settings changed.</p>}
+                ) && (
+                  <p className={styles.empty}>{resultsStrings.noConfigurationSettingsChanged}</p>
+                )}
               </section>
             )}
             <ul className="fact-list">
@@ -181,36 +190,42 @@ export function ResultsPanel({
           <Card key={runNumber}>
             <CardHeader>
               <div className={styles.heading}>
-                <CardTitle>Run {runNumber}</CardTitle>
+                <CardTitle>
+                  {resultsStrings.run}
+                  {runNumber}
+                </CardTitle>
                 <Badge variant={result.overallGatePassed ? 'secondary' : 'destructive'}>
                   {result.overallGatePassed ? 'PASSED' : 'FAILED'}
                 </Badge>
               </div>
               <p className={layoutClassName('muted text-sm')}>
                 {runNumber === 1
-                  ? 'Diagnostic baseline · normal traffic'
+                  ? resultsStrings.diagnosticBaselineNormalTraffic
                   : runNumber === 2
-                    ? 'Original preset · incident'
-                    : 'Your repaired design · same incident'}
+                    ? resultsStrings.originalPresetIncident
+                    : resultsStrings.yourRepairedDesignSameIncident}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className={layoutClassName('metrics')}>
                 <div>
                   <strong>{result.validAdmissions.toLocaleString()}</strong>
-                  <span>valid admissions</span>
+                  <span>{resultsStrings.validAdmissions}</span>
                 </div>
                 <div>
                   <strong>{result.duplicateAdmissions}</strong>
-                  <span>duplicates</span>
+                  <span>{resultsStrings.duplicates}</span>
                 </div>
                 <div>
-                  <strong>{result.p95LatencyMs.toFixed(0)} ms</strong>
-                  <span>P95 latency</span>
+                  <strong>
+                    {result.p95LatencyMs.toFixed(0)}
+                    {resultsStrings.ms}
+                  </strong>
+                  <span>{resultsStrings.p95Latency}</span>
                 </div>
                 <div>
                   <strong>{result.totalCost}</strong>
-                  <span>credits</span>
+                  <span>{resultsStrings.credits}</span>
                 </div>
               </div>
               <Gates result={result} />
@@ -223,7 +238,10 @@ export function ResultsPanel({
                       </summary>
                       <p>{f.message}</p>
                       <small>
-                        Rule: {f.rule} · Controls: {f.causedBy.join(', ') || 'gate connectivity'}
+                        {resultsStrings.rule}
+                        {f.rule}
+                        {resultsStrings.controls}
+                        {f.causedBy.join(', ') || resultsStrings.gateConnectivity}
                       </small>
                     </details>
                   </li>

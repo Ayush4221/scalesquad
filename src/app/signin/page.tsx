@@ -1,3 +1,4 @@
+import { appStrings } from '@/constants/strings/app';
 import { signIn } from '@/auth';
 import { AuthLayout } from '@/features/auth/AuthLayout';
 import { LoginForm } from '@/features/auth/LoginForm';
@@ -16,14 +17,14 @@ export default async function SignIn({
       {error && (
         <p role="alert" className={styles.serverError}>
           {error === 'OAuthAccountNotLinked'
-            ? 'Use your original sign-in method for this email.'
-            : 'Could not sign in. Try again.'}
+            ? appStrings.useYourOriginalSignInMethod
+            : appStrings.couldNotSignInTryAgain}
         </p>
       )}
       <LoginForm />
       {(process.env.AUTH_GOOGLE_ID || process.env.AUTH_GITHUB_ID) && (
         <div className={styles.providers}>
-          <p className={styles.providerDivider}>or continue with</p>
+          <p className={styles.providerDivider}>{appStrings.orContinueWith}</p>
           {process.env.AUTH_GOOGLE_ID && (
             <form
               action={async () => {
@@ -32,7 +33,7 @@ export default async function SignIn({
               }}
             >
               <Button className={motion.providerButton} variant="outline" size="lg" type="submit">
-                Continue with Google
+                {appStrings.continueWithGoogle}
               </Button>
             </form>
           )}
@@ -44,7 +45,7 @@ export default async function SignIn({
               }}
             >
               <Button className={motion.providerButton} variant="outline" size="lg" type="submit">
-                Continue with GitHub
+                {appStrings.continueWithGithub}
               </Button>
             </form>
           )}

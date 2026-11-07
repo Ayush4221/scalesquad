@@ -1,0 +1,61 @@
+/** User-facing landing text. Keep wording out of rendering and transport code. */
+export const landingStrings = {
+  clues: 'Clues',
+  nobodyHasTheWholePicture: 'Nobody has the whole picture.',
+  eachEngineerGetsAPrivateBrief:
+    'Each engineer gets a private brief. Connect your evidence through the squad’s conversation.',
+  makeTheCallTogether: 'Make the call together.',
+  discussTheTradeOffsAdjustYour:
+    'Discuss the trade-offs, adjust your design, and pass edit control when another perspective helps.',
+  compare: 'Compare',
+  sameIncidentNewEvidence: 'Same incident. New evidence.',
+  testTheRepairUnderTheSame:
+    'Test the repair under the same conditions. Compare correctness, throughput and cost to understand what changed.',
+  restartWalkthrough: 'Restart walkthrough',
+  nextScene: 'Next scene',
+  pauseWalkthrough: 'Pause walkthrough',
+  replayWalkthrough: 'Replay walkthrough',
+  playTheWalkthrough: 'Play the walkthrough',
+  exploreTheGameLoop: 'Explore the game loop',
+  scene: 'Scene ',
+  of: ' of ',
+  openingSignup: 'Opening signup…',
+  createAnAccount: 'Create an account',
+  buildYourSquad: 'Build your squad',
+  skipToContent: 'Skip to content',
+  mainNavigation: 'Main navigation',
+  theMission: 'The mission',
+  howToPlay: 'How to play',
+  thinkAsASquad: 'Think as a squad.',
+  thinkAs: 'Think as',
+  aSquad: 'a squad.',
+  aSystemDesignGameForThree:
+    'A system design game for three engineers with different private clues.',
+  exploreCampuspass: 'Explore CampusPass',
+  onePass: 'One pass.',
+  oneAdmission: 'One admission.',
+  campuspassHandlesFestivalCheckInsYour:
+    'CampusPass handles festival check-ins. Your squad repairs a system under pressure.',
+  throughput: 'Throughput',
+  cost: 'Cost',
+  stayWithinTheBudget: 'Stay within the budget.',
+  theNextRun: 'The next run',
+  getsTheLastWord: 'gets the last word.',
+  followTheSquadFromItsFirst: 'Follow the squad from its first clue to its next test.',
+  bringTwoPeople: 'Bring two people',
+  whoChallengeYourThinking: 'who challenge your thinking.',
+  buildTogetherProveItTogether: 'Build together. Prove it together.',
+  backToTop: 'Back to top',
+  readTheSurge: 'Read the\nsurge.',
+  understandThePressureBringYourPrivate:
+    'Understand the pressure. Bring your private evidence to the squad.',
+  protectEveryPass: 'Protect\nevery pass.',
+  followTheCorrectnessRisksHelpYour:
+    'Follow the correctness risks. Help your squad protect single-use admissions.',
+  ownTheTradeOffs: 'Own the\ntrade-offs.',
+  weighReliabilityAndCostBringYour:
+    'Weigh reliability and cost. Bring your perspective to the repair.',
+  exploreEngineeringRoles: 'Explore engineering roles',
+  yourSquadsPerspectives: 'Your squad’s perspectives',
+  exploreEachRoleInAMatch: 'Explore each role. In a match, roles reveal when play begins.',
+} as const;

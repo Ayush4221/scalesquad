@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_strings.dart';
+
 import '../../../core/theme/app_colors.g.dart';
 import '../../../core/widgets/app_icon.dart';
 import '../models/squad_role.dart';
@@ -26,7 +28,7 @@ class RoleSelector extends StatelessWidget {
               child: Semantics(
                 selected: selected == role,
                 button: true,
-                label: '${role.label} role',
+                label: AppStrings.roleLabel(role.label),
                 onTap: () => onSelected(role),
                 child: ExcludeSemantics(
                   child: Material(

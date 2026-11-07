@@ -1,4 +1,7 @@
 'use client';
+import { chatStrings } from '@/constants/strings/chat';
+import { commonStrings } from '@/constants/strings/common';
+
 import { useEffect, useMemo, useRef } from 'react';
 import { MessageSquare, Reply } from 'lucide-react';
 import { contentHash } from '@scalesquad/shared';
@@ -38,23 +41,25 @@ export function ChatMessages({
       }}
       className="chat-messages min-h-40 max-h-96 space-y-5 overflow-y-auto overscroll-contain py-2 pr-1"
       role="log"
-      aria-label="Squad messages"
+      aria-label={chatStrings.squadMessages}
       aria-live="polite"
       aria-relevant="additions text"
     >
       {messages.length === 0 ? (
         <div className="flex min-h-40 flex-col items-center justify-center gap-3 px-4 text-center">
           <MessageSquare className="size-6 text-muted-foreground" aria-hidden="true" />
-          <p className="text-sm font-medium">Start with what you know.</p>
+          <p className="text-sm font-medium">{chatStrings.startWithWhatYouKnow}</p>
           <p className="max-w-64 text-xs leading-5 text-muted-foreground">
-            Share the facts that could change your squad’s decision.
+            {chatStrings.shareTheFactsThatCouldChange}
           </p>
         </div>
       ) : (
         messages.map((message) => {
           const member = senders.get(message.sender);
           const system = message.sender === 'scalesquadsystem';
-          const name = system ? 'ScaleSquad' : (member?.name ?? 'Squad member');
+          const name = system
+            ? commonStrings.scalesquad
+            : (member?.name ?? commonStrings.squadMember);
           const date = new Date(message.sentAt);
           const validDate = Number.isFinite(date.getTime());
           return (
@@ -86,10 +91,10 @@ export function ChatMessages({
                     size="sm"
                     className="mt-1 min-h-11 px-0 text-xs text-muted-foreground transition-none"
                     onClick={() => onReply({ name, text: message.text })}
-                    aria-label={`Reply to ${name}`}
+                    aria-label={chatStrings.replyToMember(name)}
                   >
                     <Reply className="size-3" aria-hidden="true" />
-                    Reply
+                    {chatStrings.reply}
                   </Button>
                 )}
               </div>

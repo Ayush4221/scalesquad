@@ -191,3 +191,22 @@ An Android integration smoke test is authored but not run: no Android device or
 configured emulator was available. Native auth/contracts, provider chat and live
 mixed-client gameplay remain A2 onward. Production identifiers/signing and release
 remain disabled. A1 foundation evidence does not mark the full Android plan done.
+
+### Android review fixes and shared UI text — 2026-11-07
+
+All three findings in `ANDROID_CODE_REVIEW.md` are addressed: SDK naming lints,
+callback-injected introduction navigation, and complete exported-asset drift
+checks. Check mode compares PNG pixels when compression differs, checks fonts
+and licences byte-for-byte, and reports missing/stale output paths without writing.
+
+Android UI text is centralized in `mobile/lib/core/constants/app_strings.dart`.
+Web UI text is centralized under `src/constants/strings/`, grouped by feature
+with shared labels in `common.ts` and typed dynamic message builders. Existing
+validation/error/scenario constants remain canonical. Shared helpers stay in
+focused `src/utils` modules. The PWA worker/offline build includes its constants.
+
+Verified: Flutter formatting/analysis and 5 tests including the existing golden;
+all 429 Vitest tests; root lint/type checks; Android debug APK build; complete
+asset checks plus seven corruption probes and a missing-file probe with all
+originals restored; full web/server production build and standalone worker loading.
+No new dependency, server endpoint or production configuration.

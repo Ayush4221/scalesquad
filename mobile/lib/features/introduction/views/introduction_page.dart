@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/router.dart';
+import '../../../core/constants/app_strings.dart';
+
 import '../../../core/theme/app_colors.g.dart';
 import '../../../core/widgets/app_icon.dart';
 import '../../../core/widgets/brand_mark.dart';
@@ -8,7 +9,9 @@ import '../../../core/widgets/squad_button.dart';
 import '../../../core/widgets/surface_card.dart';
 
 class IntroductionPage extends StatelessWidget {
-  const IntroductionPage({super.key});
+  const IntroductionPage({super.key, required this.onExploreMission});
+
+  final VoidCallback onExploreMission;
   @override
   Widget build(BuildContext context) => Scaffold(
     body: SafeArea(
@@ -36,7 +39,7 @@ class IntroductionPage extends StatelessWidget {
                             vertical: 6,
                           ),
                           child: Text(
-                            'DEV',
+                            AppStrings.dev,
                             style: TextStyle(fontSize: 10, letterSpacing: 1.5),
                           ),
                         ),
@@ -45,7 +48,7 @@ class IntroductionPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 44),
                   const Text(
-                    'A COOPERATIVE SYSTEMS GAME',
+                    AppStrings.aCooperativeSystemsGame,
                     style: TextStyle(
                       fontSize: 10,
                       color: AppColors.muted,
@@ -57,9 +60,9 @@ class IntroductionPage extends StatelessWidget {
                   Text.rich(
                     const TextSpan(
                       children: [
-                        TextSpan(text: 'Same squad.\nNew incident.\n'),
+                        TextSpan(text: AppStrings.heroIntroduction),
                         TextSpan(
-                          text: 'Your next move.',
+                          text: AppStrings.yourNextMove,
                           style: TextStyle(color: AppColors.lime),
                         ),
                       ],
@@ -68,7 +71,7 @@ class IntroductionPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'Three engineers. Different clues. One system to save.',
+                    AppStrings.threeEngineersDifferentCluesOneSystem,
                     style: TextStyle(
                       fontSize: 18,
                       height: 1.5,
@@ -77,43 +80,43 @@ class IntroductionPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
                   SquadButton(
-                    label: 'Explore the mission',
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed(AppRouter.mission),
+                    label: AppStrings.exploreTheMission,
+                    onPressed: onExploreMission,
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Android preview · Account sign-in is coming next.',
+                    AppStrings.androidPreviewAccountSignInIs,
                     style: TextStyle(fontSize: 11, color: AppColors.subtle),
                   ),
                   const SizedBox(height: 34),
                   const SurfaceCard(accent: true, child: _MissionPreview()),
                   const SizedBox(height: 28),
                   Text(
-                    'Win by thinking together.',
+                    AppStrings.winByThinkingTogether,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 16),
                   const _Feature(
                     glyph: AppGlyph.users,
-                    title: 'Bring your squad',
-                    description: 'Three roles make three perspectives. Every player has a part to play.',
+                    title: AppStrings.bringYourSquad,
+                    description:
+                        AppStrings.threeRolesMakeThreePerspectivesEvery,
                   ),
                   const _Feature(
                     glyph: AppGlyph.chat,
-                    title: 'Connect the clues',
-                    description: 'Trade what you know. A useful detail can change the whole plan.',
+                    title: AppStrings.connectTheClues,
+                    description: AppStrings.tradeWhatYouKnowAUseful,
                   ),
                   const _Feature(
                     glyph: AppGlyph.shield,
-                    title: 'Prove the repair',
-                    description: 'Compare your fix against the same incident. Let the results do the talking.',
+                    title: AppStrings.proveTheRepair,
+                    description: AppStrings.compareYourFixAgainstTheSame,
                   ),
                   const SizedBox(height: 12),
                   const Divider(),
                   const SizedBox(height: 12),
                   const Text(
-                    'Built for squads who like asking “what if?”.',
+                    AppStrings.builtForSquadsWhoLikeAsking,
                     style: TextStyle(color: AppColors.subtle, fontSize: 12),
                   ),
                 ],
@@ -133,7 +136,7 @@ class _MissionPreview extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       const Text(
-        'MISSION PREVIEW / 01',
+        AppStrings.missionPreview01,
         style: TextStyle(
           fontSize: 10,
           letterSpacing: 1.6,
@@ -141,10 +144,13 @@ class _MissionPreview extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 14),
-      Text('CampusPass', style: Theme.of(context).textTheme.titleLarge),
+      Text(
+        AppStrings.campuspass,
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
       const SizedBox(height: 10),
       const Text(
-        'The gates are open. The crowd is building. Can your squad keep every check-in correct?',
+        AppStrings.theGatesAreOpenTheCrowd,
         style: TextStyle(color: AppColors.muted),
       ),
       const SizedBox(height: 24),
@@ -152,9 +158,9 @@ class _MissionPreview extends StatelessWidget {
         spacing: 16,
         runSpacing: 12,
         children: [
-          _Goal(glyph: AppGlyph.traffic, text: 'Handle the surge'),
-          _Goal(glyph: AppGlyph.data, text: 'Protect each pass'),
-          _Goal(glyph: AppGlyph.operations, text: 'Stay within budget'),
+          _Goal(glyph: AppGlyph.traffic, text: AppStrings.handleTheSurge),
+          _Goal(glyph: AppGlyph.data, text: AppStrings.protectEachPass),
+          _Goal(glyph: AppGlyph.operations, text: AppStrings.stayWithinBudget),
         ],
       ),
     ],

@@ -1,3 +1,5 @@
+import { authStrings } from '@/constants/strings/auth';
+import { commonStrings } from '@/constants/strings/common';
 import type { ReactNode } from 'react';
 import { BrandLogo } from '@/components/shared/BrandLogo';
 import { cn } from '@/utils/classNames';
@@ -13,16 +15,16 @@ export function AuthLayout({
 }) {
   return (
     <main className={cn(styles.page, variant === 'login' && styles.loginPage)}>
-      <section className={styles.story} aria-label="Build together with ScaleSquad">
+      <section className={styles.story} aria-label={authStrings.buildTogetherWithScalesquad}>
         <BrandLogo href="/" />
         <AuthStory variant={variant} />
         {variant === 'login' && (
-          <p className={styles.storyFooter}>CampusPass / Incident simulation 01</p>
+          <p className={styles.storyFooter}>{authStrings.campuspassIncidentSimulation01}</p>
         )}
       </section>
       <section
         className={styles.formPanel}
-        aria-label={variant === 'login' ? 'Sign in' : 'Create account'}
+        aria-label={variant === 'login' ? commonStrings.signIn : authStrings.createAccount}
       >
         <div className={styles.formContent}>{children}</div>
       </section>

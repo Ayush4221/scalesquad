@@ -1,3 +1,4 @@
+import { lobbyStrings } from '@/constants/strings/lobby';
 import { layoutClassName } from '@/styles/layout';
 import type { PublicMatchView } from '@scalesquad/shared';
 import { Button } from '@/components/ui/button';
@@ -22,11 +23,11 @@ export function RunAction({
   return (
     <div className="run-action flex items-center justify-between gap-5 rounded-xl border border-[var(--success-border)] bg-[var(--success-background)] p-[22px] max-[650px]:flex-col max-[650px]:items-start">
       <div>
-        <strong>{baseline ? 'Establish the baseline' : 'Test your repaired design'}</strong>
+        <strong>
+          {baseline ? lobbyStrings.establishTheBaseline : lobbyStrings.testYourRepairedDesign}
+        </strong>
         <p className={layoutClassName('muted text-sm')}>
-          {baseline
-            ? 'Runs 1 and 2 use the original preset. Your proposal is saved for Run 3.'
-            : 'The same incident and traffic from Run 2. Only your repair changes.'}
+          {baseline ? lobbyStrings.runs1And2UseThe : lobbyStrings.theSameIncidentAndTrafficFrom}
         </p>
       </div>
       <Button
@@ -34,7 +35,11 @@ export function RunAction({
         aria-busy={running}
         onClick={() => void action('/runs', { runNumber: baseline ? 1 : 3 })}
       >
-        {running ? 'Running…' : baseline ? 'Run baseline + incident →' : 'Run repair →'}
+        {running
+          ? lobbyStrings.running
+          : baseline
+            ? lobbyStrings.runBaselineIncident
+            : lobbyStrings.runRepair}
       </Button>
     </div>
   );

@@ -62,6 +62,7 @@ real authentication, Nexconn delivery, notifications or full gameplay.
 - `lib/app`: bootstrap, licence registration and the single Navigator route boundary.
 - `lib/features/introduction`: presentation models, local controller and views.
 - `lib/core/theme`: generated palette and shared Flutter theme.
+- `lib/core/constants/app_strings.dart`: user-facing text and accessible labels.
 - `lib/core/widgets`: licensed Lucide icons, logo, buttons, panels and voice BETA card.
 - `test`: controller, widget, large-text, reduced-motion and golden checks.
 - `integration_test`: standard native Flutter smoke-test entry.
@@ -73,6 +74,15 @@ palette outputs manually. Lucide glyphs are exported from the installed web
 library with 1x–4x density variants; Flutter applies semantic theme tints.
 The existing approved logo/fonts and ISC/OFL licences are bundled. Licence texts
 are registered with Flutter's licence registry at startup.
+
+`npm run mobile:assets:check` checks both palettes, every icon density, launcher
+icons, the logo, fonts and licence copies. It never rewrites files. PNG checks
+compare pixels and dimensions when compression bytes differ across platforms.
+Missing or stale files fail with their path and the regeneration command.
+
+Feature pages receive navigation callbacks from the app router. They do not
+import router implementations. The analyzer enforces Dart file, type, constant
+and member naming conventions without a third-party lint package.
 
 Golden baselines use the pinned Windows Flutter test renderer and bundled fonts;
 CI uses that same platform for visual tests. Android compilation runs separately

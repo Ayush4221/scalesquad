@@ -1,4 +1,6 @@
 'use client';
+import { authStrings } from '@/constants/strings/auth';
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ResponsiveDialog } from '@/components/shared/ResponsiveDialog';
@@ -10,9 +12,9 @@ export function AccountSettings() {
   return (
     <>
       <Button variant="outline" onClick={() => setOpen(true)}>
-        Settings
+        {authStrings.settings}
       </Button>
-      <ResponsiveDialog title="Account settings" open={open} onOpenChange={setOpen}>
+      <ResponsiveDialog title={authStrings.accountSettings} open={open} onOpenChange={setOpen}>
         <ChangePasswordForm />
         <NotificationSettings />
         <SignOutButton all />

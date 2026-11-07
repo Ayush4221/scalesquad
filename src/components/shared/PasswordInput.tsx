@@ -1,4 +1,6 @@
 'use client';
+import { commonStrings } from '@/constants/strings/common';
+
 import { useState, type ComponentProps, type ReactNode } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -30,7 +32,7 @@ export function PasswordInput({ className, leadingIcon, wrapperClassName, ...pro
         variant="ghost"
         size="icon"
         className={styles.toggle}
-        aria-label={visible ? 'Hide password' : 'Show password'}
+        aria-label={visible ? commonStrings.hidePassword : commonStrings.showPassword}
         aria-pressed={visible}
         disabled={props.disabled}
         onClick={() => setVisible((value) => !value)}

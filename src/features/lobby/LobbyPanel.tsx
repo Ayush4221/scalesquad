@@ -1,4 +1,7 @@
 'use client';
+import { commonStrings } from '@/constants/strings/common';
+import { lobbyStrings } from '@/constants/strings/lobby';
+
 import { useRouter } from 'next/navigation';
 import { Activity, Check, Cpu, LockKeyhole, LogOut, Play, UserPlus } from 'lucide-react';
 import type { PublicMatchView } from '@scalesquad/shared';
@@ -39,26 +42,27 @@ export function LobbyPanel({
         <div>
           <div className="flex flex-wrap items-center gap-3">
             <h2 id="control-room-title" className="text-xl font-semibold tracking-tight">
-              Your control room
+              {lobbyStrings.yourControlRoom}
             </h2>
             <span className="rounded border border-border bg-background/50 px-2 py-1 text-xs text-muted-foreground">
-              {host ? 'Host terminal' : 'Squad member'}
+              {host ? lobbyStrings.hostTerminal : commonStrings.squadMember}
             </span>
           </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Share your code, fill the squad, and check everyone is ready.
+            {lobbyStrings.shareYourCodeFillTheSquad}
           </p>
         </div>
-        <LockKeyhole className="size-5 text-primary" aria-label="Invite-only squad" />
+        <LockKeyhole className="size-5 text-primary" aria-label={lobbyStrings.inviteOnlySquad} />
       </div>
       <InviteCode code={view.joinCode} onError={onError} />
       <div className="mt-6 mb-4 flex items-center justify-between gap-3">
-        <h3 className="text-sm font-medium">Your engineers</h3>
+        <h3 className="text-sm font-medium">{lobbyStrings.yourEngineers}</h3>
         <span className="rounded-full border border-secondary/40 bg-secondary/10 px-3 py-1 font-mono text-xs">
-          {view.members.length} / {SQUAD_SIZE} joined
+          {view.members.length} / {SQUAD_SIZE}
+          {lobbyStrings.joined}
         </span>
       </div>
-      <ul className="roster space-y-3 list-none p-0" aria-label="Joined engineers">
+      <ul className="roster space-y-3 list-none p-0" aria-label={lobbyStrings.joinedEngineers}>
         {view.members.map((member, index) => (
           <li
             key={member.userId}
@@ -83,17 +87,17 @@ export function LobbyPanel({
                 <p className="flex flex-wrap items-center gap-2 break-words text-sm font-medium">
                   {member.name}
                   {member.userId === userId && (
-                    <span className="text-xs text-muted-foreground">You</span>
+                    <span className="text-xs text-muted-foreground">{commonStrings.you}</span>
                   )}
                   {member.userId === view.hostUserId && (
                     <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      Host
+                      {lobbyStrings.host}
                     </span>
                   )}
                 </p>
                 <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Cpu className="size-3 shrink-0" aria-hidden="true" />
-                  Role assigned at briefing
+                  {lobbyStrings.roleAssignedAtBriefing}
                 </p>
               </div>
             </div>
@@ -106,8 +110,11 @@ export function LobbyPanel({
               )}
             >
               {member.ready && <Check className="size-3" aria-hidden="true" />}
-              {member.ready ? 'Ready' : 'Not ready'}
-              <span className="sr-only">Engineer {index + 1}</span>
+              {member.ready ? lobbyStrings.ready : lobbyStrings.notReady}
+              <span className="sr-only">
+                {lobbyStrings.engineer}
+                {index + 1}
+              </span>
             </span>
           </li>
         ))}
@@ -122,20 +129,24 @@ export function LobbyPanel({
           </span>
           <div>
             <p className="text-sm text-muted-foreground">
-              Waiting for engineer {view.members.length + index + 1}…
+              {lobbyStrings.waitingForEngineer}
+              {view.members.length + index + 1}…
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Share the invite code to fill this seat.
+              {lobbyStrings.shareTheInviteCodeToFill}
             </p>
           </div>
         </div>
       ))}
-      <p className="mt-4 text-xs text-muted-foreground">Roles reveal when the match starts.</p>
+      <p className="mt-4 text-xs text-muted-foreground">
+        {lobbyStrings.rolesRevealWhenTheMatchStarts}
+      </p>
       <div className="mt-6 space-y-4 border-t border-border pt-5">
         <div className="flex items-center justify-between gap-3 text-xs">
           <span className="flex items-center gap-2 text-muted-foreground">
             <Activity className="size-4 text-secondary" aria-hidden="true" />
-            {ready} / {SQUAD_SIZE} engineers ready
+            {ready} / {SQUAD_SIZE}
+            {lobbyStrings.engineersReady}
           </span>
           <span className="font-mono text-muted-foreground">
             {Math.round((ready / SQUAD_SIZE) * 100)}%
@@ -144,7 +155,7 @@ export function LobbyPanel({
         <div
           className="grid grid-cols-3 gap-1.5"
           role="progressbar"
-          aria-label="Squad readiness"
+          aria-label={lobbyStrings.squadReadiness}
           aria-valuemin={0}
           aria-valuemax={SQUAD_SIZE}
           aria-valuenow={ready}
@@ -158,12 +169,12 @@ export function LobbyPanel({
         </div>
         <p className="text-xs leading-5 text-muted-foreground">
           {!full
-            ? 'Waiting for all three engineers to join.'
+            ? lobbyStrings.waitingForAllThreeEngineersTo
             : !canStart
-              ? 'Everyone must mark ready before the host starts.'
+              ? lobbyStrings.everyoneMustMarkReadyBeforeThe
               : host
-                ? 'Squad ready. Start when everyone is set.'
-                : 'Squad ready. Waiting for your host to start.'}
+                ? lobbyStrings.squadReadyStartWhenEveryoneIs
+                : lobbyStrings.squadReadyWaitingForYourHost}
         </p>
         <div className="flex flex-wrap gap-3">
           <Button
@@ -172,7 +183,11 @@ export function LobbyPanel({
             className="min-h-12 flex-1 gap-2 transition-transform active:scale-95 motion-reduce:transform-none"
           >
             <Check aria-hidden="true" />
-            {pendingAction === '/ready' ? 'Saving…' : own?.ready ? 'Not ready' : 'Ready up'}
+            {pendingAction === '/ready'
+              ? lobbyStrings.saving
+              : own?.ready
+                ? lobbyStrings.notReady
+                : lobbyStrings.readyUp}
           </Button>
           {host ? (
             <Button
@@ -182,7 +197,7 @@ export function LobbyPanel({
               className="min-h-12 flex-1 gap-2 transition-none"
             >
               <Play aria-hidden="true" />
-              {pendingAction === '/start' ? 'Starting…' : 'Start match'}
+              {pendingAction === '/start' ? lobbyStrings.starting : lobbyStrings.startMatch}
             </Button>
           ) : (
             <Button
@@ -196,7 +211,7 @@ export function LobbyPanel({
               }
             >
               <LogOut aria-hidden="true" />
-              {pendingAction === '/leave' ? 'Leaving…' : 'Leave'}
+              {pendingAction === '/leave' ? lobbyStrings.leaving : lobbyStrings.leave}
             </Button>
           )}
         </div>

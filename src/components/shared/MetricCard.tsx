@@ -1,3 +1,4 @@
+import { commonStrings } from '@/constants/strings/common';
 import { layoutClassName } from '@/styles/layout';
 export function MetricCard({
   label,
@@ -15,7 +16,10 @@ export function MetricCard({
         {Number(before.toFixed(2)).toLocaleString()} →{' '}
         <strong>{Number(after.toFixed(2)).toLocaleString()}</strong>
       </p>
-      <small>Change: {Number((after - before).toFixed(2)).toLocaleString()}</small>
+      <small>
+        {commonStrings.change}
+        {Number((after - before).toFixed(2)).toLocaleString()}
+      </small>
     </article>
   );
 }

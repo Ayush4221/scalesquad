@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_strings.dart';
+
 import '../../../core/theme/app_colors.g.dart';
 import '../../../core/widgets/app_icon.dart';
 import '../../../core/widgets/surface_card.dart';
@@ -24,9 +26,9 @@ class _MissionPageState extends State<MissionPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Meet your squad'),
+      title: const Text(AppStrings.meetYourSquad),
       leading: IconButton(
-        tooltip: 'Back',
+        tooltip: AppStrings.back,
         icon: const AppIcon(AppGlyph.arrowLeft),
         onPressed: () => Navigator.of(context).pop(),
       ),
@@ -43,7 +45,7 @@ class _MissionPageState extends State<MissionPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'THREE ROLES. ONE SHARED REPAIR.',
+                    AppStrings.threeRolesOneSharedRepair,
                     style: TextStyle(
                       color: AppColors.lime,
                       fontSize: 10,
@@ -52,12 +54,12 @@ class _MissionPageState extends State<MissionPage> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Different clues.\nBetter decisions.',
+                    AppStrings.missionHeadline,
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Explore each perspective. Your real role and private clues reveal when a match begins.',
+                    AppStrings.exploreEachPerspectiveYourRealRole,
                     style: TextStyle(color: AppColors.muted),
                   ),
                   const SizedBox(height: 24),
@@ -97,24 +99,24 @@ class _MissionPageState extends State<MissionPage> {
                   ),
                   const SizedBox(height: 30),
                   Text(
-                    'From clue to comeback.',
+                    AppStrings.fromClueToComeback,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 18),
                   const _Step(
-                    number: '01',
-                    title: 'Read your brief',
-                    text: 'You see facts your teammates don’t. Find the detail that matters.',
+                    number: AppStrings.briefStepNumber,
+                    title: AppStrings.readYourBrief,
+                    text: AppStrings.youSeeFactsYourTeammatesDont,
                   ),
                   const _Step(
-                    number: '02',
-                    title: 'Talk it through',
-                    text: 'Build a shared picture. Private clues enter chat only when you choose to share them.',
+                    number: AppStrings.discussionStepNumber,
+                    title: AppStrings.talkItThrough,
+                    text: AppStrings.buildASharedPicturePrivateClues,
                   ),
                   const _Step(
-                    number: '03',
-                    title: 'Repair. Run. Compare.',
-                    text: 'Change the system together and test your repair against the same incident.',
+                    number: AppStrings.repairStepNumber,
+                    title: AppStrings.repairRunCompare,
+                    text: AppStrings.changeTheSystemTogetherAndTest,
                   ),
                   const SizedBox(height: 8),
                   const SurfaceCard(child: VoiceBetaCard()),

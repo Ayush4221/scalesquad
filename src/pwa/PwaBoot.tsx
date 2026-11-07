@@ -1,4 +1,6 @@
 'use client';
+import { pwaStrings } from '@/constants/strings/pwa';
+
 import { layoutClassName } from '@/styles/layout';
 
 import { useEffect, useState } from 'react';
@@ -49,24 +51,25 @@ export function PwaBoot() {
     <>
       {offline && (
         <div className={layoutClassName('pwa-banner')} role="status">
-          Offline · Reconnect to sync your squad.
+          {pwaStrings.offlineReconnectToSyncYourSquad}
         </div>
       )}
       {waiting && (
         <div className={layoutClassName('pwa-banner')} role="status">
-          Update available. <Button onClick={update}>Reload</Button>
+          {pwaStrings.updateAvailable}
+          <Button onClick={update}>{pwaStrings.reload}</Button>
         </div>
       )}
       {install.canInstall && pathname !== '/' && (
         <div className={layoutClassName('pwa-banner')}>
           <span>
-            {install.ios
-              ? 'Install: tap Share ↑, then Add to Home Screen ⊞.'
-              : 'Keep your squad one tap away.'}
+            {install.ios ? pwaStrings.installTapShareThenAddTo : pwaStrings.keepYourSquadOneTapAway}
           </span>
-          {!install.ios && <Button onClick={() => void install.promptInstall()}>Install</Button>}
+          {!install.ios && (
+            <Button onClick={() => void install.promptInstall()}>{pwaStrings.install}</Button>
+          )}
           <Button variant="ghost" onClick={install.dismiss}>
-            Dismiss
+            {pwaStrings.dismiss}
           </Button>
         </div>
       )}

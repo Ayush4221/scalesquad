@@ -10,9 +10,11 @@ abstract final class AppRouter {
   static Route<void> generate(RouteSettings settings) =>
       MaterialPageRoute<void>(
         settings: settings,
-        builder: (_) => switch (settings.name) {
+        builder: (context) => switch (settings.name) {
           mission => const MissionPage(),
-          _ => const IntroductionPage(),
+          _ => IntroductionPage(
+            onExploreMission: () => Navigator.of(context).pushNamed(mission),
+          ),
         },
       );
 }

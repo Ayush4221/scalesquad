@@ -1,3 +1,4 @@
+import { metricsStrings } from '../constants/strings/metrics';
 /** Simulator utilization is a ratio; display it as a percentage, including overload. */
 export function formatPercent(ratio: number): string {
   return `${Number((ratio * 100).toFixed(2))}%`;
@@ -9,11 +10,15 @@ export function formatMetric(metric: string, value: number): string {
 }
 export function metricDirection(metric: string, before: number, after: number) {
   if (before === after)
-    return { label: 'Unchanged', tone: 'neutral' as const, movement: 'same' as const };
+    return { label: metricsStrings.unchanged, tone: 'neutral' as const, movement: 'same' as const };
   const increased = after > before;
   const improved = metric === 'validAdmissions' ? increased : !increased;
   return {
-    label: improved ? 'Improved' : metric === 'totalCost' ? 'Higher cost' : 'Worsened',
+    label: improved
+      ? metricsStrings.improved
+      : metric === 'totalCost'
+        ? metricsStrings.higherCost
+        : metricsStrings.worsened,
     tone: improved
       ? ('positive' as const)
       : metric === 'totalCost'

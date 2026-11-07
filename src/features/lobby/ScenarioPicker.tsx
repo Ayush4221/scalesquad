@@ -1,4 +1,6 @@
 'use client';
+import { lobbyStrings } from '@/constants/strings/lobby';
+
 import type { ScenarioId } from '@scalesquad/shared';
 import { scenarioCatalog } from '@/constants/scenarios';
 import styles from './dashboard.module.css';
@@ -13,10 +15,8 @@ export function ScenarioPicker({
 }) {
   return (
     <fieldset className={styles.scenarioPicker} disabled={disabled}>
-      <legend>Choose your mission</legend>
-      <p className={styles.hint}>
-        Hosting? Pick a challenge. Joining? Your host has already chosen.
-      </p>
+      <legend>{lobbyStrings.chooseYourMission}</legend>
+      <p className={styles.hint}>{lobbyStrings.hostingPickAChallengeJoiningYour}</p>
       <div className={styles.scenarioOptions}>
         {scenarioCatalog.map((mission) => (
           <label key={mission.id} className={styles.scenarioOption}>

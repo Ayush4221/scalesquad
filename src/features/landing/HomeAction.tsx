@@ -1,4 +1,6 @@
 'use client';
+import { landingStrings } from '@/constants/strings/landing';
+
 import { landingClassName } from './landingStyles';
 
 import Link, { useLinkStatus } from 'next/link';
@@ -14,7 +16,7 @@ function Content({ label }: { label: string }) {
       </span>
       {pending && (
         <span className="sr-only" role="status">
-          Opening signup…
+          {landingStrings.openingSignup}
         </span>
       )}
     </>
@@ -26,7 +28,7 @@ export function HomeAction({ secondary = false }: { secondary?: boolean }) {
       href="/register"
       className={landingClassName(secondary ? 'hm-link hm-account-link' : 'hm-primary')}
     >
-      <Content label={secondary ? 'Create an account' : 'Build your squad'} />
+      <Content label={secondary ? landingStrings.createAnAccount : landingStrings.buildYourSquad} />
     </Link>
   );
 }

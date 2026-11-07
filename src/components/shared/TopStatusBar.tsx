@@ -1,4 +1,6 @@
 'use client';
+import { commonStrings } from '@/constants/strings/common';
+
 import { layoutClassName } from '@/styles/layout';
 
 import { useEffect, useState } from 'react';
@@ -26,7 +28,10 @@ export function TopStatusBar({
       <span>
         {deadline && now !== null ? `${Math.max(0, Math.ceil((deadline - now) / 1000))}s` : ''}
       </span>
-      <span>Editor: {holder}</span>
+      <span>
+        {commonStrings.editor}
+        {holder}
+      </span>
       <span data-connection={connection}>
         <span aria-hidden="true">● </span>
         {connection}

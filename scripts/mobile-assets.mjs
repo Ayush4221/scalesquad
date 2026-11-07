@@ -14,10 +14,47 @@ import {
   Mic,
 } from 'lucide-react';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { palette } from '../src/styles/palette.ts';
 
 const check = process.argv.includes('--check');
+// Both modes use the same outputs. Check mode never writes generated files.
+async function outputAsset(path, contents, image = false) {
+  if (!check) {
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, contents);
+    return;
+  }
+  let actual;
+  try {
+    actual = await readFile(path);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    throw new Error(
+      `Missing mobile asset: ${relative(process.cwd(), path)}. Run npm run mobile:assets.`,
+    );
+  }
+  const expected = Buffer.from(contents);
+  let matches = actual.equals(expected);
+  if (image && !matches) {
+    // PNG compression can vary by platform; compare dimensions and pixels.
+    try {
+      const decode = (buffer) =>
+        sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+      const [left, right] = await Promise.all([decode(actual), decode(expected)]);
+      matches =
+        left.info.width === right.info.width &&
+        left.info.height === right.info.height &&
+        left.data.equals(right.data);
+    } catch {
+      matches = false;
+    }
+  }
+  if (!matches)
+    throw new Error(
+      `Stale mobile asset: ${relative(process.cwd(), path)}. Run npm run mobile:assets.`,
+    );
+}
 const assets = resolve('mobile/assets');
 const colorsPath = resolve('mobile/lib/core/theme/app_colors.g.dart');
 const androidColorsPath = resolve('mobile/android/app/src/main/res/values/colors.xml');
@@ -37,17 +74,8 @@ const colors =
     })
     .join('\n') +
   '\n}\n';
-if (check) {
-  if ((await readFile(colorsPath, 'utf8')) !== colors)
-    throw new Error('Flutter palette is stale. Run npm run mobile:assets.');
-  if ((await readFile(androidColorsPath, 'utf8')) !== androidColors)
-    throw new Error('Android launch palette is stale. Run npm run mobile:assets.');
-  process.stdout.write('Flutter palette matches the shared source.\n');
-  process.exit(0);
-}
-await mkdir(resolve('mobile/lib/core/theme'), { recursive: true });
-await writeFile(colorsPath, colors);
-await writeFile(androidColorsPath, androidColors);
+await outputAsset(colorsPath, colors);
+await outputAsset(androidColorsPath, androidColors);
 const icons = {
   arrow_left: ArrowLeft,
   arrow_right: ArrowRight,
@@ -62,34 +90,39 @@ const icons = {
 };
 for (const scale of [1, 2, 3, 4]) {
   const directory = resolve(assets, 'icons', ...(scale === 1 ? [] : [`${scale}.0x`]));
-  await mkdir(directory, { recursive: true });
   for (const [name, Icon] of Object.entries(icons)) {
     const svg = renderToStaticMarkup(
       React.createElement(Icon, { color: '#ffffff', size: 24, strokeWidth: 2 }),
     );
-    await sharp(Buffer.from(svg))
-      .resize(24 * scale, 24 * scale)
-      .png()
-      .toFile(resolve(directory, `${name}.png`));
+    await outputAsset(
+      resolve(directory, `${name}.png`),
+      await sharp(Buffer.from(svg))
+        .resize(24 * scale, 24 * scale)
+        .png()
+        .toBuffer(),
+      true,
+    );
   }
 }
-for (const name of ['brand', 'fonts', 'licenses'])
-  await mkdir(resolve(assets, name), { recursive: true });
-await sharp(await readFile('public/icons/squad-link.svg'))
-  .resize(176, 176)
-  .png()
-  .toFile(resolve(assets, 'brand/squad_link.png'));
+await outputAsset(
+  resolve(assets, 'brand/squad_link.png'),
+  await sharp(await readFile('public/icons/squad-link.svg'))
+    .resize(176, 176)
+    .png()
+    .toBuffer(),
+  true,
+);
 for (const name of ['chivo', 'bungee']) {
-  await writeFile(
+  await outputAsset(
     resolve(assets, `fonts/${name}.ttf`),
     await readFile(`public/fonts/landing/${name}.ttf`),
   );
-  await writeFile(
+  await outputAsset(
     resolve(assets, `licenses/${name}-OFL.txt`),
     await readFile(`public/fonts/landing/${name}-OFL.txt`),
   );
 }
-await writeFile(
+await outputAsset(
   resolve(assets, 'licenses/lucide-ISC.txt'),
   await readFile('node_modules/lucide-react/LICENSE'),
 );
@@ -100,11 +133,15 @@ for (const [density, size] of Object.entries({
   xxhdpi: 144,
   xxxhdpi: 192,
 })) {
-  await sharp(await readFile('public/icons/icon-512.png'))
-    .resize(size, size)
-    .png()
-    .toFile(resolve(`mobile/android/app/src/main/res/mipmap-${density}/ic_launcher.png`));
+  await outputAsset(
+    resolve(`mobile/android/app/src/main/res/mipmap-${density}/ic_launcher.png`),
+    await sharp(await readFile('public/icons/icon-512.png'))
+      .resize(size, size)
+      .png()
+      .toBuffer(),
+    true,
+  );
 }
 process.stdout.write(
-  'Generated Flutter palette, Lucide icons, approved logo and licensed fonts.\n',
+  `${check ? 'Checked' : 'Generated'} Flutter palette, all icons, approved logo, fonts and licenses.\n`,
 );

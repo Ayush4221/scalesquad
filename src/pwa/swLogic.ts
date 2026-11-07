@@ -1,11 +1,12 @@
+import { pwaStrings } from '@/constants/strings/pwa';
 export const CACHE_NAME = 'scalesquad-static-v3';
 export const OFFLINE_URL = '/offline';
 export const notificationText = {
-  MATCH_STARTED: 'Your squad has started a match.',
-  EVIDENCE_AVAILABLE: 'New private evidence is ready.',
-  LOCK_PASSED_TO_YOU: 'You now have edit control.',
-  RUN_COMPLETED: 'A run has finished.',
-  MATCH_FINISHED: 'Your match has finished.',
+  MATCH_STARTED: pwaStrings.yourSquadHasStartedAMatch,
+  EVIDENCE_AVAILABLE: pwaStrings.newPrivateEvidenceIsReady,
+  LOCK_PASSED_TO_YOU: pwaStrings.youNowHaveEditControl,
+  RUN_COMPLETED: pwaStrings.aRunHasFinished,
+  MATCH_FINISHED: pwaStrings.yourMatchHasFinished,
 } as const;
 export function shouldCache(
   request: Pick<Request, 'method' | 'url' | 'mode'>,

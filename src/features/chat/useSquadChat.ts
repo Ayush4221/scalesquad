@@ -1,4 +1,6 @@
 'use client';
+import { chatStrings } from '@/constants/strings/chat';
+
 import { useEffect, useRef, useState } from 'react';
 import { z } from '../../utils/validation';
 import { api } from '@/lib/api/client';
@@ -14,7 +16,9 @@ export function useSquadChat(
 ) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState('');
-  const [status, setStatus] = useState<'Connecting' | 'Connected' | 'Unavailable'>('Connecting');
+  const [status, setStatus] = useState<'Connecting' | 'Connected' | 'Unavailable'>(
+    chatStrings.connecting,
+  );
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -31,7 +35,7 @@ export function useSquadChat(
   }, [draft]);
   useEffect(() => {
     setMessages([]);
-    setStatus(available ? 'Connecting' : 'Unavailable');
+    setStatus(available ? chatStrings.connecting : chatStrings.unavailable);
     setSending(false);
     pending.current = false;
     if (!available) return;
@@ -63,9 +67,9 @@ export function useSquadChat(
         await instance.close();
         return;
       }
-      setStatus('Connected');
+      setStatus(chatStrings.connected);
     })().catch(() => {
-      if (!stopped) setStatus('Unavailable');
+      if (!stopped) setStatus(chatStrings.unavailable);
       void instance?.close().catch(() => {});
     });
     return () => {
@@ -79,7 +83,7 @@ export function useSquadChat(
     const outgoing = text.trim();
     if (
       !current ||
-      status !== 'Connected' ||
+      status !== chatStrings.connected ||
       pending.current ||
       !outgoing ||
       outgoing.length > CHAT_MESSAGE_MAX_LENGTH
@@ -93,8 +97,7 @@ export function useSquadChat(
       if (client.current === current) setText((value) => (value.trim() === outgoing ? '' : value));
       return client.current === current;
     } catch {
-      if (client.current === current)
-        setSendError('Message not sent. Your draft is safe. Try again.');
+      if (client.current === current) setSendError(chatStrings.messageNotSentYourDraftIs);
       return false;
     } finally {
       if (client.current === current) {
@@ -111,7 +114,7 @@ export function useSquadChat(
     sending,
     sendError,
     send,
-    ready: available && status === 'Connected',
+    ready: available && status === chatStrings.connected,
     reconnect: () => setAttempt((value) => value + 1),
   };
 }

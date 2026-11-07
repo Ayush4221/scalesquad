@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../constants/app_strings.dart';
+
 import '../theme/app_colors.g.dart';
 
 class BrandMark extends StatelessWidget {
   const BrandMark({super.key});
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'ScaleSquad',
+    label: AppStrings.appName,
     child: ExcludeSemantics(
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -17,9 +19,9 @@ class BrandMark extends StatelessWidget {
             child: Text.rich(
               TextSpan(
                 children: [
-                  TextSpan(text: 'SCALE'),
+                  TextSpan(text: AppStrings.scale),
                   TextSpan(
-                    text: 'SQUAD',
+                    text: AppStrings.squad,
                     style: TextStyle(color: AppColors.lime),
                   ),
                 ],

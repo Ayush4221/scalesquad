@@ -1,4 +1,6 @@
 'use client';
+import { chatStrings } from '@/constants/strings/chat';
+
 // Hallmark v2: app screen; ScaleSquad brand; signature: three roles, one deliberate conversation.
 // BETA is the owner's requested voice label. Voice transport remains coming soon.
 import { useEffect, useRef, useState } from 'react';
@@ -43,7 +45,7 @@ export function ChatPanel({
     if (draft) {
       setSection('squad');
       setReply(null);
-      setFeedback('Clue added to draft. Review it before sending.');
+      setFeedback(chatStrings.clueAddedToDraftReviewIt);
     }
   }, [draft]);
   useEffect(() => {
@@ -55,14 +57,14 @@ export function ChatPanel({
     setReply(null);
     chat.setText(text.slice(0, CHAT_MESSAGE_MAX_LENGTH));
     setSection('squad');
-    setFeedback('Clue added to draft. Review it before sending.');
+    setFeedback(chatStrings.clueAddedToDraftReviewIt);
   }
   function mention(name: string) {
     setSection('squad');
     chat.setText((value) =>
       (value + (value ? ' ' : '') + `@${name} `).slice(0, CHAT_MESSAGE_MAX_LENGTH),
     );
-    setFeedback('Mention added to your draft.');
+    setFeedback(chatStrings.mentionAddedToYourDraft);
   }
   async function send() {
     if (await chat.send()) {
@@ -73,19 +75,21 @@ export function ChatPanel({
   return (
     <Card
       className="chat-card min-w-0 gap-5 overflow-clip lg:sticky lg:top-6"
-      aria-label="Squad Desk"
+      aria-label={chatStrings.squadDesk}
     >
       <CardHeader className="gap-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-lg">Squad Desk</CardTitle>
-            <p className="mt-1 text-xs text-muted-foreground">Three perspectives. One repair.</p>
+            <CardTitle className="text-lg">{chatStrings.squadDesk}</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {chatStrings.threePerspectivesOneRepair}
+            </p>
           </div>
           <div className="text-right text-xs">
-            <p className="text-muted-foreground">Nexconn chat</p>
+            <p className="text-muted-foreground">{chatStrings.nexconnChat}</p>
             <p role="status" className="mt-1 text-foreground">
-              {chat.status === 'Unavailable'
-                ? 'Chat unavailable. You can still play.'
+              {chat.status === chatStrings.unavailable
+                ? chatStrings.chatUnavailableYouCanStillPlay
                 : chat.status}
             </p>
           </div>
@@ -93,7 +97,11 @@ export function ChatPanel({
         {showRoster && (
           <ChatRoster members={members} {...(userId ? { userId } : {})} onMention={mention} />
         )}
-        <div className="grid grid-cols-2 gap-2" role="group" aria-label="Squad Desk sections">
+        <div
+          className="grid grid-cols-2 gap-2"
+          role="group"
+          aria-label={chatStrings.squadDeskSections}
+        >
           <Button
             variant={section === 'squad' ? 'secondary' : 'ghost'}
             className="min-h-11 transition-none"
@@ -101,7 +109,7 @@ export function ChatPanel({
             onClick={() => setSection('squad')}
           >
             <MessagesSquare aria-hidden="true" />
-            Squad channel
+            {chatStrings.squadChannel}
           </Button>
           <Button
             variant={section === 'clues' ? 'secondary' : 'ghost'}
@@ -110,7 +118,7 @@ export function ChatPanel({
             onClick={() => setSection('clues')}
           >
             <LockKeyhole aria-hidden="true" />
-            My clues
+            {chatStrings.myClues}
           </Button>
         </div>
       </CardHeader>
@@ -119,9 +127,9 @@ export function ChatPanel({
           <ChatClues cards={cards} onDraft={draftClue} />
         ) : (
           <>
-            {chat.status === 'Connecting' ? (
-              <div className="min-h-40 space-y-4 py-4" aria-label="Loading conversation">
-                <p className="text-sm text-muted-foreground">Connecting your squad…</p>
+            {chat.status === chatStrings.connecting ? (
+              <div className="min-h-40 space-y-4 py-4" aria-label={chatStrings.loadingConversation}>
+                <p className="text-sm text-muted-foreground">{chatStrings.connectingYourSquad}</p>
                 <div className="h-8 w-3/4 rounded bg-muted" />
                 <div className="h-8 w-1/2 rounded bg-muted" />
               </div>
@@ -136,14 +144,14 @@ export function ChatPanel({
                 }}
               />
             )}
-            {chat.status === 'Unavailable' && available && (
+            {chat.status === chatStrings.unavailable && available && (
               <Button
                 variant="outline"
                 className="min-h-11 transition-none"
                 onClick={chat.reconnect}
               >
                 <RefreshCw aria-hidden="true" />
-                Reconnect chat
+                {chatStrings.reconnectChat}
               </Button>
             )}
             <ChatComposer

@@ -1,3 +1,5 @@
+import { commonStrings } from '@/constants/strings/common';
+import { landingStrings } from '@/constants/strings/landing';
 import { landingClassName } from './landingStyles';
 import Link from 'next/link';
 import { BrandLogo } from '@/components/shared/BrandLogo';
@@ -9,15 +11,15 @@ export function LandingPage() {
   return (
     <div className={landingClassName('hallmarkHome')}>
       <a className={landingClassName('hm-skip')} href="#qa-top" tabIndex={0}>
-        Skip to content
+        {landingStrings.skipToContent}
       </a>
       <header className={landingClassName('hm-container hm-nav')}>
         <BrandLogo href="/" />
-        <nav aria-label="Main navigation" className={landingClassName('hm-main-nav')}>
-          <a href="#qa-mission">The mission</a>
-          <a href="#qa-how">How to play</a>
+        <nav aria-label={landingStrings.mainNavigation} className={landingClassName('hm-main-nav')}>
+          <a href="#qa-mission">{landingStrings.theMission}</a>
+          <a href="#qa-how">{landingStrings.howToPlay}</a>
           <Link href="/signin" className={landingClassName('hm-link')}>
-            Sign in
+            {commonStrings.signIn}
           </Link>
         </nav>
       </header>
@@ -26,19 +28,20 @@ export function LandingPage() {
           <div className={landingClassName('hm-opening')}>
             <h1
               id="home-title"
-              aria-label="Think as a squad."
+              aria-label={landingStrings.thinkAsASquad}
               className={landingClassName('hm-headline')}
             >
-              Think as
-              <br />a squad.
+              {landingStrings.thinkAs}
+              <br />
+              {landingStrings.aSquad}
             </h1>
             <p className={landingClassName('hm-lede')}>
-              A system design game for three engineers with different private clues.
+              {landingStrings.aSystemDesignGameForThree}
             </p>
             <div className={landingClassName('hm-actions')}>
               <HomeAction />
               <a href="#qa-mission" className={landingClassName('hm-link')}>
-                Explore CampusPass
+                {landingStrings.exploreCampuspass}
               </a>
             </div>
           </div>
@@ -52,26 +55,24 @@ export function LandingPage() {
           <div className={landingClassName('hm-container hm-mission-layout')}>
             <div>
               <h2 id="mission-title">
-                One pass.
+                {landingStrings.onePass}
                 <br />
-                One admission.
+                {landingStrings.oneAdmission}
               </h2>
-              <p>
-                CampusPass handles festival check-ins. Your squad repairs a system under pressure.
-              </p>
+              <p>{landingStrings.campuspassHandlesFestivalCheckInsYour}</p>
             </div>
             <dl className={landingClassName('hm-objectives')}>
               <div>
-                <dt>Correctness</dt>
-                <dd>Protect single-use passes.</dd>
+                <dt>{commonStrings.correctness}</dt>
+                <dd>{commonStrings.protectSingleUsePasses}</dd>
               </div>
               <div>
-                <dt>Throughput</dt>
-                <dd>Keep the gates moving.</dd>
+                <dt>{landingStrings.throughput}</dt>
+                <dd>{commonStrings.keepTheGatesMoving}</dd>
               </div>
               <div>
-                <dt>Cost</dt>
-                <dd>Stay within the budget.</dd>
+                <dt>{landingStrings.cost}</dt>
+                <dd>{landingStrings.stayWithinTheBudget}</dd>
               </div>
             </dl>
           </div>
@@ -83,11 +84,11 @@ export function LandingPage() {
         >
           <div className={landingClassName('hm-round-heading')}>
             <h2 id="round-title">
-              The next run
+              {landingStrings.theNextRun}
               <br />
-              gets the last word.
+              {landingStrings.getsTheLastWord}
             </h2>
-            <p>Follow the squad from its first clue to its next test.</p>
+            <p>{landingStrings.followTheSquadFromItsFirst}</p>
           </div>
           <GameWalkthrough />
         </section>
@@ -96,17 +97,17 @@ export function LandingPage() {
           aria-labelledby="ready-title"
         >
           <h2 id="ready-title">
-            Bring two people
+            {landingStrings.bringTwoPeople}
             <br />
-            who challenge your thinking.
+            {landingStrings.whoChallengeYourThinking}
           </h2>
           <HomeAction secondary />
         </section>
       </main>
       <footer className={landingClassName('hm-container hm-footer')}>
-        <span>ScaleSquad</span>
-        <p>Build together. Prove it together.</p>
-        <a href="#qa-top">Back to top</a>
+        <span>{commonStrings.scalesquad}</span>
+        <p>{landingStrings.buildTogetherProveItTogether}</p>
+        <a href="#qa-top">{landingStrings.backToTop}</a>
       </footer>
     </div>
   );

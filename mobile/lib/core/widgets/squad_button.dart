@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../constants/app_strings.dart';
+
 import '../theme/app_colors.g.dart';
 import 'app_icon.dart';
 
@@ -39,7 +41,7 @@ class SquadButton extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Expanded(child: Text(busy ? 'Working…' : label)),
+            Expanded(child: Text(busy ? AppStrings.working : label)),
             const SizedBox(width: 12),
             if (busy && !MediaQuery.disableAnimationsOf(context))
               const SizedBox(

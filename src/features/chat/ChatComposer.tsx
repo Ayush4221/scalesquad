@@ -1,4 +1,6 @@
 'use client';
+import { chatStrings } from '@/constants/strings/chat';
+
 import type { RefObject } from 'react';
 import { ArrowUp, LoaderCircle, LockKeyhole, NotebookText, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -39,7 +41,10 @@ export function ChatComposer({
         {reply && (
           <div className="mb-3 flex items-start justify-between gap-3 border-l-2 border-secondary pl-3 text-xs">
             <div className="min-w-0">
-              <p className="font-medium">Replying to {reply.name}</p>
+              <p className="font-medium">
+                {chatStrings.replyingTo}
+                {reply.name}
+              </p>
               <p className="mt-1 line-clamp-2 break-words text-muted-foreground">{reply.text}</p>
             </div>
             <Button
@@ -48,14 +53,14 @@ export function ChatComposer({
               size="icon"
               className="min-h-11 min-w-11 transition-none"
               onClick={onCancelReply}
-              aria-label="Cancel reply"
+              aria-label={chatStrings.cancelReply}
             >
               <X aria-hidden="true" />
             </Button>
           </div>
         )}
         <label htmlFor="squad-message" className="sr-only">
-          Message your squad
+          {chatStrings.messageYourSquad}
         </label>
         <textarea
           ref={inputRef}
@@ -63,7 +68,7 @@ export function ChatComposer({
           value={text}
           onChange={(event) => onChange(event.target.value)}
           maxLength={CHAT_MESSAGE_MAX_LENGTH}
-          placeholder="What should your squad know?"
+          placeholder={chatStrings.whatShouldYourSquadKnow}
           disabled={!ready || sending}
           aria-describedby="chat-privacy"
           className="block min-h-24 w-full resize-y rounded bg-transparent p-1 text-base leading-6 text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:text-sm"
@@ -76,7 +81,7 @@ export function ChatComposer({
             onClick={onClues}
           >
             <NotebookText aria-hidden="true" />
-            Choose a clue
+            {chatStrings.chooseAClue}
           </Button>
           <Button
             type="submit"
@@ -90,11 +95,11 @@ export function ChatComposer({
                   className="animate-spin motion-reduce:animate-none"
                   aria-hidden="true"
                 />
-                Sending
+                {chatStrings.sending}
               </>
             ) : (
               <>
-                Send
+                {chatStrings.send}
                 <ArrowUp aria-hidden="true" />
               </>
             )}
@@ -111,7 +116,7 @@ export function ChatComposer({
         className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"
       >
         <LockKeyhole className="mt-0.5 size-3 shrink-0" aria-hidden="true" />
-        Evidence stays private until you choose to share it.
+        {chatStrings.evidenceStaysPrivateUntilYouChoose}
       </p>
     </div>
   );

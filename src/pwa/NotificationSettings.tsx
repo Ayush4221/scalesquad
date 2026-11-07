@@ -1,4 +1,6 @@
 'use client';
+import { pwaStrings } from '@/constants/strings/pwa';
+
 import { layoutClassName } from '@/styles/layout';
 
 import { useEffect, useState } from 'react';
@@ -64,33 +66,33 @@ export function NotificationSettings() {
       }
       setEnabled(true);
     } catch {
-      setError('Could not enable notifications. Try again.');
+      setError(pwaStrings.couldNotEnableNotificationsTryAgain);
     } finally {
       setBusy(false);
     }
   }
   return (
     <section className="space-y-3">
-      <h3 className="font-bold">Squad notifications</h3>
+      <h3 className="font-bold">{pwaStrings.squadNotifications}</h3>
       <p className={layoutClassName('muted text-sm')}>
         {!available
-          ? 'Install ScaleSquad on your home screen to use notifications.'
+          ? pwaStrings.installScalesquadOnYourHomeScreen
           : !key
-            ? 'Notifications are unavailable.'
+            ? pwaStrings.notificationsAreUnavailable
             : permission === 'denied'
-              ? 'Notifications blocked. Change this in your browser settings.'
+              ? pwaStrings.notificationsBlockedChangeThisInYour
               : enabled
-                ? 'Notifications on for this device.'
-                : 'Get a nudge when your squad needs you.'}
+                ? pwaStrings.notificationsOnForThisDevice
+                : pwaStrings.getANudgeWhenYourSquad}
       </p>
       {available && key && permission === 'default' && (
         <Button disabled={busy} onClick={() => void enable()}>
-          Enable notifications
+          {pwaStrings.enableNotifications}
         </Button>
       )}
       {available && key && permission === 'granted' && !enabled && (
         <Button disabled={busy} onClick={() => void enable()}>
-          Enable on this device
+          {pwaStrings.enableOnThisDevice}
         </Button>
       )}
       {enabled && (
@@ -104,14 +106,14 @@ export function NotificationSettings() {
                 await disableNotifications();
                 setEnabled(false);
               } catch {
-                setError('Could not disable notifications.');
+                setError(pwaStrings.disableNotificationsFailure);
               } finally {
                 setBusy(false);
               }
             })()
           }
         >
-          Disable notifications
+          {pwaStrings.disableNotifications}
         </Button>
       )}
       {error && <p role="alert">{error}</p>}

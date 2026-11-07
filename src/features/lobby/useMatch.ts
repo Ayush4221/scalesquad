@@ -1,4 +1,6 @@
 'use client';
+import { lobbyStrings } from '@/constants/strings/lobby';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { z } from '../../utils/validation';
 import { EvidenceCard, PublicMatchView } from '@scalesquad/shared';
@@ -34,7 +36,7 @@ export function useMatch(matchId: string) {
     setCards([]);
     setError('');
     void refresh().catch((e) => {
-      if (active) setError(clientErrorMessage(e, 'Cannot load match'));
+      if (active) setError(clientErrorMessage(e, lobbyStrings.cannotLoadMatch));
     });
     const url = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`;
     const client = new WsClient(
@@ -57,7 +59,7 @@ export function useMatch(matchId: string) {
         }
         if (event.type === 'match.snapshot') accept(event.payload);
         if (event.type === 'evidence.available')
-          void evidence().catch(() => setError('Could not load private evidence'));
+          void evidence().catch(() => setError(lobbyStrings.couldNotLoadPrivateEvidence));
         if (event.type === 'error') setError(clientErrorMessage(new Error(event.payload.message)));
         if (event.type === 'run.completed') void refresh().catch(() => {});
       },
@@ -82,7 +84,7 @@ export function useMatch(matchId: string) {
   }, [matchId, refresh, evidence, accept]);
   useEffect(() => {
     if (view && view.phase !== 'LOBBY')
-      void evidence().catch(() => setError('Could not load private evidence'));
+      void evidence().catch(() => setError(lobbyStrings.couldNotLoadPrivateEvidence));
   }, [view?.phase, evidence]);
   async function action(path: string, body: unknown = {}, reload = true) {
     if (requestPending.current) return false;
@@ -95,7 +97,7 @@ export function useMatch(matchId: string) {
       return true;
     } catch (e) {
       await refresh().catch(() => {});
-      setError(clientErrorMessage(e, 'Request failed'));
+      setError(clientErrorMessage(e, lobbyStrings.requestFailed));
       return false;
     } finally {
       requestPending.current = false;

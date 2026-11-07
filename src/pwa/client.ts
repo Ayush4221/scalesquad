@@ -1,3 +1,4 @@
+import { pwaStrings } from '@/constants/strings/pwa';
 export async function purgeCaches(): Promise<void> {
   if ('serviceWorker' in navigator) {
     try {
@@ -32,6 +33,6 @@ export async function disableNotifications(): Promise<void> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ endpoint: subscription.endpoint }),
   });
-  if (!response.ok) throw new Error('Could not disable notifications');
+  if (!response.ok) throw new Error(pwaStrings.couldNotDisableNotifications);
   await subscription.unsubscribe();
 }

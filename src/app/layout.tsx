@@ -1,3 +1,5 @@
+import { appStrings } from '@/constants/strings/app';
+import { commonStrings } from '@/constants/strings/common';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { headers } from 'next/headers';
@@ -6,9 +8,13 @@ import { PwaBoot } from '@/pwa/PwaBoot';
 import { palette, paletteVariables } from '@/styles/palette';
 import './globals.css';
 export const metadata: Metadata = {
-  title: 'ScaleSquad',
-  description: 'Build together. Predict failure. Survive the system.',
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'ScaleSquad' },
+  title: commonStrings.scalesquad,
+  description: appStrings.buildTogetherPredictFailureSurviveThe,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: commonStrings.scalesquad,
+  },
   icons: {
     icon: { url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' },
     apple: '/icons/apple-touch-icon.png',

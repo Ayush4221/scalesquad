@@ -612,3 +612,23 @@ Domain contracts live in `src/server/domain`. Infrastructure adapters live in
 under `src/server/utils`; server constants use `src/server/constants`. ESLint
 keeps these runtime boundaries so browser imports cannot pull Node helpers.
 The old middleware rate-limit re-export shim is removed.
+
+### Shared display text and helpers (2026-11-07)
+
+Web display text lives in `src/constants/strings/`, split by feature with
+`common.ts` for shared labels. Existing scenario metadata, validation messages
+and safe server error defaults remain in their established canonical modules.
+Dynamic display messages use typed builders beside their feature's text.
+Android preview text lives in `mobile/lib/core/constants/app_strings.dart`.
+Keep wording and accessible labels out of view/transport implementations.
+Routes, wire values, CSS classes and environment keys are not display copy.
+
+Reusable web helpers stay under `src/utils`, including metric and person-name
+formatting. Keep helpers focused; do not mix UI text into a catch-all utilities
+file. Helpers also consumed by the compiled simulator use relative imports.
+The PWA build inlines its display constants into the standalone worker and
+HTML-escapes constants inserted into the offline shell.
+
+Android feature views receive navigation callbacks from app composition. Mobile
+asset drift verification covers all exported palettes, icons, logo, fonts and
+licences, using decoded PNG pixels to tolerate platform compression differences.

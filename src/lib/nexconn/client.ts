@@ -1,3 +1,4 @@
+import { networkStrings } from '@/constants/strings/network';
 import { CHAT_MESSAGE_MAX_LENGTH } from '@/constants/chat';
 import {
   AreaCode,
@@ -94,7 +95,7 @@ export class NexconnClient implements ChatClient {
       }),
     );
     const result = await NCEngine.connect({ token: access.token });
-    if (result.code !== 0) throw new Error('Chat connection failed');
+    if (result.code !== 0) throw new Error(networkStrings.chatConnectionFailed);
     if (this.closed) return;
     const history = await BaseChannel.createMessagesQuery({
       channelIdentifier: this.channel.identifier,
@@ -112,9 +113,9 @@ export class NexconnClient implements ChatClient {
       !text.trim() ||
       text.length > CHAT_MESSAGE_MAX_LENGTH
     )
-      throw new Error('Invalid chat message');
+      throw new Error(networkStrings.invalidChatMessage);
     const result = await this.channel.sendMessage(new SendTextMessageParams({ text: text.trim() }));
-    if (result.code !== 0) throw new Error('Message not sent');
+    if (result.code !== 0) throw new Error(networkStrings.messageNotSent);
     if (result.data) this.receive?.(this.map([result.data]));
   }
   async close() {

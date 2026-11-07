@@ -1,3 +1,4 @@
+import { networkStrings } from '@/constants/strings/network';
 import { AppError, ErrorCode } from '@scalesquad/shared';
 import { errorMessages } from '@/constants/errorMessages';
 
@@ -35,7 +36,7 @@ export async function api<T>(
         response.ok ? 502 : response.status,
         response.status === 429 || response.status === 401
           ? errorMessages[code]
-          : 'The service returned an unreadable response. Please try again.',
+          : networkStrings.theServiceReturnedAnUnreadableResponse,
         Number.isFinite(seconds) && seconds > 0
           ? { retryAfterSeconds: Math.min(seconds, 86400) }
           : {},
@@ -87,8 +88,8 @@ export async function api<T>(
       'UPSTREAM_UNAVAILABLE',
       503,
       controller.signal.aborted
-        ? 'The request took too long. Please try again.'
-        : 'Cannot reach the service. Check your connection and try again.',
+        ? networkStrings.theRequestTookTooLongPlease
+        : networkStrings.cannotReachTheServiceCheckYour,
     );
   } finally {
     clearTimeout(timer);

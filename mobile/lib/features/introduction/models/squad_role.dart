@@ -1,18 +1,20 @@
+import '../../../core/constants/app_strings.dart';
+
 enum SquadRole {
   traffic(
-    'Traffic',
-    'Read the surge.',
-    'Understand incoming demand and the retries that can turn a busy entrance into a bottleneck.',
+    AppStrings.traffic,
+    AppStrings.readTheSurge,
+    AppStrings.understandIncomingDemandAndTheRetries,
   ),
   data(
-    'Data',
-    'Protect every pass.',
-    'Think about identity and consistency. One valid pass should mean one admission.',
+    AppStrings.data,
+    AppStrings.protectEveryPass,
+    AppStrings.thinkAboutIdentityAndConsistencyOne,
   ),
   operations(
-    'Operations',
-    'Keep the system moving.',
-    'Balance capacity, reliability and budget. A repair needs to hold up under pressure.',
+    AppStrings.operations,
+    AppStrings.keepTheSystemMoving,
+    AppStrings.balanceCapacityReliabilityAndBudgetA,
   );
 
   const SquadRole(this.label, this.heading, this.description);
