@@ -31,6 +31,10 @@ delete only their own users and matches. Third-party network traffic is blocked.
 The suite runs with 2 workers by default (whole files in parallel; tests inside a
 file stay in order). Set `E2E_WORKERS=1` (or pass `--workers=1`) if simulation
 runs time out on a slow machine.
+CI explicitly sets `E2E_WORKERS=2`; the three browser projects run in separate
+parallel jobs. Aborted database serialization transactions use bounded backoff
+before retrying. Squad setup checks each readiness response and saved UI state before
+starting the match, so request failures surface at the step that caused them.
 
 After one build, use `npx playwright test --project=mobile-ios` (or `chromium`,
 `mobile-android`) for a shorter run. `npm run test:e2e:ui` opens the runner;

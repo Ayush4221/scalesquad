@@ -140,6 +140,8 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       E2E_DATABASE_URL: postgresql://scalesquad_ci:${{ github.run_id }}-${{ github.run_attempt }}@127.0.0.1:5432/scalesquad_e2e_test
+      # Keep the worker limit explicit; browser projects run in separate parallel jobs.
+      E2E_WORKERS: '2'
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:

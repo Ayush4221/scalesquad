@@ -78,6 +78,8 @@ are registered with Flutter's licence registry at startup.
 `npm run mobile:assets:check` checks both palettes, every icon density, launcher
 icons, the logo, fonts and licence copies. It never rewrites files. PNG checks
 compare pixels and dimensions when compression bytes differ across platforms.
+Palettes and licence copies compare text with normalized line endings; font
+files remain byte-exact. Generated text always uses LF on Windows and Linux.
 Missing or stale files fail with their path and the regeneration command.
 
 Feature pages receive navigation callbacks from the app router. They do not

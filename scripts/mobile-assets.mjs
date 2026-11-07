@@ -22,7 +22,10 @@ const check = process.argv.includes('--check');
 async function outputAsset(path, contents, image = false) {
   if (!check) {
     await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, contents);
+    await writeFile(
+      path,
+      typeof contents === 'string' ? contents.replace(/\r\n/g, '\n') : contents,
+    );
     return;
   }
   let actual;
@@ -123,12 +126,12 @@ for (const name of ['chivo', 'bungee']) {
   );
   await outputAsset(
     resolve(assets, `licenses/${name}-OFL.txt`),
-    await readFile(`public/fonts/landing/${name}-OFL.txt`),
+    await readFile(`public/fonts/landing/${name}-OFL.txt`, 'utf8'),
   );
 }
 await outputAsset(
   resolve(assets, 'licenses/lucide-ISC.txt'),
-  await readFile('node_modules/lucide-react/LICENSE'),
+  await readFile('node_modules/lucide-react/LICENSE', 'utf8'),
 );
 for (const [density, size] of Object.entries({
   mdpi: 48,
