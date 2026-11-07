@@ -35,7 +35,11 @@ async function outputAsset(path, contents, image = false) {
     );
   }
   const expected = Buffer.from(contents);
-  let matches = actual.equals(expected);
+  // Text may be checked out with CRLF on Windows. Content must still match.
+  let matches =
+    typeof contents === 'string'
+      ? actual.toString('utf8').replace(/\r\n/g, '\n') === contents.replace(/\r\n/g, '\n')
+      : actual.equals(expected);
   if (image && !matches) {
     // PNG compression can vary by platform; compare dimensions and pixels.
     try {
