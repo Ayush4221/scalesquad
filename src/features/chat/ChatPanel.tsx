@@ -23,6 +23,7 @@ export function ChatPanel({
   userId,
   draft,
   onIncoming,
+  showRoster = true,
 }: {
   matchId: string;
   available: boolean;
@@ -31,6 +32,7 @@ export function ChatPanel({
   userId?: string;
   draft?: ChatDraft;
   onIncoming?: () => void;
+  showRoster?: boolean;
 }) {
   const chat = useSquadChat(matchId, available, draft, onIncoming);
   const [section, setSection] = useState<'squad' | 'clues'>('squad');
@@ -88,7 +90,9 @@ export function ChatPanel({
             </p>
           </div>
         </div>
-        <ChatRoster members={members} {...(userId ? { userId } : {})} onMention={mention} />
+        {showRoster && (
+          <ChatRoster members={members} {...(userId ? { userId } : {})} onMention={mention} />
+        )}
         <div className="grid grid-cols-2 gap-2" role="group" aria-label="Squad Desk sections">
           <Button
             variant={section === 'squad' ? 'secondary' : 'ghost'}

@@ -104,3 +104,9 @@ environment variable and the account pairs above as environment **secrets**.
 Those secrets are available only to that manual test step. It uploads no reports,
 traces, screenshots, outbox files or databases. Normal PR jobs need no account
 secrets. The workflow must be committed/pushed before GitHub can run it.
+
+Failure-injection checks assert the message shown to the player, not the mocked
+backend diagnostic. A JSON 503 produces the generic service-unavailable message;
+sign-in distinguishes an outage from invalid credentials. Keep those assertions
+separate and verify private diagnostics never appear in the page. Scope error
+locators to `main` so Next.js's route announcer is not matched as another alert.

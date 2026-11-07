@@ -7,6 +7,17 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --background-image-lobby-grid:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--border) 15%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--border) 15%, transparent) 1px,
+      transparent 1px
+    );
   --font-brand-body: var(--font-squad-body);
   --font-brand-display: var(--font-squad-display);
   --color-warning: var(--warning);

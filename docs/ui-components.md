@@ -104,3 +104,28 @@ landing component tests passed after sharing font declarations. Desktop and
 phone screenshots were inspected. Hallmark static audit: no findings; its render
 runner cannot authenticate this route, so visual checks used authenticated
 Playwright sessions instead.
+
+## Squad lobby
+
+The lobby follows the owner's supplied `campuspass_squad_lobby_ui.html` reference:
+a mission header, eight invite-code tiles, three engineer seats, readiness meter,
+and chat beside the control room. On phones the panels stack and remain visible
+without switching tabs. `LobbyScreen`, `LobbyPanel` and `InviteCode` separate the
+page layout, squad actions and sharing controls. Styles use Tailwind and the
+shared palette; the grid background is a theme token.
+
+Player names, joined count, readiness, connection and mission goals come from
+the current match. Roles stay hidden until briefing, and the host can start only
+when all three players are ready. Copy reports success; Share uses native sharing
+when available and otherwise copies the code. The code can be masked locally.
+The existing chat remains available in the lobby; its duplicate roster is hidden
+there. Voice keeps its BETA / Coming soon label and disabled join control.
+No simulated players, latency, region claims or voice activation are included.
+
+Validation (2026-11-07): production and server builds, typecheck, lint and 429
+unit/integration tests passed. All 24 selected browser cases passed across
+desktop, Android and iPhone after correcting an old error-message assertion.
+The browser cases cover joining, readiness, host authority, capacity, leaving
+and retrying, the full match loop, chat failure, code masking and viewport fit.
+Desktop and phone screenshots were inspected. Browser chat uses the isolated
+test setup; these checks do not establish live Nexconn message delivery.

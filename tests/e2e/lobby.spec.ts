@@ -55,7 +55,9 @@ test('a failed leave keeps the player in the room and allows retry', async ({ sq
     }),
   );
   await player.page.getByRole('button', { name: 'Leave', exact: true }).click();
-  await expect(player.page.locator('.error[role="alert"]')).toContainText('Chat is unavailable');
+  await expect(player.page.getByRole('main').getByRole('alert')).toContainText(
+    'The service is temporarily unavailable. Please try again.',
+  );
   await expect(player.page).toHaveURL(new RegExp(`/match/${s.matchId}$`));
   expect(await s.db.matchMember.count({ where: { matchId: s.matchId } })).toBe(3);
   await player.page.unroute(`**/api/game/matches/${s.matchId}/leave`);

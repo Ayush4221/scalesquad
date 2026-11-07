@@ -28,11 +28,16 @@ test('dashboard validates locally, recovers from failure and fits narrow screens
   await create.click();
   await expect(page.getByRole('button', { name: 'Creating squad…' })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Join', exact: true })).toBeDisabled();
-  await expect(page.getByRole('main').getByRole('alert')).toContainText('Try again shortly.');
+  await expect(page.getByRole('main').getByRole('alert')).toContainText(
+    'The service is temporarily unavailable. Please try again.',
+  );
+  await expect(page.getByText('Try again shortly.', { exact: true })).toHaveCount(0);
   await expect(create).toBeEnabled();
   expect(calls).toBe(1);
   await create.click();
-  await expect(page.getByRole('main').getByRole('alert')).toContainText('Try again shortly.');
+  await expect(page.getByRole('main').getByRole('alert')).toContainText(
+    'The service is temporarily unavailable. Please try again.',
+  );
   expect(calls).toBe(2);
   await page.unroute('**/api/game/matches');
   await page.reload();

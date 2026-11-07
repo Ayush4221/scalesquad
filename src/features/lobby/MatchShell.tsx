@@ -4,7 +4,7 @@ import { layoutClassName } from '@/styles/layout';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useMatch } from './useMatch';
-import { LobbyPanel } from './LobbyPanel';
+import { LobbyScreen } from './LobbyScreen';
 import { SquadPanel } from './SquadPanel';
 import { RunAction } from './RunAction';
 import { BrandLogo } from '@/components/shared/BrandLogo';
@@ -50,6 +50,19 @@ export function MatchShell({ matchId, userId }: { matchId: string; userId: strin
   const own = view.members.find((u) => u.userId === userId),
     isHost = view.hostUserId === userId;
   const repair = ['REPAIR_1', 'REPAIR_2'].includes(view.phase);
+  if (view.phase === 'LOBBY')
+    return (
+      <LobbyScreen
+        view={view}
+        userId={userId}
+        connection={connection}
+        error={error}
+        busy={busy}
+        pendingAction={pendingAction}
+        action={action}
+        onError={setError}
+      />
+    );
   return (
     <SafeAreaView>
       <main className={layoutClassName('page-shell match-shell')} data-tab={tab}>
@@ -69,7 +82,7 @@ export function MatchShell({ matchId, userId }: { matchId: string; userId: strin
           <p className={layoutClassName('eyebrow')}>
             {view.scenario.title} / {view.phase.replaceAll('_', ' ')}
           </p>
-          <h1>{view.phase === 'LOBBY' ? 'Assemble your squad.' : 'Keep the gates moving.'}</h1>
+          <h1>Keep the gates moving.</h1>
           <p className={layoutClassName('match-intro')}>{directions[view.phase]}</p>
           <div className={layoutClassName('goal-strip')}>
             <span>
@@ -104,85 +117,74 @@ export function MatchShell({ matchId, userId }: { matchId: string; userId: strin
         )}
         <div className={layoutClassName('match-grid')}>
           <div className="space-y-6">
-            {view.phase === 'LOBBY' ? (
-              <LobbyPanel
-                view={view}
-                userId={userId}
-                busy={busy}
-                pendingAction={pendingAction}
-                action={action}
-                onError={setError}
-              />
-            ) : (
-              <>
-                <div className={layoutClassName('tab-brief')}>
-                  <BriefPanel
-                    cards={cards}
-                    acknowledged={
-                      own?.acknowledged === true ||
-                      !['BRIEFING', 'INCIDENT_EVIDENCE'].includes(view.phase)
-                    }
-                    busy={busy}
-                    onAcknowledge={() => void action('/acknowledge')}
-                    onShare={(text) => {
-                      setDraft({ text, id: Date.now() });
-                      setTab('Chat');
-                      setUnread(0);
-                    }}
-                  />
-                </div>
-                <SquadPanel view={view} />
-                <div className={layoutClassName('tab-repair')}>
-                  <RepairPanel
+            <>
+              <div className={layoutClassName('tab-brief')}>
+                <BriefPanel
+                  cards={cards}
+                  acknowledged={
+                    own?.acknowledged === true ||
+                    !['BRIEFING', 'INCIDENT_EVIDENCE'].includes(view.phase)
+                  }
+                  busy={busy}
+                  onAcknowledge={() => void action('/acknowledge')}
+                  onShare={(text) => {
+                    setDraft({ text, id: Date.now() });
+                    setTab('Chat');
+                    setUnread(0);
+                  }}
+                />
+              </div>
+              <SquadPanel view={view} />
+              <div className={layoutClassName('tab-repair')}>
+                <RepairPanel
+                  view={view}
+                  userId={userId}
+                  busy={busy}
+                  onChange={(change) =>
+                    void action('/config', {
+                      change,
+                      expectedVersion: view.configuration.version,
+                    })
+                  }
+                  onPass={(targetUserId) => void action('/lock/pass', { targetUserId })}
+                  onReclaim={() => void action('/lock/reclaim')}
+                />
+                {repair && (
+                  <RunAction
                     view={view}
                     userId={userId}
-                    busy={busy}
-                    onChange={(change) =>
-                      void action('/config', {
-                        change,
-                        expectedVersion: view.configuration.version,
-                      })
-                    }
-                    onPass={(targetUserId) => void action('/lock/pass', { targetUserId })}
-                    onReclaim={() => void action('/lock/reclaim')}
+                    pendingAction={pendingAction}
+                    action={action}
                   />
-                  {repair && (
-                    <RunAction
-                      view={view}
-                      userId={userId}
-                      pendingAction={pendingAction}
-                      action={action}
-                    />
-                  )}
-                </div>
-                {view.phase === 'RUNS_1_2' && isHost && (
-                  <Button
-                    disabled={busy || view.simulationLocked || view.runs.length < 2}
-                    onClick={() => void action('/advance')}
-                  >
-                    Reveal incident evidence →
-                  </Button>
                 )}
-                {view.phase === 'COMPARE' && isHost && (
-                  <Button disabled={busy} onClick={() => void action('/advance')}>
-                    Finish match
-                  </Button>
-                )}
-                <div className={layoutClassName('tab-results')}>
-                  <ResultsPanel
-                    runs={view.runs}
-                    comparison={view.comparison}
-                    presetConfiguration={view.scenario.presetConfiguration}
-                    repairedConfiguration={view.configuration.values}
-                  />
-                </div>
-                {view.phase === 'FINISHED' && (
-                  <Link href="/play" className={layoutClassName('play-again')}>
-                    Play again →
-                  </Link>
-                )}
-              </>
-            )}
+              </div>
+              {view.phase === 'RUNS_1_2' && isHost && (
+                <Button
+                  disabled={busy || view.simulationLocked || view.runs.length < 2}
+                  onClick={() => void action('/advance')}
+                >
+                  Reveal incident evidence →
+                </Button>
+              )}
+              {view.phase === 'COMPARE' && isHost && (
+                <Button disabled={busy} onClick={() => void action('/advance')}>
+                  Finish match
+                </Button>
+              )}
+              <div className={layoutClassName('tab-results')}>
+                <ResultsPanel
+                  runs={view.runs}
+                  comparison={view.comparison}
+                  presetConfiguration={view.scenario.presetConfiguration}
+                  repairedConfiguration={view.configuration.values}
+                />
+              </div>
+              {view.phase === 'FINISHED' && (
+                <Link href="/play" className={layoutClassName('play-again')}>
+                  Play again →
+                </Link>
+              )}
+            </>
           </div>
           <aside className={layoutClassName('tab-chat')}>
             <ChatPanel

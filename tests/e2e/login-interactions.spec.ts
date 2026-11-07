@@ -46,7 +46,9 @@ test('sign-in loading keeps its size, locks controls, and restores a safe retry'
     expect(attempts).toBe(1);
     release();
     const error = page.getByRole('main').getByRole('alert');
-    await expect(error).toContainText('Could not sign in with those details');
+    await expect(error).toContainText(
+      'Sign-in is temporarily unavailable. Please try again shortly.',
+    );
     await expect(error).toBeFocused();
     await expect(page.getByText('private backend diagnostic')).toHaveCount(0);
     await expect(submit).toBeEnabled();
@@ -59,7 +61,8 @@ test('sign-in loading keeps its size, locks controls, and restores a safe retry'
     if (testInfo.project.use.hasTouch) await submit.tap();
     else await submit.click();
     expect((await response).status()).toBe(401);
-    await expect(error).toBeVisible();
+    await expect(error).toContainText('Could not sign in with those details');
+    await expect(page.getByText('private backend diagnostic')).toHaveCount(0);
     await expect(submit).toBeEnabled();
     expect(attempts).toBe(2);
     await expect(page).toHaveURL(/\/signin$/);
