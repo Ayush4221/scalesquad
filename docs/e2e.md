@@ -123,8 +123,33 @@ in `mobile-ux.md`. Email delivery and recovery are removed by owner choice.
 
 Actions are pinned to commit hashes. Gitleaks uses a checksum-verified official
 release. Dependabot checks root npm dependencies and Actions weekly. Browser
-jobs are initially advisory (`continue-on-error`), as plan 12 requires; all other
-checks block on failure. Branch protection is an owner setting.
+jobs now fail the workflow when tests fail (owner update, 2026-11-07). The
+`CI required` job waits for lint/types/coverage/build, database tests, audit,
+secret scan and every browser project. Failed, cancelled or skipped dependencies
+fail that gate. Optional configured-account checks remain manual and are not a
+required PR check. Merge-queue events also run the workflow.
+
+Dependabot's npm and GitHub Actions version-update PRs target `development`.
+GitHub still creates the PR before running its PR checks; Dependabot cannot wait
+for those checks before opening it. Enforce passing CI before **merging** instead.
+
+Repository settings are separate from workflow files. Import
+`.github/rulesets/development.json` under GitHub **Settings -> Rules -> Rulesets ->
+New ruleset -> Import a ruleset**, then confirm it is active. It requires the
+`CI required` check from the verified GitHub Actions app (ID 15368), targets only
+`development`, requires the branch to be up to date and has no bypass actors.
+The JSON file is an import template; committing it does not activate protection.
+If rulesets are unavailable for the repository's plan, configure equivalent
+branch protection with that required check and the up-to-date requirement.
+
+GitHub reads Dependabot configuration from the default branch. Publish this
+configuration there so the scheduler can see it. Security-update PRs always use
+the default branch even with `target-branch`; to send those to `development` too,
+make `development` the default branch in repository settings. This also changes
+the default base for other PRs, so it is not silently changed by this patch.
+Existing PRs are not retargeted by this file edit. See GitHub's
+[Dependabot branch rules](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#target-branch)
+and [required status checks](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets#require-status-checks-to-pass-before-merging).
 
 The optional manual `configured_users` workflow input runs the account smoke
 checks using the `test-accounts` GitHub environment. Set `E2E_LIVE_BASE_URL` as an

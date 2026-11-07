@@ -4,6 +4,7 @@ on:
   push:
     branches: ['**']
   pull_request:
+  merge_group:
   workflow_dispatch:
     inputs:
       configured_users:
@@ -122,8 +123,6 @@ jobs:
     needs: checks
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    # Step 12 keeps E2E separate/non-blocking while the CI runner matrix stabilizes.
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -162,6 +161,29 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+  required:
+    name: CI required
+    if: always()
+    needs: [checks, database, audit, secrets-scan, e2e]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every routine CI job to succeed
+        env:
+          CI_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          node --input-type=module <<'NODE'
+          const jobs = JSON.parse(process.env.CI_RESULTS);
+          const failed = Object.entries(jobs)
+            .filter(([, job]) => job.result !== 'success')
+            .map(([name, job]) => `${name}: ${job.result}`);
+          if (failed.length) {
+            console.error(`Required CI did not pass: ${failed.join(', ')}`);
+            process.exit(1);
+          }
+          console.log('All required CI jobs passed.');
+          NODE
 
   configured-users:
     name: Configured account checks (manual only)

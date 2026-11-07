@@ -394,10 +394,14 @@ are never recorded in traces or uploaded as artifacts. See `e2e.md` for coverage
 local setup and remaining physical-device/live-provider checks.
 
 GitHub Actions checks root lint, types, coverage, database integrations, build,
-production dependency audit and redacted secret scanning. Separate browser jobs
-are initially advisory per plan 12. Actions are commit-pinned; Dependabot checks
-npm and Actions weekly. Manual configured-account checks use environment secrets
-and upload no artifacts.
+production dependency audit and redacted secret scanning. Browser failures now
+fail CI (owner update, 2026-11-07). The aggregate `CI required` check requires all
+routine jobs to pass, including all three browser projects; GitHub must activate
+the development ruleset to enforce it before merging. See `e2e.md` and the import
+template `.github/rulesets/development.json`. Actions are commit-pinned;
+Dependabot checks npm and Actions weekly and targets `development` for version
+updates. Security updates still follow GitHub's default-branch policy. Manual
+configured-account checks use environment secrets and upload no artifacts.
 
 ## 15. Deployment (VPS)
 
