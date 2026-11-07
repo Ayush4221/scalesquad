@@ -1,0 +1,234 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+enum Role {
+  TRAFFIC
+  DATA
+  OPS
+}
+enum MatchPhase {
+  LOBBY
+  BRIEFING
+  REPAIR_1
+  RUNS_1_2
+  INCIDENT_EVIDENCE
+  REPAIR_2
+  RUN_3
+  COMPARE
+  FINISHED
+}
+model User {
+  id String @id @default(cuid())
+  name String?
+  email String? @unique
+  emailVerified DateTime?
+  image String?
+  passwordHash String?
+  passwordChangedAt DateTime?
+  failedLoginCount Int @default(0)
+  lastFailedLoginAt DateTime?
+  createdAt DateTime @default(now())
+  emailTokens EmailToken[]
+  authEvents AuthEvent[]
+  accounts Account[]
+  sessions Session[]
+  memberships MatchMember[]
+  hostedMatches Match[]
+  evidence PrivateEvidence[]
+  pushSubscriptions PushSubscription[]
+}
+enum EmailTokenPurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+enum AuthEventType {
+  REGISTER
+  VERIFY
+  LOGIN_OK
+  LOGIN_FAIL
+  LOGOUT
+  LOGOUT_ALL
+  RESET_REQUEST
+  RESET_OK
+  PASSWORD_CHANGE
+  THROTTLED
+}
+model EmailToken {
+  id String @id @default(cuid())
+  userId String
+  purpose EmailTokenPurpose
+  tokenHash String @unique
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId,purpose])
+}
+model AuthEvent {
+  id String @id @default(cuid())
+  userId String?
+  type AuthEventType
+  ipPrefix String
+  userAgent String
+  createdAt DateTime @default(now())
+  user User? @relation(fields:[userId],references:[id],onDelete:SetNull)
+  @@index([userId,createdAt])
+}
+model PushSubscription {
+  id String @id @default(cuid())
+  userId String
+  endpoint String @unique
+  p256dh String
+  auth String
+  userAgent String
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId,lastUsedAt])
+}
+model Account {
+  userId String
+  type String
+  provider String
+  providerAccountId String
+  refresh_token String? @db.Text
+  access_token String? @db.Text
+  expires_at Int?
+  token_type String?
+  scope String?
+  id_token String? @db.Text
+  session_state String?
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  @@id([provider, providerAccountId])
+}
+model Session {
+  sessionToken String @unique
+  userId String
+  expires DateTime
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId])
+}
+model VerificationToken {
+  identifier String
+  token String @unique
+  expires DateTime
+  @@unique([identifier,token])
+}
+model Match {
+  id String @id
+  joinCode String @unique
+  joinCodeExpiresAt DateTime
+  hostUserId String
+  host User @relation(fields:[hostUserId],references:[id])
+  phase MatchPhase @default(LOBBY)
+  scenarioVersion String
+  scenarioId String @default("campuspass")
+  engineVersion String
+  revision Int @default(0)
+  simulationLocked Boolean @default(false)
+  deadlineAt DateTime?
+  runStartedAt DateTime?
+  runError Boolean @default(false)
+  createdAt DateTime @default(now())
+  endedAt DateTime?
+  members MatchMember[]
+  configurations Configuration[]
+  editLock EditLock?
+  runs SimulationRun[]
+  evidence PrivateEvidence[]
+  audit AuditLog[]
+  nexconn NexconnMapping?
+  @@index([hostUserId,createdAt])
+  @@index([phase,simulationLocked,deadlineAt])
+}
+model MatchMember {
+  id String @id
+  matchId String
+  userId String
+  role Role
+  ready Boolean @default(false)
+  acknowledged Boolean @default(false)
+  lastSeenAt DateTime
+  disconnectedAt DateTime?
+  joinedAt DateTime @default(now())
+  match Match @relation(fields:[matchId],references:[id],onDelete:Cascade)
+  user User @relation(fields:[userId],references:[id])
+  @@unique([matchId,userId])
+  @@unique([matchId,role])
+  @@index([matchId,lastSeenAt])
+}
+model Configuration {
+  id String @id
+  matchId String
+  version Int
+  values Json
+  createdByUserId String
+  createdAt DateTime @default(now())
+  match Match @relation(fields:[matchId],references:[id],onDelete:Cascade)
+  @@unique([matchId,version])
+}
+model ConfigurationSnapshot {
+  id String @id
+  contentHash String @unique
+  values Json
+  runs SimulationRun[]
+}
+model EditLock {
+  matchId String @id
+  holderUserId String
+  expiresAt DateTime
+  configurationVersion Int
+  match Match @relation(fields:[matchId],references:[id],onDelete:Cascade)
+}
+model SimulationRun {
+  id String @id
+  matchId String
+  runNumber Int
+  snapshotId String
+  configurationVersion Int
+  inputHash String
+  sharedInputHash String
+  incidentVersion String
+  trafficProfileId String
+  engineVersion String
+  scenarioVersion String
+  input Json
+  result Json
+  createdAt DateTime @default(now())
+  match Match @relation(fields:[matchId],references:[id],onDelete:Cascade)
+  snapshot ConfigurationSnapshot @relation(fields:[snapshotId],references:[id])
+  @@unique([matchId,runNumber])
+}
+model PrivateEvidence {
+  id String @id
+  matchId String
+  userId String
+  phase MatchPhase
+  payload Json
+  deliveredAt DateTime @default(now())
+  match Match @relation(fields:[matchId],references:[id],onDelete:Cascade)
+  user User @relation(fields:[userId],references:[id])
+  @@unique([matchId,userId,phase])
+  @@index([userId])
+}
+model AuditLog {
+  id String @id
+  matchId String
+  userId String
+  action String
+  detail Json
+  createdAt DateTime @default(now())
+  match Match @relation(fields:[matchId],references:[id],onDelete:Cascade)
+  @@index([matchId,createdAt])
+}
+model NexconnMapping {
+  matchId String @id
+  groupChannelRef String
+  userRefs Json
+  match Match @relation(fields:[matchId],references:[id],onDelete:Cascade)
+}

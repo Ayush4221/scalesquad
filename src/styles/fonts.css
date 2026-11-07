@@ -1,0 +1,12 @@
+@font-face {
+  font-family: 'Squad Bungee';
+  src: url('/fonts/landing/bungee.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Squad Chivo';
+  src: url('/fonts/landing/chivo.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}

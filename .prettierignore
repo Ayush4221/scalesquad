@@ -1,0 +1,14 @@
+node_modules
+.next
+dist
+coverage
+.cache
+.husky/_
+package-lock.json
+docs/plan
+docs/scalesquad-deep-design.md
+docs/nexconn-guide.html
+*.sql
+*.prisma
+public/sw.js
+tests/e2e/credentials.js

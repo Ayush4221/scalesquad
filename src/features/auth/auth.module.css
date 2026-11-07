@@ -1,0 +1,398 @@
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+  min-height: 100svh;
+  max-width: 1680px;
+  margin: 0 auto;
+}
+
+.loginPage .formPanel {
+  background: var(--card);
+}
+
+.loginPage .input {
+  background: var(--background);
+}
+
+.loginPage .badge {
+  background: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--secondary);
+}
+
+.storyHeading.loginStoryHeading {
+  font-size: clamp(38px, 3.8vw, 64px);
+}
+
+.storyFooter {
+  color: var(--muted-foreground);
+  font: 12px/1.6 monospace;
+  margin: 0;
+}
+
+.providers {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.providerDivider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 4px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.providerDivider::before,
+.providerDivider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--border);
+}
+
+.providers button {
+  width: 100%;
+  min-height: 48px;
+}
+
+.story {
+  display: flex;
+  flex-direction: column;
+  padding: 44px clamp(32px, 4.4vw, 72px);
+  border-inline-end: 1px solid var(--border);
+  min-width: 0;
+}
+
+.story :global(.wordmark) {
+  font-size: 28px;
+  gap: 12px;
+}
+
+.story :global(.wordmark-mark) {
+  width: 56px;
+  height: 56px;
+}
+
+.storyContent {
+  margin-block: auto;
+  padding-block: 64px 48px;
+}
+
+.eyebrow {
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.7px;
+  text-transform: uppercase;
+  margin: 0 0 24px;
+}
+
+.storyHeading {
+  margin: 0;
+  font-size: clamp(42px, 4.4vw, 68px);
+  line-height: 1.08;
+  letter-spacing: -2.8px;
+  font-weight: 800;
+}
+
+.storyHeading span {
+  color: var(--primary);
+}
+
+.storyDescription {
+  max-width: 520px;
+  margin: 24px 0 0;
+  color: var(--muted-foreground);
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.roles {
+  position: relative;
+  list-style: none;
+  padding: 0;
+  margin: 64px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.roles::before {
+  content: '';
+  position: absolute;
+  inset-inline: 24px;
+  top: 50%;
+  height: 2px;
+  background: var(--secondary);
+}
+
+.role {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 26px 8px;
+  border: 1px solid var(--secondary);
+  border-radius: 16px;
+  background: var(--card);
+}
+
+.roleIcon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  color: var(--primary);
+}
+
+.role strong {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.role span {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.formPanel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px clamp(32px, 4.4vw, 72px);
+  min-width: 0;
+}
+
+.formContent {
+  width: 100%;
+  max-width: 450px;
+}
+
+.formHeader {
+  margin-bottom: 36px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  text-transform: uppercase;
+  font-weight: 750;
+  font-size: 12px;
+  letter-spacing: 0.25px;
+  margin-bottom: 20px;
+}
+
+.formHeading {
+  margin: 0;
+  font-size: clamp(30px, 2.8vw, 40px);
+  line-height: 1.16;
+  letter-spacing: -1.4px;
+  font-weight: 800;
+}
+
+.formDescription {
+  color: var(--muted-foreground);
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 14px 0 0;
+}
+
+.form {
+  display: grid;
+  gap: 24px;
+}
+
+.input {
+  width: 100%;
+  height: 52px;
+  border-radius: 10px;
+  padding-inline-start: 16px;
+  background: var(--card);
+  border: 1px solid var(--input);
+  font-size: 15px;
+  transition:
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.input::placeholder {
+  color: var(--subtle-foreground);
+}
+
+.input:focus-visible {
+  border-color: var(--primary);
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--destructive);
+}
+
+.submit,
+.continueLink {
+  width: 100%;
+  height: 54px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.continueLink {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  text-decoration: none;
+  margin-top: 30px;
+}
+
+.continueLink svg {
+  width: 20px;
+  height: 20px;
+}
+
+.signin {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  text-align: center;
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+.signin a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 4px;
+  color: var(--primary);
+  font-weight: 700;
+  margin-left: 3px;
+  text-decoration: none;
+}
+
+.signin a:hover {
+  text-decoration: underline;
+}
+
+.serverError {
+  color: var(--destructive);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.serverError:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+
+.success {
+  padding-block: 32px;
+}
+
+.successIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--success-background);
+  color: var(--primary);
+  margin-bottom: 24px;
+}
+
+.spinner {
+  animation: signup-spin 900ms linear infinite;
+}
+
+@keyframes signup-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 960px) {
+  .page {
+    display: block;
+  }
+  .loginPage {
+    display: flex;
+    flex-direction: column;
+  }
+  .loginPage .formPanel {
+    flex: 1;
+    align-items: flex-start;
+  }
+  .story {
+    padding: 24px 28px;
+    border: 0;
+  }
+  .story :global(.wordmark) {
+    font-size: 22px;
+  }
+  .story :global(.wordmark-mark) {
+    width: 44px;
+    height: 44px;
+  }
+  .storyContent,
+  .storyFooter {
+    display: none;
+  }
+  .formPanel {
+    padding: 24px 28px 48px;
+  }
+  .formContent {
+    max-width: 480px;
+  }
+  .formHeading {
+    font-size: 34px;
+  }
+  .formHeader {
+    margin-bottom: 28px;
+  }
+  .input {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  .story {
+    padding-inline: 22px;
+  }
+  .formPanel {
+    padding-inline: 22px;
+  }
+  .formHeading {
+    font-size: 30px;
+    letter-spacing: -1px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+  .input {
+    transition: none;
+  }
+}

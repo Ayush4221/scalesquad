@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: scalesquad_test
+      POSTGRES_DB: scalesquad_e2e_test
+      # Disposable test-only DB, published on loopback only. Never use for deployment.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - '127.0.0.1:55433:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U scalesquad_test -d scalesquad_e2e_test']
+      interval: 2s
+      timeout: 3s
+      retries: 20

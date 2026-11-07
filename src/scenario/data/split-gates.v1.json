@@ -1,0 +1,145 @@
+{
+  "scenarioId": "split-gates",
+  "scenarioVersion": "1",
+  "engineCompat": ["1.0.0"],
+  "title": "Split Gates: the broken connection",
+  "deadlineSeconds": 60,
+  "graceSeconds": 10,
+  "requiredValidAdmissions": 2600,
+  "totalPasses": 10000,
+  "timeoutMs": 800,
+  "raceWindowMs": 20,
+  "trafficSeries": {
+    "normal": [
+      50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50,
+      50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50,
+      50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50
+    ],
+    "incident": [
+      70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70,
+      70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+      45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45
+    ]
+  },
+  "tiers": {
+    "app": {
+      "LOW": {
+        "capacityRps": 50,
+        "baseLatencyMs": 30,
+        "cost": 15
+      },
+      "MEDIUM": {
+        "capacityRps": 180,
+        "baseLatencyMs": 20,
+        "cost": 35
+      },
+      "HIGH": {
+        "capacityRps": 350,
+        "baseLatencyMs": 10,
+        "cost": 65
+      }
+    },
+    "db": {
+      "LOW": {
+        "capacityRps": 45,
+        "baseLatencyMs": 40,
+        "cost": 20
+      },
+      "MEDIUM": {
+        "capacityRps": 160,
+        "baseLatencyMs": 25,
+        "cost": 40
+      },
+      "HIGH": {
+        "capacityRps": 320,
+        "baseLatencyMs": 15,
+        "cost": 65
+      }
+    }
+  },
+  "cache": {
+    "cost": 8,
+    "readLatencyMs": 5,
+    "staleReadProbabilityRule": "NON_AUTHORITATIVE_ONLY"
+  },
+  "queue": {
+    "enabled": false,
+    "maxBacklog": 1000,
+    "workerRate": 150,
+    "cost": 5
+  },
+  "latency": {
+    "overloadStartUtil": 0.7,
+    "steepStartUtil": 0.9,
+    "linearPenaltyMs": 50,
+    "steepPenaltyMs": 600,
+    "maxPenaltyMs": 2000
+  },
+  "budgetLimit": 110,
+  "budgetDisplayRange": [100, 120],
+  "gates": [
+    {
+      "id": "A"
+    },
+    {
+      "id": "B"
+    },
+    {
+      "id": "C"
+    },
+    {
+      "id": "D"
+    }
+  ],
+  "profiles": {
+    "normal": {
+      "version": "normal-1",
+      "retryAfterTimeoutRate": 0.5,
+      "outage": null,
+      "offlineGateIds": [],
+      "committedTimeoutPassIds": [],
+      "staleReplica": false
+    },
+    "incident": {
+      "version": "incident-1",
+      "retryAfterTimeoutRate": 1,
+      "outage": {
+        "from": 10,
+        "to": 30
+      },
+      "offlineGateIds": ["A", "B", "C"],
+      "committedTimeoutPassIds": ["P-5", "P-10"],
+      "staleReplica": true
+    }
+  },
+  "simultaneousScan": {
+    "enabled": true,
+    "second": 0,
+    "passIds": ["RACE-1"],
+    "gateIds": ["A", "B"],
+    "profiles": ["incident"]
+  },
+  "presetConfiguration": {
+    "appCapacity": "LOW",
+    "dbCapacity": "LOW",
+    "atomicCheckin": false,
+    "retryPolicy": "RETRY_NEW_IDENTITY",
+    "cache": "ON_READS_ONLY"
+  },
+  "referenceRepair": {
+    "appCapacity": "HIGH",
+    "dbCapacity": "MEDIUM",
+    "atomicCheckin": true,
+    "retryPolicy": "RETRY_SAME_KEY",
+    "cache": "OFF"
+  },
+  "match": {
+    "joinCodeTtlMs": 1800000,
+    "briefDurationMs": 120000,
+    "incidentDurationMs": 120000,
+    "compareDurationMs": 300000,
+    "lockLeaseMs": 120000,
+    "reclaimAfterMs": 15000,
+    "runTimeoutMs": 15000
+  }
+}

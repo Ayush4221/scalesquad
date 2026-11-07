@@ -1,0 +1,193 @@
+name: Build and test
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      configured_users:
+        description: Run optional configured-account sign-in checks
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HUSKY: '0'
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  checks:
+    name: ${{ matrix.check }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [lint, typecheck, 'test:cov', build]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npm run ${{ matrix.check }}
+      - name: Upload coverage
+        if: always() && matrix.check == 'test:cov'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  database:
+    name: Database tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: scalesquad_ci
+          POSTGRES_PASSWORD: ${{ github.run_id }}-${{ github.run_attempt }}
+          POSTGRES_DB: scalesquad_ci_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U scalesquad_ci -d scalesquad_ci_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://scalesquad_ci:${{ github.run_id }}-${{ github.run_attempt }}@127.0.0.1:5432/scalesquad_ci_test
+      DIRECT_URL: postgresql://scalesquad_ci:${{ github.run_id }}-${{ github.run_attempt }}@127.0.0.1:5432/scalesquad_ci_test
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npm run db:migrate
+      - run: npm run test:db
+
+  audit:
+    name: Production dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --omit=dev
+      - name: Confirm local credentials stay ignored
+        run: git check-ignore tests/e2e/credentials.js
+
+  secrets-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install checksum-verified Gitleaks
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl --fail --silent --show-error --location --output gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tar.gz' | sha256sum --check
+          tar -xzf gitleaks.tar.gz gitleaks
+      - name: Scan all Git history with secrets redacted
+        run: '"${{ runner.temp }}/gitleaks" git --redact --no-banner .'
+
+  e2e:
+    name: Browser tests (${{ matrix.project }})
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # Step 12 keeps E2E separate/non-blocking while the CI runner matrix stabilizes.
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, mobile-android, mobile-ios]
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: scalesquad_ci
+          POSTGRES_PASSWORD: ${{ github.run_id }}-${{ github.run_attempt }}
+          POSTGRES_DB: scalesquad_e2e_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U scalesquad_ci -d scalesquad_e2e_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgresql://scalesquad_ci:${{ github.run_id }}-${{ github.run_attempt }}@127.0.0.1:5432/scalesquad_e2e_test
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run build
+      - run: npx playwright test --project=${{ matrix.project }}
+      - name: Upload browser report and disposable-test diagnostics
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-${{ matrix.project }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  configured-users:
+    name: Configured account checks (manual only)
+    if: github.event_name == 'workflow_dispatch' && inputs.configured_users
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: test-accounts
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Check configured users without recording credentials or uploading artifacts
+        run: npm run test:e2e:configured -- --reporter=list
+        env:
+          E2E_LIVE_BASE_URL: ${{ vars.E2E_LIVE_BASE_URL }}
+          E2E_HOST_EMAIL: ${{ secrets.E2E_HOST_EMAIL }}
+          E2E_HOST_PASSWORD: ${{ secrets.E2E_HOST_PASSWORD }}
+          E2E_PLAYER2_EMAIL: ${{ secrets.E2E_PLAYER2_EMAIL }}
+          E2E_PLAYER2_PASSWORD: ${{ secrets.E2E_PLAYER2_PASSWORD }}
+          E2E_PLAYER3_EMAIL: ${{ secrets.E2E_PLAYER3_EMAIL }}
+          E2E_PLAYER3_PASSWORD: ${{ secrets.E2E_PLAYER3_PASSWORD }}
+          E2E_OUTSIDER_EMAIL: ${{ secrets.E2E_OUTSIDER_EMAIL }}
+          E2E_OUTSIDER_PASSWORD: ${{ secrets.E2E_OUTSIDER_PASSWORD }}

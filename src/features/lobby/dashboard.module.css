@@ -1,0 +1,320 @@
+/* Hallmark — scope: app; theme: ScaleSquad cobalt/lime; signature: paired squad entry. */
+/* Critique: put the two real actions first; keep the incident brief quiet and readable. */
+.shell {
+  --dashboard-font: 'Squad Chivo', system-ui, sans-serif;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 32px 48px;
+  font-family: var(--dashboard-font);
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 96px;
+  border-bottom: 1px solid var(--border);
+}
+.account {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.content {
+  padding-top: 48px;
+}
+.heading {
+  margin-bottom: 32px;
+}
+.heading h1 {
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+.heading p {
+  margin-top: 12px;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+.actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--card);
+}
+.host,
+.join {
+  padding: 32px;
+  min-width: 0;
+}
+.host {
+  border-top: 3px solid var(--primary);
+}
+.join {
+  border-left: 1px solid var(--border);
+  border-top: 3px solid var(--secondary);
+}
+.hostIcon {
+  width: 28px;
+  height: 28px;
+  color: var(--primary);
+  margin-bottom: 20px;
+}
+.actions h2 {
+  font-size: 23px;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+.actions section > p {
+  color: var(--muted-foreground);
+  margin-top: 12px;
+  line-height: 1.55;
+}
+.actions .actionButton {
+  min-height: 48px;
+  font-size: 16px;
+  font-weight: 650;
+  border-radius: 9px;
+  transition: transform 160ms ease-out;
+}
+.actionButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.actionButton:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+.host > .actionButton {
+  width: 100%;
+  margin-top: 28px;
+}
+.join form {
+  margin-top: 28px;
+}
+.join label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.joinControls {
+  display: flex;
+  gap: 12px;
+}
+.joinControls input {
+  min-width: 0;
+  min-height: 48px;
+  font-size: 16px;
+  background: var(--background);
+  transition: none;
+}
+.joinControls button {
+  width: 128px;
+  flex-shrink: 0;
+}
+.hint {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin-top: 12px;
+}
+.actions .error {
+  margin-top: 16px;
+  color: var(--destructive);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mission {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+  gap: 48px;
+}
+.missionIntro h2 {
+  font-size: 18px;
+  font-weight: 650;
+}
+.missionIntro p {
+  font-size: 24px;
+  letter-spacing: -0.025em;
+  margin: 8px 0 12px;
+}
+.missionIntro span {
+  display: block;
+  max-width: 36ch;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+.roles {
+  display: grid;
+  gap: 20px;
+  list-style: none;
+  padding: 0;
+}
+.roles li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.roles svg {
+  color: var(--primary);
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.roles h3 {
+  font-size: 15px;
+  font-weight: 650;
+}
+.roles p {
+  font-size: 14px;
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+.shell :is(button, a, input):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+}
+.spinner {
+  animation: spin 800ms linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 700px) {
+  .shell {
+    padding: 0 20px 32px;
+  }
+  .topbar {
+    flex-wrap: wrap;
+    padding: 20px 0;
+    gap: 16px;
+  }
+  .content {
+    padding-top: 32px;
+  }
+  .actions,
+  .mission {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .host,
+  .join {
+    padding: 24px;
+  }
+  .join {
+    border-left: 0;
+  }
+  .mission {
+    gap: 28px;
+  }
+}
+@media (max-width: 360px) {
+  .host,
+  .join {
+    padding: 20px;
+  }
+  .joinControls {
+    flex-direction: column;
+  }
+  .joinControls button {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell *,
+  .shell *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .actionButton:hover:not(:disabled),
+  .actionButton:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+.scenarioPicker {
+  margin-bottom: 24px;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.scenarioPicker legend {
+  font-size: 18px;
+  font-weight: 650;
+}
+.scenarioOptions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.scenarioOption {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  background: var(--card);
+}
+.scenarioOption:has(:checked) {
+  border-color: var(--primary);
+  background: var(--success-background);
+}
+.scenarioOption:has(:disabled) {
+  cursor: default;
+  opacity: 0.65;
+}
+.scenarioOption input {
+  margin-top: 4px;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+}
+.scenarioOption strong {
+  font-size: 15px;
+  font-weight: 650;
+}
+.scenarioOption small {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+.missionIntro .source {
+  font-size: 14px;
+  letter-spacing: normal;
+  line-height: 1.6;
+  margin-top: 16px;
+}
+.source a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.source small {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted-foreground);
+}
+@media (max-width: 850px) {
+  .scenarioOptions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 400px) {
+  .scenarioOptions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

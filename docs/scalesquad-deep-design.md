@@ -1431,3 +1431,13 @@ learning experience.**
 **Final recommendation:** Freeze the first scenario, component palette,
 and simulation rules early. Build the complete match loop before adding
 more content.
+
+## Owner-approved scenario expansion — 2026-11-06
+
+The owner requested real-world-inspired playable scenarios after the core loop
+was implemented. The one-scenario MVP constraint above is extended to the
+versioned missions in `scenarios.md`: CampusPass, Retry Storm, Split Gates and
+Flash Crowd. Each uses the same pass-admission model, controls, roles, privacy,
+and fair three-run comparison. Numeric settings belong to versioned scenario
+data. Real-world source patterns are adapted into fictional check-in exercises;
+no payment processing, leader election or new simulator mechanics are implied.
