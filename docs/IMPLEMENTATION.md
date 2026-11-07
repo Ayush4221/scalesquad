@@ -144,3 +144,50 @@ The focused home/auth/login browser run passed **39 checks** across desktop
 Chromium, Pixel 7 Chromium and iPhone 13 WebKit, using isolated test accounts and
 database. It covers guest navigation, signed-in routing, input hydration,
 keyboard/skip-link focus, reduced motion, loading, retry and password flows.
+
+## Android Flutter foundation — 2026-11-07
+
+Owner requested implementation after plan 14 review. Read repository AGENTS.md,
+CLAUDE.md and local Agent Bridge decisions. No CODEX.md or agents.ms was found;
+AGENTS.md is the repository's Codex instructions adapter. The manager approved
+SDK-only A1 scope, dev-only identifiers and licensed PNG export of existing icons.
+
+Implemented `mobile/`: standard Android Flutter package, thin Navigator boundary,
+local introduction controller/models, native guest home and interactive role/mission
+walkthrough, reusable theme/panels/buttons, and disabled voice BETA card. Colours
+and Android launch background are generated from the existing palette. Approved
+logo/fonts and density-specific Lucide artwork include registered licence texts.
+No account/game/chat/push backend is simulated or connected in this slice.
+
+Direct Flutter dependencies are SDK-only. Native tests stay package-local under
+the owner-approved exception. Root formatting/lint/test/type tooling excludes
+Flutter outputs; staged Dart uses bounded formatting plus analysis without invoking
+Flutter for web-only commits. Pinned Flutter test and Android compile jobs join
+the existing required CI gate. Workflow structure/pins were validated locally;
+GitHub-hosted runs have not been observed for these uncommitted changes.
+
+Validation:
+
+- Flutter 3.47.1 / Dart 3.13.1 format and analyzer passed.
+- Five controller/widget/golden checks passed, including navigation, role changes,
+  disabled voice, 320px/large-text fit and reduced-motion loading behavior.
+- Home golden inspected with the actual bundled fonts/assets.
+- APK build passed: `mobile/build/app/outputs/flutter-apk/app-dev-debug.apk`.
+- APK inspection: `com.example.scalesquad.dev`, min API 26, target/compile API 36;
+  debug INTERNET permission only, plus AndroidX's non-exported receiver permission;
+  no microphone, camera or notification permission.
+- Root lint/typecheck passed. All 429 existing tests passed with two workers after
+  an initial Windows worker crash at default concurrency; no failed assertion was
+  hidden or removed.
+- Shared palette drift and required native CI dependency/pin checks passed.
+
+The Android toolchain initially failed in Java's local-pipe connection. A
+manager-approved command-only short `jdk.net.unixdomain.tmpdir` inside ignored
+`.cache/udtmp` allowed compilation; it is not a tracked Gradle/system/firewall
+change. The build also caught and fixed AGP 9's disabled custom-resource feature
+by putting the development label in normal flavor resource XML.
+
+An Android integration smoke test is authored but not run: no Android device or
+configured emulator was available. Native auth/contracts, provider chat and live
+mixed-client gameplay remain A2 onward. Production identifiers/signing and release
+remain disabled. A1 foundation evidence does not mark the full Android plan done.

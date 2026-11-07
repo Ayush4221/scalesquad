@@ -1,11 +1,13 @@
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { resolve, sep } from 'node:path';
 
 const MAX_FILES = 30;
 const MAX_PATH_LENGTH = 6000;
 const tools = {
   prettier: fileURLToPath(new URL('./node_modules/prettier/bin/prettier.cjs', import.meta.url)),
   eslint: fileURLToPath(new URL('./node_modules/eslint/bin/eslint.js', import.meta.url)),
+  mobile: fileURLToPath(new URL('./scripts/mobile-tool.mjs', import.meta.url)),
 };
 
 function batches(files) {
@@ -64,9 +66,17 @@ export default {
   '*.{ts,tsx,js,jsx,mjs,cjs,mts,cts,json,css,md,yml,yaml}': {
     title: 'Format and lint staged files (at most 30 per batch)',
     task: async (files, { log }) => {
-      await check('prettier', ['--write'], files, log);
-      const code = files.filter((file) => /\.(?:[cm]?[jt]s|[jt]sx)$/i.test(file));
+      const web = files.filter((file) => !resolve(file).startsWith(resolve('mobile') + sep));
+      await check('prettier', ['--write'], web, log);
+      const code = web.filter((file) => /\.(?:[cm]?[jt]s|[jt]sx)$/i.test(file));
       await check('eslint', ['--no-warn-ignored'], code, log);
+    },
+  },
+  'mobile/**/*.dart': {
+    title: 'Format Dart in batches, then analyze the Flutter package',
+    task: async (files, { log }) => {
+      await check('mobile', ['format'], files, log);
+      await run('mobile', ['analyze']);
     },
   },
 };

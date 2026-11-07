@@ -162,10 +162,77 @@ jobs:
             test-results/
           retention-days: 7
 
+  flutter-checks:
+    name: Flutter analysis and tests
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: flutter/flutter
+          ref: 6655482ec06e547f90abf8ae7590466f4415978d # Flutter 3.47.1
+          fetch-tags: true
+          path: .flutter-sdk
+          persist-credentials: false
+      - name: Add pinned Flutter to PATH
+        shell: pwsh
+        run: Add-Content -LiteralPath $env:GITHUB_PATH -Value "$env:GITHUB_WORKSPACE/.flutter-sdk/bin"
+      - run: npm ci
+      - run: flutter config --no-analytics
+      - run: flutter pub get --enforce-lockfile
+        working-directory: mobile
+      - run: npm run mobile:assets:check
+      # Goldens use the same pinned Windows renderer as their recorded baseline.
+      - run: npm run mobile:check
+
+  android-build:
+    name: Android debug build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: flutter/flutter
+          ref: 6655482ec06e547f90abf8ae7590466f4415978d # Flutter 3.47.1
+          fetch-tags: true
+          path: .flutter-sdk
+          persist-credentials: false
+      - name: Select pinned Flutter and JDK 21
+        run: |
+          echo "$GITHUB_WORKSPACE/.flutter-sdk/bin" >> "$GITHUB_PATH"
+          echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
+      - run: npm ci
+      - run: flutter config --no-analytics
+      - run: flutter pub get --enforce-lockfile
+        working-directory: mobile
+      - run: npm run mobile:assets:check
+      - run: npm run mobile:build
+      - name: Upload development APK
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: scalesquad-android-dev
+          path: mobile/build/app/outputs/flutter-apk/app-dev-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+
   required:
     name: CI required
     if: always()
-    needs: [checks, database, audit, secrets-scan, e2e]
+    needs: [checks, database, audit, secrets-scan, e2e, flutter-checks, android-build]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:

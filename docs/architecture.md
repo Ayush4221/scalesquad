@@ -7,28 +7,36 @@ Companion to `scalesquad-deep-design.md` (game rules, Version 2 revision). Where
 
 ## 1. Decisions summary
 
-| Area                | Decision                                                                                                                                                                                                                                                                                 |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Language            | TypeScript everywhere (`strict`)                                                                                                                                                                                                                                                         |
-| Repo                | Single npm package; one root `package.json` and lockfile. App and shared-code folders are organized by responsibility                                                                                                                                                                    |
-| Web framework       | **Next.js** (App Router)                                                                                                                                                                                                                                                                 |
-| Server              | **Custom Node server** (`src/server`) that mounts Next and a `ws` WebSocket gateway in one process                                                                                                                                                                                       |
-| Realtime game state | WebSocket (`ws`), server-authoritative                                                                                                                                                                                                                                                   |
-| Database            | **PostgreSQL** (Neon or Supabase, hosted)                                                                                                                                                                                                                                                |
-| ORM                 | **Prisma**                                                                                                                                                                                                                                                                               |
-| Auth                | **Email + password (primary, own endpoints, database sessions)**; **Auth.js (NextAuth v5)** OAuth (Google, GitHub) optional; one `Session` table. See `plan/11-email-password-auth.md`                                                                                                   |
-| UI                  | **Tailwind CSS + shadcn/ui**                                                                                                                                                                                                                                                             |
-| Chat                | **Nexconn** group messaging (core collaboration layer). Voice deferred                                                                                                                                                                                                                   |
-| Private evidence    | **Postgres is source of truth**, delivered via authenticated API. Nexconn DM is notification/display only until DM privacy is verified                                                                                                                                                   |
-| Validation          | zod at every boundary                                                                                                                                                                                                                                                                    |
-| Tests               | Vitest                                                                                                                                                                                                                                                                                   |
-| Mobile              | **PWA first** (Android, iOS, desktop from one Next.js codebase): manifest, security-safe service worker (static assets only, never API/evidence), content-free Web Push, mobile-first UI. Native app only if push or store presence proves necessary. See `plan/10-pwa-and-mobile-ui.md` |
-| Deploy              | VPS, Docker, Caddy (TLS + WS upgrade)                                                                                                                                                                                                                                                    |
-| Architecture style  | MVC with a service and repository layer, one-way dependencies                                                                                                                                                                                                                            |
+| Area                | Decision                                                                                                                                                                               |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Language            | TypeScript for web/backend; Dart for the Flutter Android foundation (owner update 2026-11-07)                                                                                          |
+| Repo                | One root npm package for web/backend; single Flutter package at `mobile/` with its own pubspec/lockfile                                                                                |
+| Web framework       | **Next.js** (App Router)                                                                                                                                                               |
+| Server              | **Custom Node server** (`src/server`) that mounts Next and a `ws` WebSocket gateway in one process                                                                                     |
+| Realtime game state | WebSocket (`ws`), server-authoritative                                                                                                                                                 |
+| Database            | **PostgreSQL** (Neon or Supabase, hosted)                                                                                                                                              |
+| ORM                 | **Prisma**                                                                                                                                                                             |
+| Auth                | **Email + password (primary, own endpoints, database sessions)**; **Auth.js (NextAuth v5)** OAuth (Google, GitHub) optional; one `Session` table. See `plan/11-email-password-auth.md` |
+| UI                  | **Tailwind CSS + shadcn/ui**                                                                                                                                                           |
+| Chat                | **Nexconn** group messaging (core collaboration layer). Voice deferred                                                                                                                 |
+| Private evidence    | **Postgres is source of truth**, delivered via authenticated API. Nexconn DM is notification/display only until DM privacy is verified                                                 |
+| Validation          | zod at every boundary                                                                                                                                                                  |
+| Tests               | Vitest                                                                                                                                                                                 |
+| Mobile              | Web PWA retained. Owner requested an Android-first Flutter client on 2026-11-07; this supersedes conditional PWA-only native deferral. See decision 0001 and plan 14                   |
+| Deploy              | VPS, Docker, Caddy (TLS + WS upgrade)                                                                                                                                                  |
+| Architecture style  | MVC with a service and repository layer, one-way dependencies                                                                                                                          |
 
 ---
 
 ## 2. Principles
+
+Owner native-platform decision (2026-11-07): see
+[decision 0001](decisions/0001-flutter-android.md) and
+[Android plan](plan/14-flutter-android.md). The SDK-only Flutter Android foundation is implemented at `mobile/`; native
+authentication, live gameplay and provider integration remain planned. The owner approved authored Flutter tests in `mobile/test` and
+`mobile/integration_test`; shared TS/Dart fixtures stay in `tests/contracts`,
+and existing web/server tests stay in root `tests/`. There is no test-copy layer.
+Only the new emulator CI job starts advisory; existing Playwright remains required.
 
 Owner home-page update (2026-11-06): unauthenticated visitors at `/` see the
 public Hallmark landing page before signup/sign-in. Authenticated visitors still

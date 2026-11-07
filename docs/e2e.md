@@ -125,7 +125,10 @@ Actions are pinned to commit hashes. Gitleaks uses a checksum-verified official
 release. Dependabot checks root npm dependencies and Actions weekly. Browser
 jobs now fail the workflow when tests fail (owner update, 2026-11-07). The
 `CI required` job waits for lint/types/coverage/build, database tests, audit,
-secret scan and every browser project. Failed, cancelled or skipped dependencies
+secret scan, every browser project, Flutter analysis/tests and the Android debug
+build. Flutter golden checks run on the pinned Windows renderer; Android compilation
+runs on Linux. The authored Android-device smoke test is not part of these jobs
+yet; no emulator job is presented as already implemented. Failed, cancelled or skipped dependencies
 fail that gate. Optional configured-account checks remain manual and are not a
 required PR check. Merge-queue events also run the workflow.
 

@@ -24,7 +24,13 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   test: {
-    exclude: ['**/node_modules/**', '**/.next/**', '**/*.db.test.ts'],
+    exclude: [
+      'mobile/**',
+      '.flutter-sdk/**',
+      '**/node_modules/**',
+      '**/.next/**',
+      '**/*.db.test.ts',
+    ],
     projects: [
       ...['shared', 'scenario', 'sim', 'db', 'nexconn'].map((name) => ({
         extends: true,
@@ -59,6 +65,8 @@ export default defineConfig({
         'src/pwa/**/*.tsx',
       ],
       exclude: [
+        'mobile/**',
+        '.flutter-sdk/**',
         '**/dist/**',
         '**/*.test.ts',
         '**/types.ts',

@@ -4,6 +4,17 @@ Twelve steps, executed in order. Each step is a self-contained doc with tasks, f
 
 Sources of truth: `../scalesquad-deep-design.md` (game rules), `../architecture.md` (stack and structure), `../../CLAUDE.md` (working agreements).
 
+Owner-requested platform expansion (2026-11-07):
+[Step 14 — Android-first Flutter app](14-flutter-android.md) plans a single Flutter
+package at `mobile/` beside the existing web/backend. It covers native sessions,
+shared contracts, UI, chat, optional FCM, package-local Flutter tests, CI and Play release. This
+has started with the SDK-only foundation at `mobile/`; later milestones remain planned. Voice was cancelled by the owner;
+step 13 remains reference material and is not a prerequisite for Android.
+The Flutter-only test exception was explicitly approved on 2026-11-07 and recorded
+in CLAUDE.md and decision 0001. Shared TS/Dart fixtures stay in root tests.
+[14a — Account deletion](14a-account-deletion.md) is scheduled early alongside A2.
+
+
 Owner-requested follow-up (2026-11-07): [Step 13 — Squad voice BETA](13-squad-voice-beta.md)
 requires steps 01–12 and the core-loop playtest gate. It is split into
 [13a provider proof](13a-voice-provider-proof.md) (1–2 developer days) and
