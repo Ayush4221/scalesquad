@@ -28,10 +28,38 @@ sessions. Production refuses
 both test flags. Fixtures make disposable users, seed sessions directly and
 delete only their own users and matches. Third-party network traffic is blocked.
 
+The suite runs with 2 workers by default (whole files in parallel; tests inside a
+file stay in order). Set `E2E_WORKERS=1` (or pass `--workers=1`) if simulation
+runs time out on a slow machine.
+
 After one build, use `npx playwright test --project=mobile-ios` (or `chromium`,
 `mobile-android`) for a shorter run. `npm run test:e2e:ui` opens the runner;
 `npm run test:e2e:report` opens the last HTML report. Build before UI mode if
 application code changed. Reports and disposable-test diagnostics are ignored.
+
+## Local stack smoke test
+
+`npm run test:e2e:local` runs `tests/e2e/local/local-flow.local.ts` against
+your own dev server, `.env` and database (it reuses a server already running at
+`APP_ORIGIN`, or starts `npm run dev`). It refuses production and non-loopback
+origins. One serial run checks:
+
+- `/healthz`, database connectivity and that the latest migrations are applied;
+- three users signing up through `/register`, then the sign-in flow (generic
+  failure, success, httpOnly session cookie, sign out, sign back in);
+- the squad flow: create, invalid code, join by code, three-seat roster,
+  host-only start, ready, start, distinct roles and owner-only evidence;
+- Squad Desk chat: members and private clues, and live Nexconn messages between
+  all three users when Nexconn is configured (degraded mode otherwise);
+- guest, foreign-Origin and logged-out requests being refused.
+
+Users are named `e2e-local-<run>-…@example.invalid` and deleted with their
+matches afterwards (`E2E_LOCAL_KEEP=1` keeps them). `E2E_LOCAL_BASE_URL`
+overrides the target when it differs from `APP_ORIGIN`. Upstream Nexconn groups of
+deleted matches are not removed. The server allows five sign-ups per hour per
+IP; past that, the run creates the remaining users with the app's hasher and
+reports a `sign-up rate limited` annotation. Sign-ins are limited to ten per
+15 minutes per IP, so allow a pause between repeated runs.
 
 ## Common credentials file
 

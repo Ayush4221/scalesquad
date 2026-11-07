@@ -10,7 +10,9 @@ export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.spec.ts',
   fullyParallel: false,
-  workers: 1,
+  // Tests own their users/matches and send per-context client IPs, so files can
+  // run in parallel against the one server. Override with E2E_WORKERS or --workers.
+  workers: Number(process.env.E2E_WORKERS ?? 2),
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   timeout: 60000,

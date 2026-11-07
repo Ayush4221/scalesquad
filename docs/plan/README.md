@@ -4,6 +4,12 @@ Twelve steps, executed in order. Each step is a self-contained doc with tasks, f
 
 Sources of truth: `../scalesquad-deep-design.md` (game rules), `../architecture.md` (stack and structure), `../../CLAUDE.md` (working agreements).
 
+Owner-requested follow-up (2026-11-07): [Step 13 — Squad voice BETA](13-squad-voice-beta.md)
+requires steps 01–12 and the core-loop playtest gate. It is split into
+[13a provider proof](13a-voice-provider-proof.md) (1–2 developer days) and
+[13b build](13b-squad-voice-build.md) (6–9 developer days after GO).
+Implementation and the new SDK package are not enabled by these planning docs.
+
 Owner layout update (2026-11-04): use one root `package.json`, no npm workspaces,
 the standard Next.js `src/app` layout with all app code under root `src/`,
 and one shared root `tests/` tree. These explicit
