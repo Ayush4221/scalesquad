@@ -2,6 +2,14 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { AuthLimits } from '../../../src/server/middleware/authLimits';
 afterEach(() => vi.useRealTimers());
 describe('explicit auth quotas', () => {
+  it('leaves account-wide failure limits to password verification instead of blocking new sources', () => {
+    const limits = new AuthLimits();
+    for (let i = 0; i < 10; i++)
+      limits.take('authLogin', `203.0.113.${i}`, null, { email: 'ada@example.invalid' });
+    expect(() =>
+      limits.take('authLogin', '198.51.100.1', null, { email: 'ADA@example.invalid' }),
+    ).not.toThrow();
+  });
   it.each([
     ['authRegister', 3, 'email'],
     ['authLogin', 5, 'pair'],

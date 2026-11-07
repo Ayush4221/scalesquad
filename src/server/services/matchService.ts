@@ -2,8 +2,8 @@ import { AppError, PublicMatchView, requireUser, type EvidencePhase } from '@sca
 import { loadScenario, toPublicScenario } from '@scalesquad/scenario';
 import { ENGINE_VERSION, compareRuns } from '@scalesquad/sim';
 import type { ChatProvider } from '@scalesquad/nexconn';
-import type { GameRepository, MatchRecord, UserRepository } from '../lib/models';
-import type { Clock, DomainEvents } from '../lib/ports';
+import type { GameRepository, MatchRecord, UserRepository } from '../domain/models';
+import type { Clock, DomainEvents } from '../domain/ports';
 import { audit, currentConfig, host, member, phase } from './guards';
 import { canTransition } from './matchStateMachine';
 import { assignRoles } from './roles';
@@ -291,6 +291,23 @@ export class MatchService {
     requireUser(userId);
     const m = await this.repo.find(id);
     if (!m) throw new AppError('NOT_FOUND', 404);
+    return this.publicView(m, userId);
+  }
+  /** Internal fan-out: load once and retain each recipient's own-role projection. */
+  async getPublicViews(userIds: readonly string[], id: string) {
+    const m = await this.repo.find(id);
+    const views = new Map<string, PublicMatchView>();
+    if (!m) return views;
+    for (const userId of new Set(userIds))
+      if (m.members.some((entry) => entry.userId === userId))
+        views.set(userId, this.publicView(m, userId));
+    return views;
+  }
+  async memberIds(id: string): Promise<ReadonlySet<string>> {
+    const m = await this.repo.find(id);
+    return new Set(m?.members.map((entry) => entry.userId));
+  }
+  private publicView(m: MatchRecord, userId: string): PublicMatchView {
     const own = member(m, userId);
     const run2 = m.runs.find((r) => r.runNumber === 2),
       run3 = m.runs.find((r) => r.runNumber === 3),
@@ -308,6 +325,7 @@ export class MatchService {
         name: u.name,
         ready: u.ready,
         acknowledged: u.acknowledged,
+        role: m.phase === 'LOBBY' ? null : u.role,
       })),
       ownRole: m.phase === 'LOBBY' ? null : own.role,
       configuration: { version: config.version, values: config.values },
@@ -328,6 +346,12 @@ export class MatchService {
     member(m, userId);
     if (!m.groupRef) throw new AppError('UPSTREAM_UNAVAILABLE', 503, 'Chat is unavailable');
     const access = await this.chat.mintUserToken(userId);
-    return { ...access, groupRef: m.groupRef };
+    // Explicit public response: never serialize additional provider fields.
+    return {
+      token: access.token,
+      appKey: access.appKey,
+      region: access.region,
+      groupRef: m.groupRef,
+    };
   }
 }

@@ -4,7 +4,7 @@ import type { GameControllers, Context } from '../controllers/gameController';
 import type { SessionService } from '../services/sessionService';
 import { bodyParser } from '../middleware/bodyParser';
 import { safeError } from '../middleware/errorHandler';
-import { RateLimiter } from '../middleware/rateLimit';
+import { RateLimiter } from '../utils/rateLimit';
 import { originCheck, requestId, securityHeaders } from '../middleware/security';
 import type { Logger } from 'pino';
 import { clientIp } from '../utils/clientIp';
@@ -13,39 +13,68 @@ import type { pushControllers } from '../controllers/pushController';
 import { AuthLimits } from '../middleware/authLimits';
 import { sessionCookie } from '../utils/sessionCookie';
 
-const gameRoutes = [
-  ['GET', '/api/game/me', 'me'],
-  ['POST', '/api/game/matches', 'create'],
-  ['POST', '/api/game/matches/join', 'join'],
-  ['GET', '/api/game/matches/:id', 'view'],
-  ['POST', '/api/game/matches/:id/ready', 'ready'],
-  ['POST', '/api/game/matches/:id/start', 'start'],
-  ['POST', '/api/game/matches/:id/advance', 'advance'],
-  ['POST', '/api/game/matches/:id/leave', 'leave'],
-  ['POST', '/api/game/matches/:id/acknowledge', 'acknowledge'],
-  ['GET', '/api/game/matches/:id/evidence', 'evidence'],
-  ['GET', '/api/game/matches/:id/config', 'config'],
-  ['POST', '/api/game/matches/:id/config', 'update'],
-  ['POST', '/api/game/matches/:id/lock/pass', 'pass'],
-  ['POST', '/api/game/matches/:id/lock/reclaim', 'reclaim'],
-  ['GET', '/api/game/matches/:id/runs', 'runs'],
-  ['POST', '/api/game/matches/:id/runs', 'run'],
-  ['POST', '/api/game/nexconn/token', 'token'],
-] as const;
-const authRoutes = [
-  ['POST', '/api/game/auth/register', 'authRegister', 'public'],
-  ['POST', '/api/game/auth/login', 'authLogin', 'public'],
-  ['POST', '/api/game/auth/logout', 'authLogout', 'session'],
-  ['POST', '/api/game/auth/logout-all', 'authLogoutAll', 'session'],
-  ['POST', '/api/game/auth/change-password', 'authChange', 'session'],
-] as const;
 export const routeRegistry = [
-  ...gameRoutes.map((route) => [...route, 'session'] as const),
-  ...authRoutes,
-  ['GET', '/api/game/push/key', 'pushKey', 'session'],
-  ['POST', '/api/game/push/subscription', 'pushSubscribe', 'session'],
-  ['DELETE', '/api/game/push/subscription', 'pushUnsubscribe', 'session'],
+  { method: 'GET', path: '/api/game/me', handler: 'me', access: 'session' },
+  { method: 'POST', path: '/api/game/matches', handler: 'create', access: 'session' },
+  { method: 'POST', path: '/api/game/matches/join', handler: 'join', access: 'session' },
+  { method: 'GET', path: '/api/game/matches/:id', handler: 'view', access: 'session' },
+  { method: 'POST', path: '/api/game/matches/:id/ready', handler: 'ready', access: 'session' },
+  { method: 'POST', path: '/api/game/matches/:id/start', handler: 'start', access: 'session' },
+  { method: 'POST', path: '/api/game/matches/:id/advance', handler: 'advance', access: 'session' },
+  { method: 'POST', path: '/api/game/matches/:id/leave', handler: 'leave', access: 'session' },
+  {
+    method: 'POST',
+    path: '/api/game/matches/:id/acknowledge',
+    handler: 'acknowledge',
+    access: 'session',
+  },
+  { method: 'GET', path: '/api/game/matches/:id/evidence', handler: 'evidence', access: 'session' },
+  { method: 'GET', path: '/api/game/matches/:id/config', handler: 'config', access: 'session' },
+  { method: 'POST', path: '/api/game/matches/:id/config', handler: 'update', access: 'session' },
+  { method: 'POST', path: '/api/game/matches/:id/lock/pass', handler: 'pass', access: 'session' },
+  {
+    method: 'POST',
+    path: '/api/game/matches/:id/lock/reclaim',
+    handler: 'reclaim',
+    access: 'session',
+  },
+  { method: 'GET', path: '/api/game/matches/:id/runs', handler: 'runs', access: 'session' },
+  { method: 'POST', path: '/api/game/matches/:id/runs', handler: 'run', access: 'session' },
+  { method: 'POST', path: '/api/game/nexconn/token', handler: 'token', access: 'session' },
+  { method: 'POST', path: '/api/game/auth/register', handler: 'authRegister', access: 'public' },
+  { method: 'POST', path: '/api/game/auth/login', handler: 'authLogin', access: 'public' },
+  { method: 'POST', path: '/api/game/auth/logout', handler: 'authLogout', access: 'session' },
+  {
+    method: 'POST',
+    path: '/api/game/auth/logout-all',
+    handler: 'authLogoutAll',
+    access: 'session',
+  },
+  {
+    method: 'POST',
+    path: '/api/game/auth/change-password',
+    handler: 'authChange',
+    access: 'session',
+  },
+  { method: 'GET', path: '/api/game/push/key', handler: 'pushKey', access: 'session' },
+  {
+    method: 'POST',
+    path: '/api/game/push/subscription',
+    handler: 'pushSubscribe',
+    access: 'session',
+  },
+  {
+    method: 'DELETE',
+    path: '/api/game/push/subscription',
+    handler: 'pushUnsubscribe',
+    access: 'session',
+  },
 ] as const;
+const routes = routeRegistry.map((route) => ({
+  ...route,
+  pattern: new RegExp('^' + route.path.replace(':id', '([A-Za-z0-9_-]+)') + '$'),
+}));
+
 type Controllers = GameControllers &
   Partial<ReturnType<typeof authControllers> & ReturnType<typeof pushControllers>>;
 export function createHttpHandler(
@@ -88,20 +117,18 @@ export function createHttpHandler(
       general.take(ip);
       const user = await session.resolveFromCookie(req.headers.cookie);
       if (user) general.take(`u:${user.userId}`);
-      const route = routeRegistry.find(
-        ([m, p]) =>
-          m === method && new RegExp(`^${p.replace(':id', '([A-Za-z0-9_-]+)')}$`).test(path),
-      );
-      if ((!route || route[3] === 'session') && !user) throw new AppError('UNAUTHENTICATED', 401);
+      const route = routes.find((route) => route.method === method && route.pattern.test(path));
+      if ((!route || route.access === 'session') && !user)
+        throw new AppError('UNAUTHENTICATED', 401);
       if (!route) throw new AppError('NOT_FOUND', 404);
       parse(EmptyQuerySchema, Object.fromEntries(url.searchParams));
-      if (route[2] === 'join') {
+      if (route.handler === 'join') {
         join.take(ip);
         join.take(`u:${user!.userId}`);
       }
-      if (route[2] === 'run') runs.take(user!.userId);
-      if (route[2].startsWith('push')) pushLimits.take(user!.userId);
-      const matchId = route[1].includes(':id') ? (path.split('/')[4] ?? '') : '';
+      if (route.handler === 'run') runs.take(user!.userId);
+      if (route.handler.startsWith('push')) pushLimits.take(user!.userId);
+      const matchId = route.path.includes(':id') ? (path.split('/')[4] ?? '') : '';
       if (matchId) parse(Id, matchId);
       const ctx: Context = {
         userId: user?.userId ?? null,
@@ -112,11 +139,11 @@ export function createHttpHandler(
         userAgent: req.headers['user-agent'] ?? '',
         sessionToken: session.cookieToken(req.headers.cookie),
       };
-      authLimits.take(route[2], ip, ctx.userId, ctx.body);
-      const handler = controllers[route[2]];
+      authLimits.take(route.handler, ip, ctx.userId, ctx.body);
+      const handler = controllers[route.handler];
       if (!handler) throw new AppError('UPSTREAM_UNAVAILABLE', 503);
       let output = await handler(ctx);
-      if (route[2].startsWith('auth')) {
+      if (route.handler.startsWith('auth')) {
         const auth = output as AuthOutput;
         if (auth.session)
           res.setHeader(

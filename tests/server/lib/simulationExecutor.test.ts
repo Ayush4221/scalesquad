@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { executeSimulation } from '../../../src/server/lib/simulationExecutor';
+import { executeSimulation } from '../../../src/server/infra/simulationExecutor';
 import { loadScenario } from '@scalesquad/scenario';
 import { makeBundle, runSimulation } from '@scalesquad/sim';
 describe('bounded worker execution', () => {

@@ -15,9 +15,7 @@ afterEach(async () => {
 async function setup(development = false) {
   const f = fixture();
   const id = await f.repair(),
-    rooms = new Rooms(
-      async (user, id) => (await f.repo.find(id))?.members.some((m) => m.userId === user) ?? false,
-    ),
+    rooms = new Rooms(async (id) => new Set((await f.repo.find(id))?.members.map((m) => m.userId))),
     server: Server = createServer();
   const session = new SessionService(
     {

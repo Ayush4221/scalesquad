@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CircleCheck, LockKeyhole, Mail, Zap } from 'lucide-react';
-import { LoginSchema, type LoginDto } from '@scalesquad/shared';
+import { AppError, LoginSchema, type LoginDto } from '@scalesquad/shared';
 import { FormField } from '@/components/shared/FormField';
 import { PasswordInput } from '@/components/shared/PasswordInput';
 import { Input } from '@/components/ui/input';
@@ -97,9 +97,15 @@ export function LoginForm() {
         () => window.location.assign('/play'),
         reducedMotion ? 0 : 350,
       );
-    } catch {
+    } catch (error) {
       if (!mounted.current) return;
-      setServerError('Could not sign in with those details. Check your email and password.');
+      setServerError(
+        error instanceof AppError && error.httpStatus === 401
+          ? 'Could not sign in with those details. Check your email and password.'
+          : error instanceof AppError && error.code === 'RATE_LIMITED'
+            ? `Too many sign-in attempts. ${error.retryAfterSeconds ? `Try again in ${error.retryAfterSeconds} seconds.` : 'Wait a little, then try again.'}`
+            : 'Sign-in is temporarily unavailable. Please try again shortly.',
+      );
       submitting.current = false;
       setState('idle');
     }

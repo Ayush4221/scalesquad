@@ -5,7 +5,7 @@ import {
   type PushMessageDto,
   type PushSubscriptionDto,
 } from '@scalesquad/shared';
-import type { PushRepository, PushTransport } from '../lib/push';
+import type { PushRepository, PushTransport } from '../infra/push';
 import { KeyedQueue } from '../utils/keyedQueue';
 export class PushService {
   private readonly queue = new KeyedQueue();

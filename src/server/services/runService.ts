@@ -1,8 +1,8 @@
 import { AppError, contentHash, type SimulationResult, type RunNumber } from '@scalesquad/shared';
 import { loadScenario } from '@scalesquad/scenario';
 import { assertComparable, InputBundleSchema, makeBundle, type InputBundle } from '@scalesquad/sim';
-import type { GameRepository, MatchRecord } from '../lib/models';
-import type { Clock, DomainEvents } from '../lib/ports';
+import type { GameRepository, MatchRecord } from '../domain/models';
+import type { Clock, DomainEvents } from '../domain/ports';
 import { audit, currentConfig, member, phase } from './guards';
 
 export class RunService {

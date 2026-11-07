@@ -2,10 +2,10 @@ import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import next from 'next';
 import { readEnv } from './config/env';
-import { createLogger } from './lib/logger';
-import { systemClock, type DomainEvents } from './lib/ports';
-import { executeSimulation } from './lib/simulationExecutor';
-import { prepareSimulationEngine } from './lib/prepareSimulation';
+import { createLogger } from './infra/logger';
+import { systemClock, type DomainEvents } from './domain/ports';
+import { executeSimulation } from './infra/simulationExecutor';
+import { prepareSimulationEngine } from './infra/prepareSimulation';
 import { PrismaMatchRepository } from './repositories/matchRepository';
 import { PrismaSessionRepository, PrismaUserRepository } from './repositories/sessionRepository';
 import { PrismaEvidenceRepository } from './repositories/evidenceRepository';
@@ -39,7 +39,7 @@ import { authControllers } from './controllers/authController';
 import { PushService } from './services/pushService';
 import { PrismaPushRepository } from './repositories/pushRepository';
 import { pushControllers } from './controllers/pushController';
-import { WebPushTransport } from './lib/webPushTransport';
+import { WebPushTransport } from './infra/webPushTransport';
 
 async function main() {
   const env = readEnv(process.env),
@@ -63,25 +63,24 @@ async function main() {
       : env.NEXCONN_PROVIDER !== 'disabled' && env.NEXCONN_APP_KEY
         ? new NexconnChatProvider(env.NEXCONN_APP_KEY, env.NEXCONN_APP_SECRET, env.NEXCONN_REGION)
         : new DisabledChatProvider();
-  const rooms = new Rooms(async (user, id) => {
-    try {
-      await match.getPublicView(user, id);
-      return true;
-    } catch {
-      return false;
-    }
-  });
+  const rooms = new Rooms((id) => match.memberIds(id));
   const refresh = async (id: string) => {
-    for (const peer of rooms.peers)
-      if (peer.room === id) {
-        try {
-          const view = await match.getPublicView(peer.userId, id);
-          await rooms.sendAuthorized(peer, { type: 'match.snapshot', payload: view });
-        } catch {
-          peer.room = null;
-          peer.socket.close(1008, 'Membership ended');
-        }
+    const peers = [...rooms.peers].filter((peer) => peer.room === id);
+    if (!peers.length) return;
+    const views = await match.getPublicViews(
+      peers.map((peer) => peer.userId),
+      id,
+    );
+    for (const peer of peers) {
+      // A socket may have switched rooms while the graph was loading.
+      if (peer.room !== id) continue;
+      const view = views.get(peer.userId);
+      if (view) await rooms.sendAuthorized(peer, { type: 'match.snapshot', payload: view });
+      else {
+        peer.room = null;
+        peer.socket.close(1008, 'Membership ended');
       }
+    }
   };
   installAuthAdapter((token) => rooms.revokeSession(token));
   await purgeUnusedProviderTokens();
@@ -170,7 +169,7 @@ async function main() {
     logger,
     env.TRUSTED_PROXY_IPS,
   );
-  const authLimit = new (await import('./middleware/rateLimit')).RateLimiter(20, 0.5);
+  const authLimit = new (await import('./utils/rateLimit')).RateLimiter(20, 0.5);
   const server = createServer((req, res) => {
     if (req.url?.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
     if (req.url?.split('?')[0] === '/sw.js') res.setHeader('Cache-Control', 'no-cache');

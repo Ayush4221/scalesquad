@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../../utils/validation';
 import { ConfigurationChange, Id } from '../domain';
 
 export const ConfigUpdateSchema = z

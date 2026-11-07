@@ -11,7 +11,7 @@ import {
 import { isStandalone, useInstallPrompt } from '../../src/pwa/useInstallPrompt';
 import manifest from '../../src/app/manifest';
 import { ResponsiveSelect } from '../../src/components/shared/ResponsiveSelect';
-import { BottomNav } from '../../src/components/shared/MatchNavigation';
+import { BottomNav } from '../../src/components/shared/BottomNav';
 import { cn } from '../../src/utils/classNames';
 
 afterEach(() => {

@@ -1,6 +1,6 @@
 import { buildEvidenceCard, loadScenario } from '@scalesquad/scenario';
 import { AppError, MatchPhase, requireUser, type EvidencePhase } from '@scalesquad/shared';
-import type { GameRepository, EvidenceRepository, MatchRecord } from '../lib/models';
+import type { GameRepository, EvidenceRepository, MatchRecord } from '../domain/models';
 import { member } from './guards';
 export function ensureEvidence(m: MatchRecord, phase: EvidencePhase) {
   const s = loadScenario(m.scenarioId, m.scenarioVersion);

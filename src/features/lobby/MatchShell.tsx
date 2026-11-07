@@ -1,23 +1,22 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { layoutClassName } from '@/styles/layout';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useMatch } from './useMatch';
+import { LobbyPanel } from './LobbyPanel';
+import { SquadPanel } from './SquadPanel';
+import { RunAction } from './RunAction';
 import { BrandLogo } from '@/components/shared/BrandLogo';
-import { z } from 'zod';
-import { EvidenceCard, PublicMatchView } from '@scalesquad/shared';
-import { api } from '@/lib/api/client';
-import { WsClient } from '@/lib/ws/client';
 import { BriefPanel } from '@/features/brief/BriefPanel';
 import { RepairPanel } from '@/features/repair/RepairPanel';
 import { ResultsPanel } from '@/features/results/ResultsPanel';
 import { ChatPanel } from '@/features/chat/ChatPanel';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import {
-  BottomNav,
-  TopStatusBar,
-  SafeAreaView,
-  type MatchTab,
-} from '@/components/shared/MatchNavigation';
+import { BottomNav, type MatchTab } from '@/components/shared/BottomNav';
+import { TopStatusBar } from '@/components/shared/TopStatusBar';
+import { SafeAreaView } from '@/components/shared/SafeAreaView';
 const directions: Record<string, string> = {
   LOBBY: 'Bring three engineers together. Mark ready when your squad is here.',
   BRIEFING: 'Read your private evidence. Share the facts your squad needs.',
@@ -31,113 +30,29 @@ const directions: Record<string, string> = {
   FINISHED: 'Match complete. Review the evidence and explain what changed.',
 };
 export function MatchShell({ matchId, userId }: { matchId: string; userId: string }) {
-  const [view, setView] = useState<PublicMatchView | null>(null),
-    [cards, setCards] = useState<EvidenceCard[]>([]),
-    [connection, setConnection] = useState<'connected' | 'reconnecting' | 'offline'>('offline'),
-    [error, setError] = useState(''),
-    [busy, setBusy] = useState(false);
+  const { view, cards, connection, error, busy, pendingAction, action, setError } =
+    useMatch(matchId);
   const [tab, setTab] = useState<MatchTab>('Squad'),
     [draft, setDraft] = useState<{ text: string; id: number }>(),
     [unread, setUnread] = useState(0);
-  const base = `/matches/${matchId}`;
-  const accept = useCallback(
-    (next: PublicMatchView) =>
-      setView((old) => (!old || next.revision >= old.revision ? next : old)),
-    [],
-  );
-  const refresh = useCallback(async () => {
-    accept(PublicMatchView.parse(await api(base)));
-  }, [accept, base]);
-  const evidence = useCallback(async () => {
-    setCards(z.array(EvidenceCard).parse(await api(`${base}/evidence`)));
-  }, [base]);
-  useEffect(() => {
-    let active = true;
-    void refresh().catch((e) => {
-      if (active) setError(e instanceof Error ? e.message : 'Cannot load match');
-    });
-    const url = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`;
-    const client = new WsClient(
-      url,
-      (event) => {
-        if (!active) return;
-        if (event.type === 'hello') {
-          client.send({
-            v: 1,
-            type: 'presence.visibility',
-            id: crypto.randomUUID(),
-            payload: { foreground: document.visibilityState !== 'hidden' },
-          });
-          client.send({
-            v: 1,
-            type: 'match.subscribe',
-            id: crypto.randomUUID(),
-            payload: { matchId },
-          });
-        }
-        if (event.type === 'match.snapshot') accept(event.payload);
-        if (event.type === 'evidence.available')
-          void evidence().catch(() => setError('Could not load private evidence'));
-        if (event.type === 'error') setError(event.payload.message);
-        if (event.type === 'run.completed') void refresh().catch(() => {});
-      },
-      (state) => {
-        if (active) setConnection(state);
-      },
-    );
-    client.connect();
-    const visible = () =>
-      client.send({
-        v: 1,
-        type: 'presence.visibility',
-        id: crypto.randomUUID(),
-        payload: { foreground: document.visibilityState !== 'hidden' },
-      });
-    document.addEventListener('visibilitychange', visible);
-    return () => {
-      active = false;
-      client.close();
-      document.removeEventListener('visibilitychange', visible);
-    };
-  }, [matchId, refresh, evidence, accept]);
-  useEffect(() => {
-    if (view && view.phase !== 'LOBBY')
-      void evidence().catch(() => setError('Could not load private evidence'));
-  }, [view?.phase, evidence]);
   useEffect(() => {
     if (view?.phase === 'BRIEFING' || view?.phase === 'INCIDENT_EVIDENCE') setTab('Brief');
     if (view?.phase === 'REPAIR_1' || view?.phase === 'REPAIR_2') setTab('Repair');
     if (view?.phase === 'COMPARE' || view?.phase === 'FINISHED') setTab('Results');
   }, [view?.phase]);
-  async function action(path: string, body: unknown = {}, reload = true) {
-    setBusy(true);
-    setError('');
-    try {
-      await api(`${base}${path}`, body);
-      if (reload) await refresh();
-      return true;
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Request failed');
-      await refresh().catch(() => {});
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }
   if (!view)
     return (
-      <main className="page-shell">
+      <main className={layoutClassName('page-shell')}>
         <p role="status">{error || 'Connecting to your squad…'}</p>
-        <a href="/play">Back to squads</a>
+        <Link href="/play">Back to squads</Link>
       </main>
     );
   const own = view.members.find((u) => u.userId === userId),
     isHost = view.hostUserId === userId;
-  const canRun = (isHost || view.lock?.holderUserId === userId) && !busy && !view.simulationLocked;
   const repair = ['REPAIR_1', 'REPAIR_2'].includes(view.phase);
   return (
     <SafeAreaView>
-      <main className="page-shell match-shell" data-tab={tab}>
+      <main className={layoutClassName('page-shell match-shell')} data-tab={tab}>
         <TopStatusBar
           phase={view.phase}
           deadline={view.deadlineAt}
@@ -146,135 +61,61 @@ export function MatchShell({ matchId, userId }: { matchId: string; userId: strin
           }
           connection={connection}
         />
-        <header className="topbar">
+        <header className={layoutClassName('topbar')}>
           <BrandLogo />
-          <div className="flex gap-3">
-            <Badge variant="outline">{connection}</Badge>
-            {view.ownRole && <Badge>{view.ownRole} ENGINEER</Badge>}
-          </div>
+          <div className="flex gap-3">{view.ownRole && <Badge>{view.ownRole} ENGINEER</Badge>}</div>
         </header>
-        <section className="match-heading">
-          <p className="eyebrow">CAMPUSPASS / {view.phase.replaceAll('_', ' ')}</p>
+        <section className={layoutClassName('match-heading')}>
+          <p className={layoutClassName('eyebrow')}>
+            {view.scenario.title} / {view.phase.replaceAll('_', ' ')}
+          </p>
           <h1>{view.phase === 'LOBBY' ? 'Assemble your squad.' : 'Keep the gates moving.'}</h1>
-          <p className="intro">{directions[view.phase]}</p>
-          <div className="goal-strip">
-            <span>◇ One admission per pass</span>
+          <p className={layoutClassName('match-intro')}>{directions[view.phase]}</p>
+          <div className={layoutClassName('goal-strip')}>
             <span>
-              ↗ {view.scenario.requiredValidAdmissions.toLocaleString()} confirmed admissions
+              <span aria-hidden="true">◇ </span>One admission per pass
             </span>
-            <span>◷ {view.scenario.deadlineSeconds} seconds</span>
+            <span>
+              <span aria-hidden="true">↗ </span>
+              {view.scenario.requiredValidAdmissions.toLocaleString()} confirmed admissions
+            </span>
+            <span>
+              <span aria-hidden="true">◷ </span>
+              {view.scenario.deadlineSeconds} seconds
+            </span>
           </div>
         </section>
         {error && (
-          <div role="alert" className="error">
+          <div role="alert" className={layoutClassName('error')}>
             {error}
           </div>
         )}
         {view.runError && (
-          <p role="alert" className="error">
+          <p role="alert" className={layoutClassName('error')}>
             The run stopped safely. Your configuration was kept. Try again.
           </p>
         )}
         {view.simulationLocked && (
-          <div className="run-overlay" role="status">
+          <div className={layoutClassName('run-overlay')} role="status">
             <h2>Simulation running</h2>
             <p>Configuration locked. Your result will appear here.</p>
             <progress aria-label="Simulation running" />
           </div>
         )}
-        <div className="match-grid">
+        <div className={layoutClassName('match-grid')}>
           <div className="space-y-6">
             {view.phase === 'LOBBY' ? (
-              <div className="tab-squad">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Your control room</CardTitle>
-                    <div className="join-code">
-                      {view.joinCode}
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          void navigator.clipboard
-                            .writeText(view.joinCode ?? '')
-                            .catch(() => setError('Could not copy code'));
-                        }}
-                      >
-                        Copy code
-                      </Button>
-                      {typeof navigator !== 'undefined' &&
-                        typeof navigator.share === 'function' && (
-                          <Button
-                            variant="outline"
-                            onClick={() =>
-                              void navigator
-                                .share({
-                                  title: 'Join my ScaleSquad',
-                                  text: `Join code: ${view.joinCode}`,
-                                })
-                                .catch(() => {})
-                            }
-                          >
-                            Share
-                          </Button>
-                        )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="roster">
-                      {view.members.map((u) => (
-                        <li key={u.userId}>
-                          <span>
-                            {u.name}
-                            {u.userId === view.hostUserId ? ' · Host' : ''}
-                          </span>
-                          <Badge variant={u.ready ? 'secondary' : 'outline'}>
-                            {u.ready ? 'Ready' : 'Joining'}
-                          </Badge>
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="muted my-4">
-                      {view.members.length}/3 engineers · Roles reveal privately when the match
-                      starts.
-                    </p>
-                    <div className="flex gap-3 lobby-actions">
-                      <Button
-                        disabled={busy}
-                        onClick={() => void action('/ready', { ready: !own?.ready })}
-                      >
-                        {own?.ready ? 'Not ready' : 'Ready up'}
-                      </Button>
-                      {isHost && (
-                        <Button
-                          variant="outline"
-                          disabled={
-                            busy || view.members.length !== 3 || !view.members.every((u) => u.ready)
-                          }
-                          onClick={() => void action('/start')}
-                        >
-                          Start match →
-                        </Button>
-                      )}
-                      {!isHost && (
-                        <Button
-                          variant="ghost"
-                          disabled={busy}
-                          onClick={() => {
-                            void action('/leave', {}, false).then((ok) => {
-                              if (ok) window.location.href = '/play';
-                            });
-                          }}
-                        >
-                          Leave
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <LobbyPanel
+                view={view}
+                userId={userId}
+                busy={busy}
+                pendingAction={pendingAction}
+                action={action}
+                onError={setError}
+              />
             ) : (
               <>
-                <div className="tab-brief">
+                <div className={layoutClassName('tab-brief')}>
                   <BriefPanel
                     cards={cards}
                     acknowledged={
@@ -290,24 +131,8 @@ export function MatchShell({ matchId, userId }: { matchId: string; userId: strin
                     }}
                   />
                 </div>
-                <div className="tab-squad">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Your squad</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="roster">
-                        {view.members.map((u) => (
-                          <li key={u.userId}>
-                            {u.name}
-                            <span>{u.acknowledged ? 'Acknowledged' : 'Reading'}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                </div>
-                <div className="tab-repair">
+                <SquadPanel view={view} />
+                <div className={layoutClassName('tab-repair')}>
                   <RepairPanel
                     view={view}
                     userId={userId}
@@ -322,32 +147,12 @@ export function MatchShell({ matchId, userId }: { matchId: string; userId: strin
                     onReclaim={() => void action('/lock/reclaim')}
                   />
                   {repair && (
-                    <div className="run-action">
-                      <div>
-                        <strong>
-                          {view.phase === 'REPAIR_1'
-                            ? 'Establish the baseline'
-                            : 'Test your repaired design'}
-                        </strong>
-                        <p className="muted text-sm">
-                          {view.phase === 'REPAIR_1'
-                            ? 'Runs 1 and 2 use the original preset. Your proposal is saved for Run 3.'
-                            : 'The same incident and traffic from Run 2. Only your repair changes.'}
-                        </p>
-                      </div>
-                      <Button
-                        disabled={!canRun}
-                        onClick={() =>
-                          void action('/runs', { runNumber: view.phase === 'REPAIR_1' ? 1 : 3 })
-                        }
-                      >
-                        {busy
-                          ? 'Running…'
-                          : view.phase === 'REPAIR_1'
-                            ? 'Run baseline + incident →'
-                            : 'Run repair →'}
-                      </Button>
-                    </div>
+                    <RunAction
+                      view={view}
+                      userId={userId}
+                      pendingAction={pendingAction}
+                      action={action}
+                    />
                   )}
                 </div>
                 {view.phase === 'RUNS_1_2' && isHost && (
@@ -363,22 +168,29 @@ export function MatchShell({ matchId, userId }: { matchId: string; userId: strin
                     Finish match
                   </Button>
                 )}
-                <div className="tab-results">
-                  <ResultsPanel runs={view.runs} comparison={view.comparison} />
+                <div className={layoutClassName('tab-results')}>
+                  <ResultsPanel
+                    runs={view.runs}
+                    comparison={view.comparison}
+                    presetConfiguration={view.scenario.presetConfiguration}
+                    repairedConfiguration={view.configuration.values}
+                  />
                 </div>
                 {view.phase === 'FINISHED' && (
-                  <a href="/play" className="play-again">
+                  <Link href="/play" className={layoutClassName('play-again')}>
                     Play again →
-                  </a>
+                  </Link>
                 )}
               </>
             )}
           </div>
-          <aside className="tab-chat">
+          <aside className={layoutClassName('tab-chat')}>
             <ChatPanel
               matchId={matchId}
               available={view.chatAvailable}
               members={view.members}
+              userId={userId}
+              cards={cards}
               {...(draft ? { draft } : {})}
               onIncoming={() => {
                 if (tab !== 'Chat') setUnread((n) => n + 1);

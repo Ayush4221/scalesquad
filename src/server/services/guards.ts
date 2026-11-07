@@ -1,5 +1,5 @@
 import { AppError, requireUser } from '@scalesquad/shared';
-import type { MatchRecord } from '../lib/models';
+import type { MatchRecord } from '../domain/models';
 export function member(m: MatchRecord, userId: string | null) {
   requireUser(userId);
   const u = m.members.find((p) => p.userId === userId);

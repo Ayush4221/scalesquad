@@ -9,6 +9,7 @@ test('guests see the public home before auth screens and can follow both account
   });
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
+  await expect(page).toHaveTitle('ScaleSquad');
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Think as a squad.');
   await expect(page.getByText(/A system design game for three engineers/)).toBeVisible();

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../utils/validation';
 const schema = z.object({
   APP_ORIGIN: z.url(),
   AUTH_SECRET: z.string().min(32),

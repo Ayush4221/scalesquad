@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { allowedPushEndpoint, type PushSubscriptionDto } from '@scalesquad/shared';
 import { PushService } from '../../../src/server/services/pushService';
-import type { PushRecord } from '../../../src/server/lib/push';
+import type { PushRecord } from '../../../src/server/infra/push';
 import { pushControllers } from '../../../src/server/controllers/pushController';
 describe('private bounded push delivery', () => {
   it.each([

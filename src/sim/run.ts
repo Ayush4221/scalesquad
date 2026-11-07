@@ -6,6 +6,7 @@ import {
   type FailureReason,
   type SimulationResult,
 } from '@scalesquad/shared';
+import { formatPercent } from '../utils/formatMetric';
 import { ScenarioConfigSchema, type ScenarioConfig } from '@scalesquad/scenario';
 import { ENGINE_VERSION, InputBundleSchema, type InputBundle } from './types';
 import { expandTraffic } from './traffic';
@@ -120,7 +121,7 @@ export function failureReasons(b: InputBundle, state: State, cost: number): Fail
       'appUtilization>steepStartUtil',
       { utilization: c.appUtilizationPeak },
       ['appCapacity'],
-      `App peak utilization: ${c.appUtilizationPeak}.`,
+      `App peak utilization: ${formatPercent(c.appUtilizationPeak)}.`,
     );
   if (c.dbUtilizationPeak > s.latency.steepStartUtil)
     add(
@@ -128,7 +129,7 @@ export function failureReasons(b: InputBundle, state: State, cost: number): Fail
       'dbUtilization>steepStartUtil',
       { utilization: c.dbUtilizationPeak },
       ['dbCapacity'],
-      `DB peak utilization: ${c.dbUtilizationPeak}.`,
+      `DB peak utilization: ${formatPercent(c.dbUtilizationPeak)}.`,
     );
   if (c.retriedRequests && b.retryPolicy === 'RETRY_NEW_IDENTITY')
     add(

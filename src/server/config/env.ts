@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../../utils/validation';
 import { isIP } from 'node:net';
 import { validVapid } from './vapid';
 export const EnvSchema = z
@@ -93,6 +93,12 @@ export const EnvSchema = z
         message: 'Must be an origin without a path',
       });
     if (env.NODE_ENV === 'production') {
+      if (env.TRUSTED_PROXY_IPS.length === 0)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['TRUSTED_PROXY_IPS'],
+          message: 'Production requires explicit trusted proxy addresses',
+        });
       if (origin.protocol !== 'https:')
         ctx.addIssue({ code: 'custom', path: ['APP_ORIGIN'], message: 'HTTPS required' });
       for (const key of ['DATABASE_URL', 'DIRECT_URL'] as const)

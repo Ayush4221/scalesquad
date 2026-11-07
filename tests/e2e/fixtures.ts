@@ -140,13 +140,24 @@ export async function acknowledge(s: Squad) {
   for (const p of s.players) await expect(p.page.locator('.status-bar')).toContainText(/REPAIR/);
 }
 export async function choose(page: Page, label: string, value: string) {
+  const labels: Record<string, string> = {
+    LOW: 'Low',
+    MEDIUM: 'Medium',
+    HIGH: 'High',
+    NO_RETRY: 'No retry',
+    RETRY_SAME_KEY: 'Retry once, same key',
+    RETRY_NEW_IDENTITY: 'Retry once, new identity',
+    OFF: 'Off',
+    ON_READS_ONLY: 'Cache reads only',
+  };
+  const optionLabel = labels[value] ?? value;
   const control = page.getByLabel(label, { exact: true });
   await expect(control).toBeEnabled();
   await control.click();
   const drawer = page.getByRole('dialog');
   if (await drawer.isVisible())
-    await drawer.getByRole('button', { name: value.replaceAll('_', ' '), exact: true }).click();
-  else await page.getByRole('option', { name: value.replaceAll('_', ' '), exact: true }).click();
+    await drawer.getByRole('button', { name: optionLabel, exact: true }).click();
+  else await page.getByRole('option', { name: optionLabel, exact: true }).click();
 }
 export async function referenceRepair(s: Squad) {
   const page = s.players[0].page,

@@ -1,4 +1,6 @@
 'use client';
+import { layoutClassName } from '@/styles/layout';
+
 import type { ReactNode } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -17,7 +19,7 @@ export function ResponsiveDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={desktop ? '' : 'mobile-drawer'}
+        className={desktop ? '' : layoutClassName('mobile-drawer')}
         data-presentation={desktop ? 'dialog' : 'drawer'}
       >
         <DialogHeader>

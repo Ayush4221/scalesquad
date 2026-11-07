@@ -4,7 +4,7 @@ import { once } from 'node:events';
 import { fixture } from '../fakes';
 import { gameControllers } from '../../../src/server/controllers/gameController';
 import { SessionService } from '../../../src/server/services/sessionService';
-import { createLogger } from '../../../src/server/lib/logger';
+import { createLogger } from '../../../src/server/infra/logger';
 import { createHttpHandler, routeRegistry } from '../../../src/server/routes/http';
 const servers: Server[] = [];
 afterEach(async () => {
@@ -78,10 +78,10 @@ describe('real HTTP request boundary', () => {
   it('every route denies unauthenticated input; member-only reads reject outsiders', async () => {
     const f = await setup(),
       id = await f.repair();
-    for (const [method, path, , access] of routeRegistry)
+    for (const { method, path, access } of routeRegistry)
       if (access === 'session')
         expect((await f.request(path.replace(':id', id), method, null)).status).toBe(401);
-    expect(routeRegistry.filter((r) => r[3] === 'public').map((r) => r[1])).toEqual([
+    expect(routeRegistry.filter((r) => r.access === 'public').map((r) => r.path)).toEqual([
       '/api/game/auth/register',
       '/api/game/auth/login',
     ]);

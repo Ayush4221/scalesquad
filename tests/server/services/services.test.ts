@@ -10,7 +10,7 @@ import {
   uniqueJoinCode,
 } from '../../../src/server/utils/joinCode';
 import { RunService } from '../../../src/server/services/runService';
-import { silentEvents } from '../../../src/server/lib/ports';
+import { silentEvents } from '../../../src/server/domain/ports';
 import { runSimulation } from '@scalesquad/sim';
 describe('server-owned match state machine', () => {
   const members = Role.options.map((role, i) => ({
@@ -129,7 +129,7 @@ describe('lobby and authorization', () => {
     await expect(f.match.createMatch('missing')).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
     const v = await f.match.createMatch('a');
     expect(v.ownRole).toBeNull();
-    expect(JSON.stringify(v)).not.toContain('"role"');
+    expect(v.members.every((member) => member.role === null)).toBe(true);
     expect(f.chat.groups.size).toBe(1);
     await expect(f.match.startMatch('a', v.id)).rejects.toMatchObject({ code: 'PHASE_INVALID' });
     await f.match.joinMatch('b', ` ${v.joinCode!.toLowerCase()} `);
@@ -364,6 +364,24 @@ describe('three-run match orchestration', () => {
   });
 });
 describe('service authorization matrix', () => {
+  it('returns only SDK credentials, even if the provider adds private fields', async () => {
+    const f = fixture();
+    const view = await f.match.createMatch('a');
+    await f.match.joinMatch('b', view.joinCode!);
+    const providerResult = {
+      token: 'member-token',
+      appKey: 'public-app-key',
+      region: 'SG' as const,
+      appSecret: 'private-provider-secret',
+      internalDetails: 'not-public',
+    };
+    const mint = vi.spyOn(f.chat, 'mintUserToken').mockResolvedValue(providerResult);
+    const result = await f.match.chatToken('b', view.id);
+    expect(mint).toHaveBeenCalledWith('b');
+    expect(Object.keys(result).sort()).toEqual(['appKey', 'groupRef', 'region', 'token']);
+    expect(JSON.stringify(result)).not.toContain('private-provider-secret');
+    expect(JSON.stringify(result)).not.toContain('not-public');
+  });
   const methods = [
     'view',
     'ready',

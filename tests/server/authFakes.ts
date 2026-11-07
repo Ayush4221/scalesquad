@@ -5,7 +5,7 @@ import type {
   SessionWriteRepository,
   AuthContext,
   AuthEventRepository,
-} from '../../src/server/lib/authPorts';
+} from '../../src/server/domain/authPorts';
 import { AuthService } from '../../src/server/services/authService';
 import { normalizeEmail } from '@scalesquad/shared';
 
@@ -39,9 +39,6 @@ export function authFixture() {
       };
       users.set(user.id, user);
       return user;
-    },
-    async failed(id) {
-      users.get(id)!.failedLoginCount++;
     },
     async login(id, expectedHash, nextHash, session, oldToken) {
       const user = users.get(id);

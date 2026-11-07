@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { AppError, normalizeEmail, requireUser, type RegisterDto } from '@scalesquad/shared';
 import type {
   AuthContext,
@@ -6,8 +6,8 @@ import type {
   AuthEventType,
   SessionWriteRepository,
   UserAuthRepository,
-} from '../lib/authPorts';
-import type { Clock } from '../lib/ports';
+} from '../domain/authPorts';
+import type { Clock } from '../domain/ports';
 import { SESSION_SECONDS } from '../../constants/auth';
 import { ipPrefix } from '../utils/clientIp';
 import { RateLimiter } from '../utils/rateLimit';
@@ -18,7 +18,10 @@ export const DUMMY_HASH =
   '$scrypt$32768$8$3$KioqKioqKioqKioqKioqKg$kI5_UtO1y6tFYaH7iWTRwAe7efHSdz6Byf3casP3Ky8';
 const denied = () => new AppError('UNAUTHENTICATED', 401, 'Could not sign in with those details');
 export class AuthService {
-  private readonly attempts = new Map<string, { failures: number; at: number }>();
+  // Fixed hash slots bound memory without clearing unrelated accounts on overflow.
+  private readonly failures = new Uint8Array(32768);
+  private readonly failedAt = new Float64Array(32768);
+  private readonly loginAccounts = new RateLimiter(10, 10 / 900, () => this.clock.now());
   private readonly throttledSources = new RateLimiter(1, 1 / 60, () => this.clock.now());
   private readonly throttledTotal = new RateLimiter(10, 1, () => this.clock.now());
   constructor(
@@ -59,20 +62,19 @@ export class AuthService {
   }
   async login(email: string, password: string, ctx: AuthContext) {
     email = normalizeEmail(email);
-    const key = `${email}\0${ctx.ip}`,
-      cached = this.attempts.get(key),
-      previous = cached && this.clock.now() - cached.at < 900000 ? cached : undefined;
-    if (previous) await this.pause(Math.min(2000, previous.failures * 250));
+    const key = createHash('sha256').update(email).digest('hex');
+    const slot = Number.parseInt(key.slice(0, 8), 16) % this.failures.length;
+    const previous = this.clock.now() - this.failedAt[slot]! < 900000 ? this.failures[slot]! : 0;
+    if (previous) await this.pause(Math.min(2000, previous * 250));
     const user = await this.users.byEmail(email),
       valid = await this.hasher.verify(user?.passwordHash ?? DUMMY_HASH, password);
     if (!user?.passwordHash || !valid) {
-      if (this.attempts.size >= 10000) this.attempts.clear();
-      this.attempts.set(key, {
-        failures: Math.min(8, (previous?.failures ?? 0) + 1),
-        at: this.clock.now(),
-      });
-      if (user) await this.users.failed(user.id, this.clock.now());
+      this.failures[slot] = Math.min(8, previous + 1);
+      this.failedAt[slot] = this.clock.now();
       await this.event('LOGIN_FAIL', user?.id ?? null, ctx);
+      // Account throttling applies only to a verified failure. A correct password
+      // must still work after someone else floods this email address.
+      this.loginAccounts.take(key);
       throw denied();
     }
     const nextHash = this.hasher.needsRehash(user.passwordHash)
@@ -90,7 +92,7 @@ export class AuthService {
     )
       throw denied();
     if (ctx.sessionToken) this.revoked.session(ctx.sessionToken);
-    this.attempts.delete(key);
+    this.failures[slot] = 0;
     await this.event('LOGIN_OK', user.id, ctx);
     return { token };
   }

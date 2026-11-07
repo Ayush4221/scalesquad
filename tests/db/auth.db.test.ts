@@ -4,7 +4,10 @@ import { PrismaUserAuthRepository } from '../../src/server/repositories/userAuth
 import { PrismaSessionWriteRepository } from '../../src/server/repositories/sessionWriteRepository';
 import { PrismaAuthEventRepository } from '../../src/server/repositories/authEventRepository';
 import { PrismaSessionRepository } from '../../src/server/repositories/sessionRepository';
-import { createAuthAdapter } from '../../src/server/repositories/authRepository';
+import {
+  createAuthAdapter,
+  recoverVerifiedOAuthIdentity,
+} from '../../src/server/repositories/authRepository';
 import { PrismaPushRepository } from '../../src/server/repositories/pushRepository';
 import { AuthService } from '../../src/server/services/authService';
 import { SessionService } from '../../src/server/services/sessionService';
@@ -108,6 +111,80 @@ describe('Postgres password sessions and push ownership', () => {
     expect((await users.byId(user.id))?.emailVerified).toBeNull();
     expect((await adapter.getSessionAndUser!(login.token))?.user.id).toBe(user.id);
     expect(await db.account.count({ where: { userId: user.id } })).toBe(0);
+  });
+  it('verified OAuth quarantines an unverified password identity and creates a fresh owner', async () => {
+    const address = `reclaim-${email}`;
+    const old = (await users.register(address, 'Squatter', 'squatter-password'))!;
+    userIds.push(old.id);
+    const token = `${prefix}-reclaim-session`;
+    await db.session.create({
+      data: { userId: old.id, sessionToken: token, expires: new Date(Date.now() + 60000) },
+    });
+    await db.emailToken.create({
+      data: {
+        userId: old.id,
+        purpose: 'RESET_PASSWORD',
+        tokenHash: `${prefix}-reset`,
+        expiresAt: new Date(Date.now() + 60000),
+      },
+    });
+    const revoke = vi.fn();
+    const identity = {
+      provider: 'google' as const,
+      providerAccountId: `${prefix}-google-owner`,
+      type: 'oidc' as const,
+      email: address.toUpperCase(),
+      name: 'Verified owner',
+      image: null,
+    };
+    await recoverVerifiedOAuthIdentity(identity, db, revoke);
+    const owner = (await users.byEmail(address))!;
+    userIds.push(owner.id);
+    expect(owner.id).not.toBe(old.id);
+    expect(owner.name).toBe('Verified owner');
+    expect(owner.emailVerified).not.toBeNull();
+    expect(owner.passwordHash).toBeNull();
+    const previous = await db.user.findUniqueOrThrow({ where: { id: old.id } });
+    expect(previous.email).toBeNull();
+    expect(previous.passwordHash).toBeNull();
+    expect(await db.session.count({ where: { userId: old.id } })).toBe(0);
+    expect(await db.emailToken.count({ where: { userId: old.id } })).toBe(0);
+    expect(revoke).toHaveBeenCalledWith(token);
+    expect(
+      (
+        await createAuthAdapter(db).getUserByAccount!({
+          provider: 'google',
+          providerAccountId: identity.providerAccountId,
+        })
+      )?.id,
+    ).toBe(owner.id);
+    await recoverVerifiedOAuthIdentity(identity, db, revoke);
+    expect((await users.byEmail(address))?.id).toBe(owner.id);
+  });
+  it('OAuth recovery preserves verified password accounts and never auto-links them', async () => {
+    const address = `verified-${email}`;
+    const old = await db.user.create({
+      data: {
+        email: address,
+        emailVerified: new Date(),
+        passwordHash: 'verified-password',
+        name: 'Original',
+      },
+    });
+    userIds.push(old.id);
+    await recoverVerifiedOAuthIdentity(
+      {
+        provider: 'github',
+        providerAccountId: `${prefix}-not-linked`,
+        type: 'oauth',
+        email: address,
+        name: 'Other',
+        image: null,
+      },
+      db,
+    );
+    expect((await users.byEmail(address))?.passwordHash).toBe('verified-password');
+    expect(await db.account.count({ where: { userId: old.id } })).toBe(0);
   });
   it('keeps subscriptions owner-bound, idempotent and capped at five devices', async () => {
     const user = (await users.byEmail(email))!;

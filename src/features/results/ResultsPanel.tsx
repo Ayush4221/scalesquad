@@ -1,5 +1,13 @@
-import type { Comparison, RunView, SimulationResult } from '@scalesquad/shared';
-import { MetricCard } from '@/components/shared/MatchNavigation';
+import { layoutClassName } from '@/styles/layout';
+import type {
+  Comparison,
+  ConfigurationValues,
+  RunView,
+  SimulationResult,
+} from '@scalesquad/shared';
+import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
+import { formatMetric, metricDirection } from '@/utils/formatMetric';
+import styles from './results.module.css';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
@@ -22,6 +30,40 @@ const labels: Record<string, string> = {
   throughputPassed: 'Admission target',
   budgetMet: 'Within budget',
 };
+const configLabels: Record<keyof ConfigurationValues, string> = {
+  appCapacity: 'App capacity',
+  dbCapacity: 'Database capacity',
+  atomicCheckin: 'Atomic check-in',
+  retryPolicy: 'Retry policy',
+  cache: 'Cache',
+};
+const configValues: Record<string, string> = {
+  LOW: 'Low',
+  MEDIUM: 'Medium',
+  HIGH: 'High',
+  NO_RETRY: 'No retry',
+  RETRY_SAME_KEY: 'Retry with the same key',
+  RETRY_NEW_IDENTITY: 'Retry with a new identity',
+  OFF: 'Off',
+  ON_READS_ONLY: 'Read-only cache',
+};
+const formatConfiguration = (value: ConfigurationValues[keyof ConfigurationValues]) =>
+  typeof value === 'boolean' ? (value ? 'On' : 'Off') : (configValues[value] ?? value);
+function Direction({ metric, before, after }: { metric: string; before: number; after: number }) {
+  const direction = metricDirection(metric, before, after);
+  const Icon =
+    direction.movement === 'up'
+      ? ArrowUpRight
+      : direction.movement === 'down'
+        ? ArrowDownRight
+        : Minus;
+  return (
+    <span className={styles.direction} data-tone={direction.tone}>
+      <Icon aria-hidden="true" />
+      {direction.label}
+    </span>
+  );
+}
 export function Gates({ result }: { result: SimulationResult }) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -36,56 +78,90 @@ export function Gates({ result }: { result: SimulationResult }) {
 export function ResultsPanel({
   runs,
   comparison,
+  presetConfiguration,
+  repairedConfiguration,
 }: {
   runs: RunView[];
   comparison: Comparison | null;
+  presetConfiguration: ConfigurationValues;
+  repairedConfiguration: ConfigurationValues;
 }) {
   return (
-    <section className="space-y-6">
+    <section className={styles.panel}>
       {comparison && (
         <Card>
           <CardHeader>
-            <div className="flex justify-between">
+            <div className={styles.heading}>
               <CardTitle>Same incident. A different design.</CardTitle>
               <Badge variant={comparison.status === 'PASSED' ? 'secondary' : 'destructive'}>
                 {comparison.status}
               </Badge>
             </div>
-            <p className="muted">
+            <p className={styles.description}>
               Run 2 → Run 3 · Identical traffic, outage and engine. Only your configuration changed.
             </p>
           </CardHeader>
-          <CardContent>
-            <div className="mobile-metrics">
+          <CardContent className={styles.comparison}>
+            <div className={layoutClassName('mobile-metrics')}>
               {comparison.metrics.map((m) => (
-                <MetricCard
-                  key={m.metric}
-                  label={labels[m.metric] ?? m.metric}
-                  before={m.before}
-                  after={m.after}
-                />
+                <article className={styles.mobileMetric} key={m.metric}>
+                  <h3>{labels[m.metric] ?? m.metric}</h3>
+                  <p>
+                    {formatMetric(m.metric, m.before)} →{' '}
+                    <strong>{formatMetric(m.metric, m.after)}</strong>
+                  </p>
+                  <Direction metric={m.metric} before={m.before} after={m.after} />
+                </article>
               ))}
             </div>
-            <div className="desktop-metrics">
+            <div className={layoutClassName('desktop-metrics')}>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Metric</TableHead>
                     <TableHead>Run 2 · Preset</TableHead>
                     <TableHead>Run 3 · Repair</TableHead>
+                    <TableHead>Change</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {comparison.metrics.map((m) => (
                     <TableRow key={m.metric}>
                       <TableCell>{labels[m.metric] ?? m.metric}</TableCell>
-                      <TableCell>{Number(m.before.toFixed(2)).toLocaleString()}</TableCell>
-                      <TableCell>{Number(m.after.toFixed(2)).toLocaleString()}</TableCell>
+                      <TableCell>{formatMetric(m.metric, m.before)}</TableCell>
+                      <TableCell>{formatMetric(m.metric, m.after)}</TableCell>
+                      <TableCell>
+                        <Direction metric={m.metric} before={m.before} after={m.after} />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
+            {presetConfiguration && repairedConfiguration && (
+              <section className={styles.configDiff} aria-label="Configuration changes">
+                <h3>What you changed</h3>
+                <p className={styles.description}>
+                  Preset configuration compared with the repair used in Run 3.
+                </p>
+                <ul className={styles.changes}>
+                  {(Object.keys(configLabels) as (keyof ConfigurationValues)[])
+                    .filter((key) => presetConfiguration[key] !== repairedConfiguration[key])
+                    .map((key) => (
+                      <li key={key}>
+                        <strong>{configLabels[key]}</strong>
+                        <span>
+                          {formatConfiguration(presetConfiguration[key])} →{' '}
+                          {formatConfiguration(repairedConfiguration[key])}
+                        </span>
+                      </li>
+                    ))}
+                </ul>
+                {(Object.keys(configLabels) as (keyof ConfigurationValues)[]).every(
+                  (key) => presetConfiguration[key] === repairedConfiguration[key],
+                ) && <p className={styles.empty}>No configuration settings changed.</p>}
+              </section>
+            )}
             <ul className="fact-list">
               {comparison.gatesChanged.map((g) => (
                 <li key={g.gate}>
@@ -100,17 +176,17 @@ export function ResultsPanel({
           </CardContent>
         </Card>
       )}
-      <div className="run-grid">
+      <div className={layoutClassName('run-grid')}>
         {runs.map(({ runNumber, result }) => (
           <Card key={runNumber}>
             <CardHeader>
-              <div className="flex justify-between">
+              <div className={styles.heading}>
                 <CardTitle>Run {runNumber}</CardTitle>
                 <Badge variant={result.overallGatePassed ? 'secondary' : 'destructive'}>
                   {result.overallGatePassed ? 'PASSED' : 'FAILED'}
                 </Badge>
               </div>
-              <p className="muted text-sm">
+              <p className={layoutClassName('muted text-sm')}>
                 {runNumber === 1
                   ? 'Diagnostic baseline · normal traffic'
                   : runNumber === 2
@@ -119,7 +195,7 @@ export function ResultsPanel({
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="metrics">
+              <div className={layoutClassName('metrics')}>
                 <div>
                   <strong>{result.validAdmissions.toLocaleString()}</strong>
                   <span>valid admissions</span>
@@ -138,7 +214,7 @@ export function ResultsPanel({
                 </div>
               </div>
               <Gates result={result} />
-              <ul className="reason-list">
+              <ul className={layoutClassName('reason-list')}>
                 {result.failureReasons.map((f) => (
                   <li key={f.code}>
                     <details>

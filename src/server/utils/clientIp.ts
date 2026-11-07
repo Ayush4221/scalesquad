@@ -20,6 +20,22 @@ export function ipPrefix(value: string): string {
     : a;
   return `${groups.slice(0, 3).join(':')}::/48`;
 }
+/** IPv6 privacy addresses share a /64 quota; IPv4 clients retain individual quotas. */
+export function rateLimitIp(value: string): string {
+  const ip = normalizeIp(value);
+  if (!ip) return value;
+  if (isIP(ip) === 4) return ip;
+  const [left = '', right = ''] = ip.split('::');
+  const a = left.split(':').filter(Boolean),
+    b = right.split(':').filter(Boolean);
+  const groups = ip.includes('::')
+    ? [...a, ...Array<string>(8 - a.length - b.length).fill('0'), ...b]
+    : a;
+  return `${groups
+    .slice(0, 4)
+    .map((group) => Number.parseInt(group, 16).toString(16))
+    .join(':')}::/64`;
+}
 /** Walk from the trusted socket peer toward the client; never trust a client-supplied prefix. */
 export function clientIp(
   req: Pick<IncomingMessage, 'headers' | 'socket'>,

@@ -66,7 +66,7 @@ export function validatePassword(plain: string, email: string): string {
   if (
     !NewPasswordSchema.safeParse(value).success ||
     common.has(value.toLowerCase()) ||
-    (local.length > 0 && value.toLowerCase().includes(local))
+    (local.length >= 4 && value.toLowerCase().includes(local))
   )
     throw new AppError(
       'VALIDATION',

@@ -1,4 +1,5 @@
-import { z } from 'zod';
+import { z } from '../utils/validation';
+import { errorMessages } from '../constants/errorMessages';
 
 export const ErrorCode = z.enum([
   'UNAUTHENTICATED',
@@ -20,7 +21,7 @@ export class AppError extends Error {
   constructor(
     public readonly code: ErrorCode,
     public readonly httpStatus = 400,
-    public readonly safeMessage = code.replaceAll('_', ' '),
+    public readonly safeMessage = errorMessages[code],
     options?: ErrorOptions & { retryAfterSeconds?: number },
   ) {
     super(safeMessage, options);

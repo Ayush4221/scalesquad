@@ -1,6 +1,6 @@
 import { getPrisma } from '@scalesquad/db';
 import { AppError, type PushSubscriptionDto } from '@scalesquad/shared';
-import type { PushRepository } from '../lib/push';
+import type { PushRepository } from '../infra/push';
 import { withTransaction } from './unitOfWork';
 export class PrismaPushRepository implements PushRepository {
   constructor(private readonly client = getPrisma()) {}

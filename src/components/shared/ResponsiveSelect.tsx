@@ -16,12 +16,16 @@ export function ResponsiveSelect({
   choices,
   disabled,
   onChange,
+  id,
+  describedBy,
 }: {
   label: string;
   value: string;
   choices: readonly { value: string; label: string }[];
   disabled: boolean;
   onChange: (v: string) => void;
+  id?: string;
+  describedBy?: string;
 }) {
   const desktop = useMediaQuery('(min-width: 768px)'),
     [open, setOpen] = useState(false);
@@ -34,8 +38,10 @@ export function ResponsiveSelect({
           if (v) onChange(v);
         }}
       >
-        <SelectTrigger aria-label={label} className="w-full">
-          <SelectValue placeholder={label} />
+        <SelectTrigger id={id} aria-describedby={describedBy} aria-label={label} className="w-full">
+          <SelectValue placeholder={label}>
+            {choices.find((choice) => choice.value === value)?.label ?? label}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {choices.map((c) => (
@@ -50,6 +56,8 @@ export function ResponsiveSelect({
     <>
       <Button
         variant="outline"
+        id={id}
+        aria-describedby={describedBy}
         aria-label={label}
         disabled={disabled}
         className="w-full justify-between"

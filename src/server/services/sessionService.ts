@@ -1,5 +1,5 @@
-import type { SessionRepository } from '../lib/models';
-import type { Clock } from '../lib/ports';
+import type { SessionRepository } from '../domain/models';
+import type { Clock } from '../domain/ports';
 export class SessionService {
   constructor(
     private readonly repo: SessionRepository,
@@ -45,5 +45,45 @@ export class SessionService {
   async resolveFromCookie(header: string | undefined) {
     const token = this.cookieToken(header);
     return token ? this.resolveToken(token) : null;
+  }
+  /** Socket-local cache: no shared token map, and never extends the database expiry. */
+  async openSocket(header: string | undefined) {
+    const token = this.cookieToken(header);
+    if (!token) return null;
+    let identity;
+    try {
+      identity = await this.repo.find(token);
+    } catch {
+      return null;
+    }
+    if (!identity || identity.expires <= this.clock.now()) return null;
+    const userId = identity.userId;
+    let expires = identity.expires;
+    let checkedAt = this.clock.now();
+    let valid = true;
+    let checking: Promise<boolean> | null = null;
+    const authorize = async (force = false): Promise<boolean> => {
+      const now = this.clock.now();
+      if (!valid || expires <= now) return false;
+      if (!force && now - checkedAt < 5000) return true;
+      if (checking) return checking;
+      checking = (async () => {
+        try {
+          const current = await this.repo.find(token);
+          valid = current?.userId === userId && current.expires > this.clock.now();
+          if (current && valid) expires = current.expires;
+          checkedAt = this.clock.now();
+          return valid;
+        } catch {
+          // A failed lookup says nothing about whether this session was revoked.
+          // Preserve its last confirmed expiry and retry on the next check.
+          return valid && expires > this.clock.now();
+        } finally {
+          checking = null;
+        }
+      })();
+      return checking;
+    };
+    return { token, userId, authorize };
   }
 }

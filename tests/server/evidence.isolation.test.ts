@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { fixture } from './fakes';
-import { silentEvents } from '../../src/server/lib/ports';
+import { silentEvents } from '../../src/server/domain/ports';
 import { ensureEvidence } from '../../src/server/services/evidenceService';
 describe('mandatory private evidence isolation', () => {
   it('each caller gets only own evidence; cards never enter public views, audit, chat or notifications', async () => {

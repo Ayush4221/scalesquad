@@ -25,6 +25,7 @@ for (const mission of [
       });
     await host.page.getByRole('button', { name: 'Create squad', exact: true }).click();
     await expect(host.page).toHaveURL(/\/match\//);
+    await expect(host.page).toHaveTitle('ScaleSquad');
     s.matchId = host.page.url().split('/').at(-1)!;
     const stored = await s.db.match.findUniqueOrThrow({ where: { id: s.matchId } });
     expect(stored.scenarioId).toBe(mission.id);

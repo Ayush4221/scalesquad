@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { fixture } from '../fakes';
 import { RunService } from '../../../src/server/services/runService';
-import { silentEvents } from '../../../src/server/lib/ports';
+import { silentEvents } from '../../../src/server/domain/ports';
 import { contentHash } from '@scalesquad/shared';
 import { runSimulation } from '@scalesquad/sim';
 describe('missing records fail closed', () => {

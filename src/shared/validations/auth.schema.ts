@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../../utils/validation';
 export const normalizeEmail = (email: string) => email.trim().normalize('NFKC').toLowerCase();
 export const EmailSchema = z.string().max(254).transform(normalizeEmail).pipe(z.email().max(254));
 export const PasswordSchema = z

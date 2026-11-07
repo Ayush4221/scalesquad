@@ -1,5 +1,5 @@
 import { Role, type MatchPhase } from '@scalesquad/shared';
-import type { Member } from '../lib/models';
+import type { Member } from '../domain/models';
 const transitions: Partial<Record<MatchPhase, MatchPhase>> = {
   LOBBY: 'BRIEFING',
   BRIEFING: 'REPAIR_1',

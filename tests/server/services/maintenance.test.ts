@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { fixture } from '../fakes';
 import { MaintenanceService } from '../../../src/server/services/maintenanceService';
-import { silentEvents } from '../../../src/server/lib/ports';
+import { silentEvents } from '../../../src/server/domain/ports';
 import { runtimePolicy } from '../../../src/server/constants/runtimePolicy';
 
 describe('bounded match lifecycle and presence', () => {

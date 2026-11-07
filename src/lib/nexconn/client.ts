@@ -1,3 +1,4 @@
+import { CHAT_MESSAGE_MAX_LENGTH } from '@/constants/chat';
 import {
   AreaCode,
   BaseChannel,
@@ -104,7 +105,13 @@ export class NexconnClient implements ChatClient {
     if (!this.closed && history.code === 0 && history.data) receive(this.map(history.data.data));
   }
   async send(text: string) {
-    if (this.closed || engine.owner !== this || !this.channel || !text.trim() || text.length > 2000)
+    if (
+      this.closed ||
+      engine.owner !== this ||
+      !this.channel ||
+      !text.trim() ||
+      text.length > CHAT_MESSAGE_MAX_LENGTH
+    )
       throw new Error('Invalid chat message');
     const result = await this.channel.sendMessage(new SendTextMessageParams({ text: text.trim() }));
     if (result.code !== 0) throw new Error('Message not sent');

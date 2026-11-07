@@ -3,7 +3,8 @@ import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import GitHub from 'next-auth/providers/github';
 import type { Adapter } from 'next-auth/adapters';
-import { z } from 'zod';
+import { z } from '../utils/validation';
+import type { VerifiedOAuthIdentity } from '@scalesquad/shared';
 import { allowedSignIn, publicSession } from './callbacks';
 import { getWebEnv } from '@/lib/env';
 
@@ -84,7 +85,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
         : []),
     ],
     callbacks: {
-      signIn: ({ account, user, profile }) => allowedSignIn(account?.provider, user.email, profile),
+      signIn: async ({ account, user, profile }) => {
+        if (!allowedSignIn(account?.provider, user.email, profile)) return false;
+        if (
+          !account ||
+          !user.email ||
+          (account.provider !== 'google' && account.provider !== 'github') ||
+          (account.type !== 'oauth' && account.type !== 'oidc')
+        )
+          return false;
+        const recovery = (
+          globalThis as typeof globalThis & {
+            scaleSquadOAuthRecovery?: (identity: VerifiedOAuthIdentity) => Promise<void>;
+          }
+        ).scaleSquadOAuthRecovery;
+        if (!recovery) return false;
+        await recovery({
+          provider: account.provider,
+          providerAccountId: account.providerAccountId,
+          type: account.type,
+          email: user.email,
+          name: user.name ?? null,
+          image: user.image ?? null,
+        });
+        return true;
+      },
       session: ({ session, user }) => publicSession(user, session.expires),
       redirect: ({ url }) => {
         try {

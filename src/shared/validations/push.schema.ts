@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../../utils/validation';
 import { Id } from '../domain';
 export const PushKind = z.enum([
   'MATCH_STARTED',

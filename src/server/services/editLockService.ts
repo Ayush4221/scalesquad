@@ -1,7 +1,7 @@
 import { AppError } from '@scalesquad/shared';
 import { loadScenario } from '@scalesquad/scenario';
-import type { GameRepository } from '../lib/models';
-import type { Clock, DomainEvents } from '../lib/ports';
+import type { GameRepository } from '../domain/models';
+import type { Clock, DomainEvents } from '../domain/ports';
 import { audit, currentConfig, editable, host, member, phase } from './guards';
 export class EditLockService {
   constructor(

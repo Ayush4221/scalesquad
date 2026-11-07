@@ -7,7 +7,7 @@ import {
   RunNumber,
   type EvidencePhase,
 } from '@scalesquad/shared';
-import type { GameRepository, MatchRecord } from '../lib/models';
+import type { GameRepository, MatchRecord } from '../domain/models';
 import { withTransaction } from './unitOfWork';
 
 const include = {

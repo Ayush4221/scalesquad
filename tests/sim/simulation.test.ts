@@ -87,7 +87,9 @@ describe('deterministic simulator and fair comparison', () => {
     expect(() => assertComparable(incident, repair)).not.toThrow();
     const changed = structuredClone(repair);
     changed.scenario.profiles.incident.retryAfterTimeoutRate = 0.5;
-    expect(() => assertComparable(incident, changed)).toThrow('COMPARISON INPUT MISMATCH');
+    expect(() => assertComparable(incident, changed)).toThrow(
+      'These runs used different conditions and cannot be compared.',
+    );
     const before = runSimulation(incident),
       after = { ...before, p95LatencyMs: 0 };
     expect(compareRuns(before, after).status).toBe('FAILED');

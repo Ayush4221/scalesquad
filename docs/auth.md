@@ -66,7 +66,7 @@ one uppercase letter, one punctuation/symbol character and one number (owner
 update, 2026-11-05). Spaces do not count as special characters. The shared
 `NewPasswordSchema` enforces this for signup and password changes; both screens
 show a live requirements checklist. Existing passwords still work for login.
-Common values and the email local-part remain rejected. Pepper and CAPTCHA
+Common values and email local-parts of four or more characters remain rejected. Shorter local-parts do not disqualify unrelated passwords. Pepper and CAPTCHA
 remain off by owner choice.
 
 Unknown users, OAuth-only users and wrong passwords get the same login failure.
@@ -85,10 +85,14 @@ Only verified Google email or GitHub primary verified email claims are accepted.
 Provider access, refresh and ID tokens are discarded. Password accounts keep
 `emailVerified` null because signup no longer proves mailbox ownership.
 
-Accounts are not automatically linked by matching email text. Auth.js's default
-account-linking rejection remains enabled. OAuth sign-in does not delete a
-password account, clear its password or replace its sessions. Users must keep
-using their original sign-in method when an email already belongs to an account.
+Accounts are not automatically linked by matching email text. A verified Google
+or GitHub identity can reclaim an address held by an unverified password-only
+account: one serializable transaction clears the old email/password, removes its
+sessions, email tokens and push subscriptions, and creates a fresh verified user
+with the provider identity. Existing game data stays on the quarantined old ID;
+it is never inherited by the new owner. Revocation closes the old sessions' live
+sockets after commit. Verified password accounts and provider-linked identities
+retain Auth.js's default no-link behavior.
 
 ## Routes and limits
 
@@ -116,3 +120,34 @@ migration tooling. Both can be the same connection string for local Postgres or
 any direct-only setup. A hosted provider may offer a pooled application URL and
 a separate direct migration URL; both point to the same database. See the
 [Prisma 6 connection reference](https://www.prisma.io/docs/orm/v6/reference/prisma-config-reference).
+
+Review fixes (2026-11-06): login quotas include an email-only account limit across
+source addresses. Backoff uses fixed hashed slots, never a globally cleared map.
+Failed logins perform one lookup, one hash verification and one audit write for
+both known and unknown accounts; legacy failed-login columns are no longer
+incremented. Login reports credential errors, rate limits and service outages
+separately without exposing account existence. Production startup requires a
+nonempty explicit TRUSTED_PROXY_IPS list for the Caddy deployment.
+
+## Request nonces
+
+Rendered pages use a fresh random CSP nonce per request. Next Proxy overwrites
+incoming nonce/CSP headers, forwards the policy for server rendering, and sets
+the matching response policy. The root layout opts into dynamic rendering so
+framework and inline hydration scripts receive that nonce. Production/built-test
+`script-src` permits no `unsafe-inline` or `unsafe-eval`; development alone keeps
+`unsafe-eval` for React debugging. Inline styles remain allowed for palette
+variables and component positioning. APIs/static files keep an inline-script-free
+baseline policy. Page responses are private and not cached across users.
+
+Implementation follows the [official Next.js CSP guide](https://nextjs.org/docs/app/guides/content-security-policy).
+The browser regression verifies rendered script nonces, a fresh nonce on the
+next response, hydrated sign-in controls after client navigation, and no CSP
+violations on that route. The final review validation records its built-browser
+result; unit checks alone do not establish browser compatibility.
+
+Zod's dynamic-code capability probe also triggers a CSP violation even when the
+library catches the blocked call. Application schemas therefore import `z` from
+`src/utils/validation.ts`, which sets `jitless: true` before construction. This
+keeps validation on its normal interpreted path without relaxing script policy;
+see [Zod's CSP guidance](https://zod.dev/compile#content-security-policy).

@@ -1,7 +1,7 @@
 import type { Server } from 'node:http';
 import { WebSocket, WebSocketServer } from 'ws';
 import { AppError, ClientEvent, MAX_MESSAGE_BYTES } from '@scalesquad/shared';
-import { RateLimiter } from '../middleware/rateLimit';
+import { RateLimiter } from '../utils/rateLimit';
 import { parseJson } from '../middleware/bodyParser';
 import type { SessionService } from '../services/sessionService';
 import type { createWsController } from '../controllers/wsController';
@@ -35,18 +35,17 @@ export function attachGateway(
         if (req.url !== '/ws' || req.headers.origin !== origin)
           throw new AppError('FORBIDDEN', 403);
         upgrades.take(clientIp(req, trustedProxyIps));
-        const token = session.cookieToken(req.headers.cookie);
-        const user = await session.resolveFromCookie(req.headers.cookie);
-        if (!user || !token) throw new AppError('UNAUTHENTICATED', 401);
+        const user = await session.openSocket(req.headers.cookie);
+        if (!user) throw new AppError('UNAUTHENTICATED', 401);
         wss.handleUpgrade(req, socket, head, (ws) => {
           const peer: Peer = {
             socket: ws,
             userId: user.userId,
             room: null,
             alive: true,
-            sessionToken: token,
+            sessionToken: user.token,
             foreground: true,
-            authorize: async () => (await session.resolveToken(token))?.userId === user.userId,
+            authorize: user.authorize,
           };
           rooms.peers.add(peer);
           const limit = new RateLimiter(30, 5);
@@ -85,7 +84,7 @@ export function attachGateway(
                 if (!accepting || ws.readyState !== WebSocket.OPEN) return;
                 try {
                   // Logout/expiry invalidates already-open sockets as well as new upgrades.
-                  if (!(await peer.authorize())) {
+                  if (!(await peer.authorize(true))) {
                     ws.close(1008, 'Session expired');
                     return;
                   }
@@ -151,7 +150,7 @@ export function attachGateway(
       p.alive = false;
       p.socket.ping();
       void p
-        .authorize()
+        .authorize(true)
         .then((valid) => {
           if (!valid) p.socket.close(1008, 'Session expired');
         })

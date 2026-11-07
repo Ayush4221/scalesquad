@@ -1,3 +1,5 @@
+> Owner updates supersede the original mail/verification steps below: simple signup/login, no mail transport; scrypt; 8–128 characters with uppercase, number and symbol; pepper/CAPTCHA off. OAuth ownership recovery is described in docs/auth.md.
+
 # Step 11 — Email and Password Authentication (primary), OAuth (optional)
 
 **Goal:** make email + password the primary way to sign in, keep Google and GitHub OAuth as optional alternatives, and keep one session model so HTTP, WebSocket and Auth.js all keep working. Security is the priority: this step adds credentials, which raises the stakes of every earlier shortcut.
@@ -53,7 +55,7 @@ Email is stored once, normalized: trim, NFKC, lowercase. Unique constraint on th
 ### 11.2 Password service (`services/passwordService.ts`)
 - `PasswordHasher` interface: `hash(plain)`, `verify(hash, plain)`, `needsRehash(hash)`. Hash string encodes algorithm and parameters.
 - Argon2id parameters at or above current OWASP minimums (for example memory 19 MiB, 2 iterations, 1 lane; raise if the VPS allows). Tune so one hash takes ~100–250 ms and bound concurrent hashing (small semaphore) so login floods cannot exhaust CPU/memory.
-- **Policy:** min 12, max 128 characters (reject longer before hashing), no composition rules, allow all Unicode and spaces, NFKC-normalize before hashing, reject passwords containing the email local-part, reject entries from a bundled common-password list (top ~10k, no external call). Optional later: breached-password range check.
+- **Policy:** min 8, max 128 characters (reject longer before hashing), at least one uppercase letter, one number and one punctuation/symbol character (owner update, 2026-11-05), allow all Unicode and spaces, NFKC-normalize before hashing, reject passwords containing email local-parts of at least four characters, reject entries from a bundled common-password list (top ~10k, no external call). Optional later: breached-password range check.
 - `needsRehash` on successful login upgrades old parameters transparently.
 - Dummy hash: a precomputed valid hash used to equalize timing when the account does not exist.
 
@@ -116,7 +118,7 @@ Rules:
 ### 11.7 OAuth as optional; pre-hijacking defense
 - Keep Google and GitHub providers. They move below the email form on the sign-in page.
 - Auth.js default (no auto-linking) stays: signing in with OAuth when a password account owns the email yields a clear "use your original sign-in method" message.
-- **Pre-hijacking:** an attacker registers `victim@x.com` with a password (unverified). If the victim later signs in with OAuth, the attacker's password must not work. Rule: when an OAuth sign-in creates or attaches to a user whose email matches an **unverified** password account, clear that account's `passwordHash` and revoke its sessions and tokens.
+- **Pre-hijacking:** an attacker registers `victim@x.com` with a password (unverified). If the victim later signs in with OAuth, the attacker's password must not work. Rule: after validating the provider email ownership claim, atomically quarantine an **unverified password-only** identity (clear its email/password and revoke sessions/tokens), then create a fresh verified user and provider account. Never inherit the squatter's game data. Verified or already provider-linked accounts keep the default no-link behavior.
 - Unverified password accounts older than 7 days with no activity are purged by a daily job.
 
 ### 11.8 Email delivery (`lib/mailer.ts`)
@@ -157,7 +159,7 @@ Rules:
 ## Unit tests required (Vitest, fakes for repositories, mailer, clock)
 
 **passwordService**
-- Policy: rejects < 12 and > 128 chars; rejects common passwords and email-local-part matches; accepts long passphrases with spaces and Unicode; NFKC makes composed and decomposed forms equal.
+- Policy: rejects < 8 and > 128 chars; requires uppercase, number and symbol; rejects common passwords and email-local-part matches; accepts long passphrases with spaces and Unicode; NFKC makes composed and decomposed forms equal.
 - Hasher: hash differs per call (salt); verify true/false; `needsRehash` true for old parameters; max-length rejection happens before hashing; concurrent hashing is bounded.
 - Dummy hash verify is a valid hash and takes the same code path.
 

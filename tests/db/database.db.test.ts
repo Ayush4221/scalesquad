@@ -12,7 +12,7 @@ import { ConfigService } from '../../src/server/services/configService';
 import { RunService } from '../../src/server/services/runService';
 import { EvidenceService } from '../../src/server/services/evidenceService';
 import { PrismaEvidenceRepository } from '../../src/server/repositories/evidenceRepository';
-import { silentEvents } from '../../src/server/lib/ports';
+import { silentEvents } from '../../src/server/domain/ports';
 import { FakeChatProvider } from '@scalesquad/nexconn/fake';
 import { runSimulation } from '@scalesquad/sim';
 import { loadScenario } from '@scalesquad/scenario';

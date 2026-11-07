@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createECDH, randomBytes } from 'node:crypto';
 import webpush from 'web-push';
-import { WebPushTransport } from '../../../src/server/lib/webPushTransport';
+import { WebPushTransport } from '../../../src/server/infra/webPushTransport';
 import { validVapid } from '../../../src/server/config/vapid';
 import { readEnv } from '../../../src/server/config/env';
 describe('real Web Push adapter contract', () => {

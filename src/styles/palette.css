@@ -1,5 +1,12 @@
 /* Values are defined only in palette.ts and provided by RootLayout. */
 :root {
+  --font-app-sans: Arial, Helvetica, sans-serif;
+  --font-app-mono: monospace;
+  --font-sans: var(--font-app-sans);
+  --font-geist-mono: var(--font-app-mono);
+  --font-squad-body: 'Squad Chivo', Arial, sans-serif;
+  --font-squad-display: 'Squad Bungee', Impact, sans-serif;
+  --radius: 0.625rem;
   color-scheme: dark;
   --background: var(--palette-ink);
   --foreground: var(--palette-text);

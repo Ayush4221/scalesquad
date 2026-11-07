@@ -15,6 +15,12 @@ test('three players finish a fair baseline, incident and successful UI repair', 
   expect(view.runs[1]!.result.sharedInputHash).toBe(view.runs[2]!.result.sharedInputHash);
   expect(view.comparison.status).toBe('PASSED');
   await expect(host.page.getByText('Same incident. A different design.')).toBeVisible();
+  await expect(
+    host.page.getByRole('heading', { name: 'What you changed', exact: true }),
+  ).toBeVisible();
+  const changes = host.page.getByRole('region', { name: 'Configuration changes' });
+  await expect(changes.getByText('Atomic check-in', { exact: true })).toBeVisible();
+  await expect(changes.getByText('Off → On', { exact: true })).toBeVisible();
   if (await host.page.getByRole('navigation', { name: 'Match sections' }).isVisible()) {
     await expect(host.page.locator('.mobile-metrics')).toBeVisible();
     await expect(host.page.locator('.desktop-metrics')).toBeHidden();
@@ -49,7 +55,7 @@ test('a failed run request keeps the repair editable and can be retried', async 
     response.url().endsWith(`/matches/${s.matchId}/runs`) && response.request().method() === 'POST';
   const [failed] = await Promise.all([page.waitForResponse(isRunResponse), activate()]);
   expect(failed.status()).toBe(503);
-  await expect(page.locator('.error[role="alert"]')).toContainText('Try again');
+  await expect(page.locator('.error[role="alert"]')).toContainText(/try again/i);
   await expect(page.getByLabel('App capacity', { exact: true })).toBeEnabled();
   await page.unroute(runPath);
   const [retried] = await Promise.all([page.waitForResponse(isRunResponse), activate()]);

@@ -7,7 +7,7 @@ test('route registry stays authenticated, strict and phase/membership protected'
 }) => {
   await lobby(s);
   const [host, peer] = s.players;
-  for (const [method, path, , access] of routeRegistry) {
+  for (const { method, path, access } of routeRegistry) {
     if (access !== 'session') continue;
     const response = await request.fetch(path.replace(':id', s.matchId), {
       method,

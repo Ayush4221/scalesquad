@@ -1,6 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { ESLint } from 'eslint';
 describe('MVC boundaries', () => {
+  it.each(['utils/rateLimit', 'constants/runtimePolicy'])(
+    'the View cannot import server/%s',
+    async (module) => {
+      const results = await new ESLint().lintText(
+        `import * as serverOnly from '@/server/${module}'; void serverOnly;`,
+        { filePath: 'src/features/boundary.fixture.ts' },
+      );
+      expect(
+        results
+          .flatMap((result) => result.messages)
+          .some((message) => message.ruleId === 'boundaries/dependencies'),
+      ).toBe(true);
+    },
+  );
   it('a controller cannot import the database directly', async () => {
     const linter = new ESLint();
     const results = await linter.lintText(

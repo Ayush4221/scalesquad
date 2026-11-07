@@ -1,4 +1,5 @@
 'use client';
+import { landingClassName } from './landingStyles';
 
 import { useEffect, useState } from 'react';
 import { Pause, Play, RotateCcw } from 'lucide-react';
@@ -71,11 +72,12 @@ export function GameWalkthrough() {
         : 'Play the walkthrough';
   return (
     <>
-      <div className="hm-round-controls" aria-label="Explore the game loop">
+      <div className={landingClassName('hm-round-controls')} aria-label="Explore the game loop">
         {scenes.map((item, index) => (
           <button
             key={item.label}
             type="button"
+            className={landingClassName('hm-scene-button')}
             aria-pressed={scene === index}
             onClick={() => select(index)}
           >
@@ -84,7 +86,7 @@ export function GameWalkthrough() {
         ))}
       </div>
       <div aria-live="polite" aria-atomic="true">
-        <div className="hm-step" key={scene}>
+        <div className={landingClassName('hm-step')} key={scene}>
           <span aria-hidden="true">0{scene + 1}</span>
           <div>
             <h3>{current.title}</h3>
@@ -92,10 +94,10 @@ export function GameWalkthrough() {
           </div>
         </div>
       </div>
-      <div className="hm-play-row">
-        <button type="button" className="hm-link" onClick={toggle}>
+      <div className={landingClassName('hm-play-row')}>
+        <button type="button" className={landingClassName('hm-link')} onClick={toggle}>
           {playing ? (
-            <Pause aria-hidden="true" />
+            <Pause className="size-5 shrink-0" aria-hidden="true" />
           ) : finished ? (
             <RotateCcw aria-hidden="true" />
           ) : (

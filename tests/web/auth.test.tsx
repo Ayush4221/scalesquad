@@ -1,5 +1,13 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { act, cleanup, createEvent, render, screen, fireEvent } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  createEvent,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react';
 import { LoginForm } from '../../src/features/auth/LoginForm';
 
 afterEach(() => {
@@ -11,6 +19,22 @@ afterEach(() => {
 });
 
 describe('password forms', () => {
+  it('reports throttling separately and honors the retry interval', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('{}', { status: 429, headers: { 'Retry-After': '30' } })),
+    );
+    render(<LoginForm />);
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'ada@example.invalid' },
+    });
+    fireEvent.change(screen.getByLabelText('Password', { exact: true }), {
+      target: { value: 'existing password' },
+    });
+    fireEvent.submit(screen.getByRole('button', { name: 'Sign in' }).closest('form')!);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Try again in 30 seconds.');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Check your email');
+  });
   it('focuses the committed error even when animation frames are paused', async () => {
     vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(0);
     vi.stubGlobal(
@@ -25,7 +49,7 @@ describe('password forms', () => {
       target: { value: 'existing password' },
     });
     fireEvent.submit(screen.getByRole('button', { name: 'Sign in' }).closest('form')!);
-    expect(await screen.findByRole('alert')).toHaveFocus();
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveFocus());
   });
   it('supports password managers, show/hide and generic sign-in errors', async () => {
     vi.stubGlobal(
@@ -101,7 +125,9 @@ describe('password forms', () => {
     expect(screen.getByLabelText('Email address')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Show password' })).toBeDisabled();
     finish(new Response('{"error":{"message":"private server failure"}}', { status: 503 }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Check your email and password.');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Sign-in is temporarily unavailable.',
+    );
     expect(screen.queryByText('private server failure')).not.toBeInTheDocument();
     fireEvent.submit(form);
     expect(fetch).toHaveBeenCalledTimes(2);
@@ -219,7 +245,7 @@ describe('password forms', () => {
     });
     fireEvent.submit(screen.getByRole('button', { name: 'Sign in' }).closest('form')!);
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Could not sign in with those details',
+      'Sign-in is temporarily unavailable.',
     );
     expect(screen.queryByText('private network failure')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeEnabled();

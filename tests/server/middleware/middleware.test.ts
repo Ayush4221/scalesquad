@@ -3,10 +3,10 @@ import { Readable } from 'node:stream';
 import type { IncomingMessage } from 'node:http';
 import { AppError } from '@scalesquad/shared';
 import { originCheck, requestId, securityHeaders } from '../../../src/server/middleware/security';
-import { RateLimiter } from '../../../src/server/middleware/rateLimit';
+import { RateLimiter } from '../../../src/server/utils/rateLimit';
 import { parseJson, bodyParser } from '../../../src/server/middleware/bodyParser';
 import { safeError } from '../../../src/server/middleware/errorHandler';
-import { createLogger } from '../../../src/server/lib/logger';
+import { createLogger } from '../../../src/server/infra/logger';
 import { SessionService } from '../../../src/server/services/sessionService';
 import { readEnv } from '../../../src/server/config/env';
 describe('HTTP integrity and limits', () => {
@@ -76,14 +76,22 @@ describe('HTTP integrity and limits', () => {
     r.take('new');
     expect(r.size).toBe(1);
   });
-  it('bounds fresh keys without resetting active quotas or rescanning on every rejection', () => {
+  it('bounds fresh keys without globally denying arrivals or resetting active quotas', () => {
     let time = 0;
     const limiter = new RateLimiter(1, 1, () => time, 2);
     const cleanup = vi.spyOn(limiter, 'cleanup');
     limiter.take('a');
     limiter.take('b');
-    for (let i = 0; i < 100; i++) expect(() => limiter.take(`new-${i}`)).toThrow();
-    expect(limiter.size).toBe(2);
+    expect(() => limiter.take('new')).not.toThrow();
+    expect(() => limiter.take('new')).toThrow();
+    for (let i = 0; i < 2000; i++) {
+      try {
+        limiter.take(`new-${i}`);
+      } catch {
+        /* Overflow partitions retain quotas. */
+      }
+    }
+    expect(limiter.size).toBeLessThanOrEqual(1026);
     expect(cleanup).toHaveBeenCalledOnce();
     expect(() => limiter.take('a')).toThrow();
     time = 60000;
@@ -248,7 +256,22 @@ describe('redacted boot environment', () => {
         DATABASE_URL: env.DATABASE_URL + '?sslmode=require',
         DIRECT_URL: env.DIRECT_URL + '?sslmode=verify-full',
         NODE_ENV: 'production',
+        TRUSTED_PROXY_IPS: '127.0.0.1,::1',
       }),
     ).not.toThrow();
+  });
+  it('refuses production boot without an explicit trusted proxy', () => {
+    const production = {
+      ...env,
+      NODE_ENV: 'production',
+      APP_ORIGIN: 'https://example.invalid',
+      DATABASE_URL: env.DATABASE_URL + '?sslmode=require',
+      DIRECT_URL: env.DIRECT_URL + '?sslmode=require',
+    };
+    expect(() => readEnv(production)).toThrow('TRUSTED_PROXY_IPS');
+    expect(() => readEnv({ ...production, TRUSTED_PROXY_IPS: 'garbage' })).toThrow(
+      'TRUSTED_PROXY_IPS',
+    );
+    expect(() => readEnv({ ...production, TRUSTED_PROXY_IPS: '127.0.0.1' })).not.toThrow();
   });
 });

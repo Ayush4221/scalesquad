@@ -1,7 +1,7 @@
 import { getPrisma } from '@scalesquad/db';
 import type { User } from '@prisma/client';
 import { normalizeEmail } from '@scalesquad/shared';
-import type { UserAuthRepository, AuthUser } from '../lib/authPorts';
+import type { UserAuthRepository, AuthUser } from '../domain/authPorts';
 import { withTransaction } from './unitOfWork';
 export function authUser(user: User): AuthUser | null {
   return user.email
@@ -38,12 +38,6 @@ export class PrismaUserAuthRepository implements UserAuthRepository {
         return null;
       throw error;
     }
-  }
-  async failed(id: string, now: number) {
-    await this.client.user.updateMany({
-      where: { id },
-      data: { failedLoginCount: { increment: 1 }, lastFailedLoginAt: new Date(now) },
-    });
   }
   async login(
     id: string,

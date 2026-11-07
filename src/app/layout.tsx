@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { headers } from 'next/headers';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { PwaBoot } from '@/pwa/PwaBoot';
 import { palette, paletteVariables } from '@/styles/palette';
 import './globals.css';
 export const metadata: Metadata = {
-  title: 'ScaleSquad · CampusPass',
+  title: 'ScaleSquad',
   description: 'Build together. Predict failure. Survive the system.',
   appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'ScaleSquad' },
   icons: {
@@ -19,7 +20,9 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
   themeColor: palette.ink,
 };
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  // Nonces are request-specific, so every page using this layout must render dynamically.
+  await headers();
   return (
     <html lang="en" className="dark" style={paletteVariables}>
       <body>

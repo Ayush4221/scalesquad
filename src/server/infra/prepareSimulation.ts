@@ -16,6 +16,7 @@ export function prepareSimulationEngine(): Promise<void> {
         )
           .then(() => {})
           .catch(() => {
+            ready = undefined;
             throw new AppError('INTERNAL', 500, 'Simulation engine unavailable');
           });
   return ready;

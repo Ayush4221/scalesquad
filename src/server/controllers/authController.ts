@@ -7,7 +7,7 @@ import {
 } from '@scalesquad/shared';
 import type { AuthService } from '../services/authService';
 import type { Context } from './gameController';
-import type { AuthContext } from '../lib/authPorts';
+import type { AuthContext } from '../domain/authPorts';
 export interface AuthOutput {
   body: unknown;
   session?: { token: string; clear: boolean };

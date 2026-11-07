@@ -7,14 +7,14 @@ export interface Peer {
   room: string | null;
   alive: boolean;
   sessionToken: string;
-  authorize: () => Promise<boolean>;
+  authorize: (force?: boolean) => Promise<boolean>;
   foreground: boolean;
 }
 export class Rooms {
   readonly peers = new Set<Peer>();
   constructor(
-    private readonly isMember: (userId: string, matchId: string) => Promise<boolean> = async () =>
-      false,
+    private readonly members: (matchId: string) => Promise<ReadonlySet<string>> = async () =>
+      new Set(),
   ) {}
   private send(peer: Peer, event: Omit<ServerEvent, 'id' | 'v'>) {
     const parsed = ServerEvent.parse({ ...event, v: 1, id: randomUUID() });
@@ -28,13 +28,17 @@ export class Rooms {
     this.send(peer, event);
   }
   async broadcast(matchId: string, event: Omit<ServerEvent, 'id' | 'v'>) {
-    for (const peer of this.peers)
-      if (peer.room === matchId && (await this.isMember(peer.userId, matchId)))
-        await this.sendAuthorized(peer, event);
+    const peers = [...this.peers].filter((peer) => peer.room === matchId);
+    if (!peers.length) return;
+    const members = await this.members(matchId);
+    for (const peer of peers)
+      if (peer.room === matchId && members.has(peer.userId)) await this.sendAuthorized(peer, event);
   }
   async sendToUser(matchId: string, userId: string, event: Omit<ServerEvent, 'id' | 'v'>) {
-    if (!(await this.isMember(userId, matchId))) return;
-    for (const peer of this.peers)
+    const peers = [...this.peers].filter((peer) => peer.room === matchId && peer.userId === userId);
+    if (!peers.length) return;
+    if (!(await this.members(matchId)).has(userId)) return;
+    for (const peer of peers)
       if (peer.room === matchId && peer.userId === userId) await this.sendAuthorized(peer, event);
   }
   connected(matchId: string, userId: string) {

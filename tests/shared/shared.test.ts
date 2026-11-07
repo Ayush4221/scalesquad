@@ -51,7 +51,7 @@ describe('canonical JSON and contracts', () => {
   it('safe errors never serialize cause', () => {
     const e = new AppError('INTERNAL', 500, 'Safe', { cause: new Error('private') });
     expect(JSON.stringify(e)).toBe('{"code":"INTERNAL","message":"Safe"}');
-    expect(() => requireUser(null)).toThrow('UNAUTHENTICATED');
+    expect(() => requireUser(null)).toThrow('Sign in again to continue.');
     expect(() => requireUser('a')).not.toThrow();
     expect(() => parse(ConfigurationValues, {})).toThrow('Invalid input');
   });

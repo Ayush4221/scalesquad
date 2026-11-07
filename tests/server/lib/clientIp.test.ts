@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { IncomingMessage } from 'node:http';
-import { clientIp, normalizeIp, ipPrefix } from '../../../src/server/utils/clientIp';
-import { RateLimiter } from '../../../src/server/middleware/rateLimit';
+import { clientIp, normalizeIp, ipPrefix, rateLimitIp } from '../../../src/server/utils/clientIp';
+import { RateLimiter } from '../../../src/server/utils/rateLimit';
 
 const request = (peer: string, forwarded?: string | string[]) =>
   ({
@@ -9,6 +9,18 @@ const request = (peer: string, forwarded?: string | string[]) =>
     headers: { 'x-forwarded-for': forwarded },
   }) as unknown as IncomingMessage;
 describe('trusted proxy address selection', () => {
+  it('shares IPv6 privacy-address quotas within a /64, leaving IPv4 and other networks separate', () => {
+    expect(rateLimitIp('2001:db8:1234:5678::1234')).toBe('2001:db8:1234:5678::/64');
+    expect(rateLimitIp('2001:0db8:1234:5678:abcd:0:0:1')).toBe('2001:db8:1234:5678::/64');
+    expect(rateLimitIp('::ffff:203.0.113.5')).toBe('203.0.113.5');
+    const limiter = new RateLimiter(2, 1);
+    limiter.take('2001:db8:1234:5678::1');
+    limiter.take('2001:db8:1234:5678::2');
+    expect(() => limiter.take('2001:db8:1234:5678::3')).toThrow();
+    expect(limiter.size).toBe(1);
+    expect(() => limiter.take('2001:db8:1234:5679::1')).not.toThrow();
+    expect(() => limiter.take('203.0.113.5')).not.toThrow();
+  });
   it('audit prefixes remove host bits, including compressed IPv6', () => {
     expect(ipPrefix('2001:db8::1234')).toBe('2001:db8:0::/48');
     expect(ipPrefix('::ffff:203.0.113.5')).toBe('203.0.113.0/24');

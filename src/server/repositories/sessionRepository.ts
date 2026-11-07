@@ -1,5 +1,5 @@
 import { BaseRepository } from './baseRepository';
-import type { SessionRepository, UserRepository } from '../lib/models';
+import type { SessionRepository, UserRepository } from '../domain/models';
 export class PrismaSessionRepository extends BaseRepository implements SessionRepository {
   async find(token: string) {
     const row = await this.client.session.findUnique({

@@ -10,15 +10,17 @@ describe('scrypt password protection', () => {
     for (const value of [
       'short',
       'x'.repeat(129),
-      'Ada!1234',
+      'Adam!1234',
       'unbelievable',
       'river!12',
       'River!!!',
       'River123',
       'River 12',
     ])
-      expect(() => validatePassword(value, 'ada@example.invalid')).toThrow();
+      expect(() => validatePassword(value, 'adam@example.invalid')).toThrow();
     expect(validatePassword('River!12', 'ada@example.invalid')).toBe('River!12');
+    expect(validatePassword('Banana!9', 'a@x.com')).toBe('Banana!9');
+    expect(validatePassword('Ada!1234', 'ada@example.invalid')).toBe('Ada!1234');
     expect(validatePassword('Élan!123', 'ada@example.invalid')).toBe('Élan!123');
     expect(validatePassword('E\u0301lan!123', 'ada@example.invalid')).toBe('Élan!123');
     expect(validatePassword('Slow rivers!12 drift in silence', 'ada@example.invalid')).toContain(

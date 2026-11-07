@@ -11,7 +11,6 @@ export interface UserAuthRepository {
   byEmail(email: string): Promise<AuthUser | null>;
   byId(id: string): Promise<AuthUser | null>;
   register(email: string, name: string, hash: string): Promise<AuthUser | null>;
-  failed(id: string, now: number): Promise<void>;
   login(
     id: string,
     expectedHash: string,

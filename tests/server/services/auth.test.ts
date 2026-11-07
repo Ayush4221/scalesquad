@@ -5,6 +5,29 @@ import { fixture } from '../fakes';
 import { authControllers } from '../../../src/server/controllers/authController';
 
 describe('password accounts without email delivery', () => {
+  it('keeps account throttling across source addresses and does equal failure-write work', async () => {
+    const f = authFixture();
+    const user = await f.registered();
+    const failedWrite = vi.spyOn(f.userRepo, 'login');
+    for (let i = 0; i < 10; i++)
+      await expect(
+        f.auth.login(user.email, 'wrong value', { ...f.ctx, ip: `203.0.113.${i}` }),
+      ).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
+    await expect(
+      f.auth.login(user.email, 'wrong value', { ...f.ctx, ip: '198.51.100.1' }),
+    ).rejects.toMatchObject({ code: 'RATE_LIMITED' });
+    expect(f.pause).toHaveBeenCalledWith(2000);
+    expect(failedWrite).not.toHaveBeenCalled();
+    // Attacker failures from many addresses cannot consume the owner's login.
+    expect((await f.auth.login(user.email, f.password, f.ctx)).token).toBeTruthy();
+    const knownEvents = f.audit.record.mock.calls.filter(([type]) => type === 'LOGIN_FAIL').length;
+    await expect(
+      f.auth.login('unknown@example.invalid', 'wrong value', f.ctx),
+    ).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
+    expect(f.audit.record.mock.calls.filter(([type]) => type === 'LOGIN_FAIL')).toHaveLength(
+      knownEvents + 1,
+    );
+  });
   it('keeps existing password login working after new-password requirements change', async () => {
     const f = authFixture();
     const user = await f.registered();

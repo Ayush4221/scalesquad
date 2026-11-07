@@ -7,7 +7,7 @@ import { authControllers } from '../../../src/server/controllers/authController'
 import { gameControllers } from '../../../src/server/controllers/gameController';
 import { createHttpHandler } from '../../../src/server/routes/http';
 import { SessionService } from '../../../src/server/services/sessionService';
-import { createLogger } from '../../../src/server/lib/logger';
+import { createLogger } from '../../../src/server/infra/logger';
 import { sessionCookie } from '../../../src/server/utils/sessionCookie';
 import { SESSION_SECONDS } from '../../../src/constants/auth';
 import { RegisterSchema, LoginSchema, ChangePasswordSchema } from '@scalesquad/shared';
@@ -65,6 +65,29 @@ async function setup(production = false) {
   return { ...f, post };
 }
 describe('password HTTP boundaries', () => {
+  it('allows the owner to log in after attackers exhaust the account failure quota', async () => {
+    const f = await setup();
+    const user = await f.registered();
+    for (let attempt = 0; attempt < 11; attempt++) {
+      const response = await f.post(
+        'login',
+        { email: user.email, password: 'incorrect password' },
+        '',
+        undefined,
+        `203.0.113.${attempt + 10}`,
+      );
+      expect(response.status).toBe(attempt < 10 ? 401 : 429);
+    }
+    const response = await f.post(
+      'login',
+      { email: user.email, password: f.password },
+      '',
+      undefined,
+      '198.51.100.90',
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get('set-cookie')).toContain('session-token=');
+  });
   it('rejects a login burst without one database audit write per rejected request', async () => {
     const f = await setup();
     const responses = await Promise.all(

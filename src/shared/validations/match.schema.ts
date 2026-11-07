@@ -1,5 +1,5 @@
 import { JOIN_CODE_PATTERN } from '../../constants/joinCode';
-import { z } from 'zod';
+import { z } from '../../utils/validation';
 import { Id } from '../domain';
 export const ScenarioId = z.enum(['campuspass', 'retry-storm', 'split-gates', 'flash-crowd']);
 export type ScenarioId = z.infer<typeof ScenarioId>;

@@ -1,5 +1,5 @@
 import { EvidenceCard } from '@scalesquad/shared';
-import type { EvidenceRepository } from '../lib/models';
+import type { EvidenceRepository } from '../domain/models';
 import { BaseRepository } from './baseRepository';
 /** Ownership filtering happens in the database query, before any card is returned. */
 export class PrismaEvidenceRepository extends BaseRepository implements EvidenceRepository {

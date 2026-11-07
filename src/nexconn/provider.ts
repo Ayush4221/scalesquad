@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { z } from 'zod';
+import { z } from '../utils/validation';
 import { AppError, contentHash } from '@scalesquad/shared';
 import type { ChatProvider } from './index';
 const response = z.object({ code: z.number(), result: z.unknown().optional() });

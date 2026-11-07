@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { EmailSchema } from '@scalesquad/shared';
 import { RateLimiter } from '../utils/rateLimit';
+import { rateLimitIp } from '../utils/clientIp';
 const per = (capacity: number, seconds: number) => new RateLimiter(capacity, capacity / seconds);
 export class AuthLimits {
   private readonly registerIp = per(5, 3600);
@@ -9,6 +10,7 @@ export class AuthLimits {
   private readonly loginPair = per(5, 900);
   private readonly change = per(5, 3600);
   take(route: string, ip: string, userId: string | null, body: unknown) {
+    ip = rateLimitIp(ip);
     const input =
       body && typeof body === 'object' && 'email' in body
         ? EmailSchema.safeParse(body.email)

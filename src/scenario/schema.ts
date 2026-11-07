@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../utils/validation';
 import { ConfigurationValues, ScenarioId } from '@scalesquad/shared';
 
 const positive = z.number().finite().positive();

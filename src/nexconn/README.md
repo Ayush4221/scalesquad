@@ -38,3 +38,13 @@ Missing Nexconn credentials selects the disabled provider and displays a degrade
 banner. The fake provider is for tests only. No live credentials or provider calls
 are needed for unit tests. Real token issuance, group membership and history need
 an account to validate; public documentation alone is not live verification.
+
+Browser SDK connectivity: `@nexconn/engine` 26.2.1 uses region-specific
+`*-light-edge.com` navigation, WebSocket and cloud-control hosts. These differ
+from the server API's `*-light-api.com` hosts. The shared CSP permits HTTPS and
+WSS to both families for the supported SG/NA/SA regions. A successful token API
+response does not establish the SDK connection. After a CSP change, reload the
+whole page; reconnecting within an old document retains that document's policy.
+Reconnect obtains a fresh token and retries the existing squad channel; it does
+not require three players or start a match. Browser regression probes use mocked
+Singapore SDK endpoints, without sending live tokens or creating remote data.

@@ -58,7 +58,7 @@ describe('private briefs and repair controls', () => {
   it('chat displays degraded state without trying a provider', () => {
     render(<ChatPanel matchId="m" available={false} />);
     expect(screen.getByRole('status')).toHaveTextContent('Chat unavailable');
-    expect(screen.getByRole('button')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
   });
 });
 describe('hard-gate result presentation and auth callbacks', () => {
@@ -70,6 +70,8 @@ describe('hard-gate result presentation and auth callbacks', () => {
     const second = runs[1]!.result;
     render(
       <ResultsPanel
+        presetConfiguration={f.scenario.presetConfiguration}
+        repairedConfiguration={f.scenario.presetConfiguration}
         runs={[{ runNumber: 3, result: { ...second, p95LatencyMs: 1 } }]}
         comparison={{
           status: 'FAILED',
@@ -84,11 +86,28 @@ describe('hard-gate result presentation and auth callbacks', () => {
     expect(screen.getByText('Same incident. A different design.')).toBeVisible();
   });
   it('verified identity only and session excludes extra fields', () => {
-    expect(allowedSignIn('google', 'a@example.invalid', { email_verified: true })).toBe(true);
-    expect(allowedSignIn('github', 'a@example.invalid', { email_verified: true })).toBe(true);
+    expect(
+      allowedSignIn('google', 'a@example.invalid', {
+        email_verified: true,
+        email: 'a@example.invalid',
+      }),
+    ).toBe(true);
+    expect(
+      allowedSignIn('github', 'a@example.invalid', {
+        email_verified: true,
+        email: 'a@example.invalid',
+      }),
+    ).toBe(true);
     for (const provider of ['google', 'github', 'other', undefined])
       expect(allowedSignIn(provider, 'a@example.invalid', {})).toBe(false);
     expect(allowedSignIn('google', null, {})).toBe(false);
+    expect(
+      allowedSignIn('google', 'a@example.invalid', {
+        email_verified: true,
+        email: 'other@example.invalid',
+      }),
+    ).toBe(false);
+    expect(allowedSignIn('google', 'a@example.invalid', { email_verified: true })).toBe(false);
     expect(allowedSignIn('google', 'a', null)).toBe(false);
     expect(publicSession({ id: 'a' }, 'expires')).toEqual({
       user: { id: 'a', name: 'Player', verified: false },

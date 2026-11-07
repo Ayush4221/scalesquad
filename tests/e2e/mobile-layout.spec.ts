@@ -24,7 +24,7 @@ test('360px match has tabs, readable inputs, large targets and a mobile repair d
   await expect(page.getByRole('navigation', { name: 'Match sections' })).toBeVisible();
   await page.getByLabel('App capacity', { exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveAttribute('data-presentation', 'drawer');
-  await page.getByRole('dialog').getByRole('button', { name: 'MEDIUM', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Medium', exact: true }).click();
   await expect(page.getByText('v1', { exact: true })).toBeVisible();
   const targets = await page
     .getByRole('navigation', { name: 'Match sections' })

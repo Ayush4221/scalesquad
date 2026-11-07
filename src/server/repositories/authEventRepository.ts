@@ -1,5 +1,5 @@
 import { getPrisma } from '@scalesquad/db';
-import type { AuthEventRepository, AuthEventType } from '../lib/authPorts';
+import type { AuthEventRepository, AuthEventType } from '../domain/authPorts';
 export class PrismaAuthEventRepository implements AuthEventRepository {
   constructor(private readonly client = getPrisma()) {}
   async record(type: AuthEventType, userId: string | null, ipPrefix: string, userAgent: string) {

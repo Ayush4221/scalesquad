@@ -66,7 +66,8 @@ scalesquad/
       middleware/              origin, body size, rate limits and safe errors
       ws/                      authenticated gateway and membership-checked rooms
       config/                  validated server environment
-      lib/                     domain ports, persistence interfaces and workers
+      domain/                  domain models and port contracts
+      infra/                   logger, push transport and simulation workers
       main.ts                  custom Node server mounting Next and WebSocket
     shared/
       dtos/                    public request and response transfer types
@@ -538,11 +539,64 @@ specific module; shared domain exports retain their existing hash API.
 limits and the common session lifetime. React hooks live in `src/hooks/`.
 Server-only helpers (IP handling, join-code generation, cookies, rate limiting
 and concurrency queues) live in `src/server/utils/`. Server runtime policy lives
-in `src/server/constants/`. Infrastructure adapters and port/model contracts
-stay in `src/server/lib/`; API/chat/socket clients stay in `src/lib/`.
+in `src/server/constants/`. Infrastructure adapters stay in `src/server/infra/`; port/model contracts
+stay in `src/server/domain/`; API/chat/socket clients stay in `src/lib/`.
 
 ESLint applies layer rules to the new folders. Browser code cannot import server
 utilities; generic utilities cannot import application services or browser state.
 Validation schemas, game rules and palette tokens retain their dedicated homes.
 Tests and test helpers remain under root `tests/`. New helpers belong beside the
 layer that owns them; promote them here when multiple consumers need them.
+
+### Match subscriptions and view composition
+
+Outbound WebSocket authorization uses a per-socket five-second cache, bounded by
+its actual session expiry. Inbound messages and thirty-second idle heartbeats
+force fresh session reads; local logout/password/OAuth revocation closes matching
+sockets immediately. Database-only revocations outside this process are observed
+within five seconds of the next push or on the next idle heartbeat. Transient read errors preserve an already validated session until its known
+expiry and retry on the next due check; missing or expired sessions close. There is no unbounded global token cache.
+
+A match refresh loads one graph and creates personalized public snapshots for all
+subscribed users. Broadcast membership is loaded once per room rather than once
+per peer. Each recipient still gets only its own private evidence through the
+separate evidence endpoint. Public roster roles are null in the lobby and reveal
+once briefing begins, per the owner's review request.
+
+The match view separates `useMatch` (transport, snapshots, errors and action state),
+`LobbyPanel`, `SquadPanel` and `RunAction`. Navigation, status, safe-area and metric
+components have separate modules; callers import each component directly.
+Repair options come from the public scenario contract with friendly labels and
+linked help. Match layout uses Tailwind for basic controls/rosters/actions; layout recipes preserve marker classes without global feature selectors.
+
+### Deployment coordination limit
+
+This release runs one Node process for the web server, game commands, rooms,
+edit leases, simulation dispatch and auth backoff. Rate-limit buckets and keyed
+queues are process-local. Database transactions protect persisted records but do
+not turn those in-memory controls into distributed locks or distributed quotas.
+Do not deploy multiple workers or replicas behind a load balancer yet. Sticky
+sessions alone do not coordinate login throttling, broadcasts, group provisioning
+or background maintenance. Scaling requires a shared event bus, distributed
+quotas/command coordination and one coordinated scheduler/worker model, with
+multi-instance tests before adding replicas.
+
+### Review hardening (2026-11-06)
+
+IP quotas aggregate IPv6 privacy addresses by /64 while IPv4 remains individual.
+At bounded-map capacity, new keys use 1,024 keyed-hash overflow partitions instead
+of globally rejecting every new key or clearing existing quotas. Overflow keys
+may share a quota when the process is under exceptional key-cardinality load;
+existing primary buckets keep their quotas. Production boot requires explicit
+`TRUSTED_PROXY_IPS`; only the configured socket peers may supply forwarding data.
+
+HTTP routes are named objects with their match patterns compiled once. API
+requests have bounded abort deadlines, safe non-JSON/network failures and typed,
+readable error messages shared with WebSocket presentation. Simulator compilation
+shares in-flight work and caches success; a failed compile permits a later retry.
+
+Domain contracts live in `src/server/domain`. Infrastructure adapters live in
+`src/server/infra`. Common helpers are under `src/utils`, with Node-only helpers
+under `src/server/utils`; server constants use `src/server/constants`. ESLint
+keeps these runtime boundaries so browser imports cannot pull Node helpers.
+The old middleware rate-limit re-export shim is removed.

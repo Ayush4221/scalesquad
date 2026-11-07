@@ -1,5 +1,5 @@
 import { getPrisma } from '@scalesquad/db';
-import type { SessionWriteRepository } from '../lib/authPorts';
+import type { SessionWriteRepository } from '../domain/authPorts';
 export class PrismaSessionWriteRepository implements SessionWriteRepository {
   constructor(private readonly client = getPrisma()) {}
   async remove(token: string) {

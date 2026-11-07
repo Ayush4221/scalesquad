@@ -1,45 +1,55 @@
+import { landingClassName } from './landingStyles';
 import Link from 'next/link';
 import { BrandLogo } from '@/components/shared/BrandLogo';
 import { RoleExplorer } from './RoleExplorer';
 import { GameWalkthrough } from './GameWalkthrough';
 import { HomeAction } from './HomeAction';
-import './hallmark.css';
 
 export function LandingPage() {
   return (
-    <div className="hallmarkHome">
-      <a className="hm-skip" href="#qa-top" tabIndex={0}>
+    <div className={landingClassName('hallmarkHome')}>
+      <a className={landingClassName('hm-skip')} href="#qa-top" tabIndex={0}>
         Skip to content
       </a>
-      <header className="hm-container hm-nav">
+      <header className={landingClassName('hm-container hm-nav')}>
         <BrandLogo href="/" />
-        <nav aria-label="Main navigation">
+        <nav aria-label="Main navigation" className={landingClassName('hm-main-nav')}>
           <a href="#qa-mission">The mission</a>
           <a href="#qa-how">How to play</a>
-          <Link href="/signin" className="hm-link">
+          <Link href="/signin" className={landingClassName('hm-link')}>
             Sign in
           </Link>
         </nav>
       </header>
       <main id="qa-top" tabIndex={-1}>
-        <section className="hm-container hm-hero" aria-labelledby="home-title">
-          <div className="hm-opening">
-            <h1 id="home-title" aria-label="Think as a squad.">
+        <section className={landingClassName('hm-container hm-hero')} aria-labelledby="home-title">
+          <div className={landingClassName('hm-opening')}>
+            <h1
+              id="home-title"
+              aria-label="Think as a squad."
+              className={landingClassName('hm-headline')}
+            >
               Think as
               <br />a squad.
             </h1>
-            <p>A system design game for three engineers with different private clues.</p>
-            <div className="hm-actions">
+            <p className={landingClassName('hm-lede')}>
+              A system design game for three engineers with different private clues.
+            </p>
+            <div className={landingClassName('hm-actions')}>
               <HomeAction />
-              <a href="#qa-mission" className="hm-link">
+              <a href="#qa-mission" className={landingClassName('hm-link')}>
                 Explore CampusPass
               </a>
             </div>
           </div>
           <RoleExplorer />
         </section>
-        <section id="qa-mission" className="hm-mission" aria-labelledby="mission-title">
-          <div className="hm-container hm-mission-layout">
+        <section
+          id="qa-mission"
+          className={landingClassName('hm-mission')}
+          aria-labelledby="mission-title"
+        >
+          <div className={landingClassName('hm-container hm-mission-layout')}>
             <div>
               <h2 id="mission-title">
                 One pass.
@@ -50,7 +60,7 @@ export function LandingPage() {
                 CampusPass handles festival check-ins. Your squad repairs a system under pressure.
               </p>
             </div>
-            <dl className="hm-objectives">
+            <dl className={landingClassName('hm-objectives')}>
               <div>
                 <dt>Correctness</dt>
                 <dd>Protect single-use passes.</dd>
@@ -66,8 +76,12 @@ export function LandingPage() {
             </dl>
           </div>
         </section>
-        <section id="qa-how" className="hm-container hm-round" aria-labelledby="round-title">
-          <div className="hm-round-heading">
+        <section
+          id="qa-how"
+          className={landingClassName('hm-container hm-round')}
+          aria-labelledby="round-title"
+        >
+          <div className={landingClassName('hm-round-heading')}>
             <h2 id="round-title">
               The next run
               <br />
@@ -77,7 +91,10 @@ export function LandingPage() {
           </div>
           <GameWalkthrough />
         </section>
-        <section className="hm-container hm-close" aria-labelledby="ready-title">
+        <section
+          className={landingClassName('hm-container hm-close')}
+          aria-labelledby="ready-title"
+        >
           <h2 id="ready-title">
             Bring two people
             <br />
@@ -86,7 +103,7 @@ export function LandingPage() {
           <HomeAction secondary />
         </section>
       </main>
-      <footer className="hm-container hm-footer">
+      <footer className={landingClassName('hm-container hm-footer')}>
         <span>ScaleSquad</span>
         <p>Build together. Prove it together.</p>
         <a href="#qa-top">Back to top</a>

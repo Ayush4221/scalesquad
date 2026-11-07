@@ -1,4 +1,6 @@
 'use client';
+import { layoutClassName } from '@/styles/layout';
+
 import { useState } from 'react';
 import { api } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
@@ -92,7 +94,7 @@ export function ChangePasswordForm() {
       </Button>
       <PasswordRequirements password={password} id="change-password-requirements" />
       {error && (
-        <p role="alert" className="error">
+        <p role="alert" className={layoutClassName('error')}>
           {error}
         </p>
       )}

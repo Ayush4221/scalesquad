@@ -1,4 +1,6 @@
 'use client';
+import { layoutClassName } from '@/styles/layout';
+
 import { JOIN_CODE_LENGTH } from '@/constants/joinCode';
 
 import { useRef, useState } from 'react';
@@ -86,7 +88,7 @@ export function PlayLobby({ name }: { name: string }) {
             {busy === 'create' ? 'Creating squad…' : 'Create squad'}
           </Button>
           {error?.action === 'create' && (
-            <p className={`error ${styles.error}`} role="alert">
+            <p className={layoutClassName(`error ${styles.error}`)} role="alert">
               {error.message}
             </p>
           )}
@@ -135,7 +137,7 @@ export function PlayLobby({ name }: { name: string }) {
               Eight letters and numbers. No spaces.
             </p>
             {error?.action === 'join' && (
-              <p id="join-error" className={`error ${styles.error}`} role="alert">
+              <p id="join-error" className={layoutClassName(`error ${styles.error}`)} role="alert">
                 {error.message}
               </p>
             )}

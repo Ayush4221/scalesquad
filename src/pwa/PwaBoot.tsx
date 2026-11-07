@@ -1,4 +1,6 @@
 'use client';
+import { layoutClassName } from '@/styles/layout';
+
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useInstallPrompt } from './useInstallPrompt';
@@ -46,17 +48,17 @@ export function PwaBoot() {
   return (
     <>
       {offline && (
-        <div className="pwa-banner" role="status">
+        <div className={layoutClassName('pwa-banner')} role="status">
           Offline · Reconnect to sync your squad.
         </div>
       )}
       {waiting && (
-        <div className="pwa-banner" role="status">
+        <div className={layoutClassName('pwa-banner')} role="status">
           Update available. <Button onClick={update}>Reload</Button>
         </div>
       )}
       {install.canInstall && pathname !== '/' && (
-        <div className="pwa-banner">
+        <div className={layoutClassName('pwa-banner')}>
           <span>
             {install.ios
               ? 'Install: tap Share ↑, then Add to Home Screen ⊞.'

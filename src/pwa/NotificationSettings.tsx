@@ -1,4 +1,6 @@
 'use client';
+import { layoutClassName } from '@/styles/layout';
+
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api/client';
@@ -70,7 +72,7 @@ export function NotificationSettings() {
   return (
     <section className="space-y-3">
       <h3 className="font-bold">Squad notifications</h3>
-      <p className="muted text-sm">
+      <p className={layoutClassName('muted text-sm')}>
         {!available
           ? 'Install ScaleSquad on your home screen to use notifications.'
           : !key

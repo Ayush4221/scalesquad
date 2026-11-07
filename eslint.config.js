@@ -89,7 +89,11 @@ export default tseslint.config(
       'import/resolver': { [resolve(import.meta.dirname, 'scripts/eslintResolver.cjs')]: {} },
       'boundaries/root-path': import.meta.dirname,
       'boundaries/elements': [
-        { type: 'lib', pattern: 'src/server/{utils,constants}/**', partialMatch: false },
+        {
+          type: 'lib',
+          pattern: 'src/server/{utils,constants,domain,infra}/**',
+          partialMatch: false,
+        },
         ...['utils', 'constants'].map((type) => ({
           type,
           pattern: `src/${type}/**`,

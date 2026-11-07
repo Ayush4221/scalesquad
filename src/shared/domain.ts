@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../utils/validation';
 
 export const Role = z.enum(['TRAFFIC', 'DATA', 'OPS']);
 export type Role = z.infer<typeof Role>;
@@ -169,7 +169,13 @@ export const PublicMatchView = z
     members: z
       .array(
         z
-          .object({ userId: Id, name: z.string(), ready: z.boolean(), acknowledged: z.boolean() })
+          .object({
+            userId: Id,
+            name: z.string(),
+            ready: z.boolean(),
+            acknowledged: z.boolean(),
+            role: Role.nullable().optional(),
+          })
           .strict(),
       )
       .max(3),

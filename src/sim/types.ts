@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../utils/validation';
 import { ConfigurationValues, RetryPolicy } from '@scalesquad/shared';
 import { ScenarioConfigSchema } from '@scalesquad/scenario';
 export const ENGINE_VERSION = '1.0.0';
