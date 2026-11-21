@@ -26,11 +26,17 @@ The Android release fix was also verified before commit in an isolated local
 Signed production APK and AAB builds both passed in that `master` checkout.
 APK verification passed with `apksigner`; AAB verification passed with
 `jarsigner` and the expected signature entry was present. The package is
-`com.ayushdhoot.scalesquad`, version `2.0.0` (code `2`), label **ScaleSquad**.
+`com.ayushdhoot.scalesquad`; the verified release used version `2.0.0` (code `2`),
+label **ScaleSquad**.
 The signed APK installed and launched on the Android 35 emulator; home, mission
 navigation and return worked without a process crash. AAB verification emitted
 the upload key's self-signed certificate warnings and JAR streaming-layout
 warnings; its file-based signature verification succeeded.
+
+The owner then requested version `2.0.1`. The root manifest and lockfile agree,
+and Flutter uses `2.0.1+3`. Web production and Android development builds passed
+again; APK metadata confirmed version name `2.0.1` and code `3`. No additional
+signed release was created or published for that version update.
 
 No production APK/AAB was built from `development`. After merging these fixes
 into `master` and passing required CI, the release job still needs to be rerun
