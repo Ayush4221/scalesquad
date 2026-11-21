@@ -26,6 +26,16 @@ Standard Next.js `src/app` layout; all application code under root `src/`.
 One root `package.json` and lockfile; shared code uses
 TypeScript path aliases. This supersedes the original step-01 workspace layout.
 
+Owner native-platform update (2026-11-07): an Android-first Flutter client is
+started at `mobile/`, with Dart in `mobile/lib`, one pubspec/lockfile, alongside
+the root npm package. The web PWA stays. The owner explicitly approved a
+Flutter-only test exception: authored tests live in `mobile/test` and
+`mobile/integration_test`; shared TS/Dart fixtures live in `tests/contracts`.
+Existing web/server tests stay in root `tests/`. No test-copy/staging layer.
+See `docs/decisions/0001-flutter-android.md` and `docs/plan/14-flutter-android.md`.
+This permits the Flutter framework/directory exception; additional libraries
+still require approval under the fixed-stack rule.
+
 ## Layout and layers
 
 `src/app`, `src/components`, `src/features` (View); `src/server/{controllers,services,repositories}`; `src/{sim,scenario,shared,db,nexconn}`.

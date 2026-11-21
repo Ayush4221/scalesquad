@@ -53,3 +53,22 @@ Thumbs.db
 # Tooling output
 graphify-out/
 .hallmark/
+
+# Agent manager bridge (local Q&A files)
+.agent-bridge/
+
+# Flutter Android (authored tests and pubspec.lock remain tracked)
+mobile/.dart_tool/
+mobile/build/
+mobile/coverage/
+mobile/test/failures/
+mobile/.flutter-plugins-dependencies
+mobile/android/.gradle/
+mobile/android/.kotlin/
+mobile/android/local.properties
+mobile/android/key.properties
+mobile/android/.release-signing/
+*.jks
+*.keystore
+mobile/**/*.iml
+.flutter-sdk/

@@ -3,6 +3,9 @@ import type { ChatProvider } from './index';
 /** Unit tests only; bootstrap never selects this provider. */
 export class FakeChatProvider implements ChatProvider {
   readonly available = true;
+  groupReference(matchId: string) {
+    return matchId;
+  }
   readonly groups = new Map<string, Set<string>>();
   readonly notices: string[] = [];
   async createGroup(id: string, members: string[]) {
@@ -27,6 +30,9 @@ export class FakeChatProvider implements ChatProvider {
 }
 export class DisabledChatProvider implements ChatProvider {
   readonly available = false;
+  groupReference(matchId: string) {
+    return matchId;
+  }
   private fail(): never {
     throw new AppError('UPSTREAM_UNAVAILABLE', 503, 'Chat is unavailable');
   }

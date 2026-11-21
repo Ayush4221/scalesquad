@@ -1,4 +1,7 @@
 'use client';
+import { chatStrings } from '@/constants/strings/chat';
+import { commonStrings } from '@/constants/strings/common';
+
 import { UserRound } from 'lucide-react';
 import { initials } from '@/utils/personName';
 import { SQUAD_SIZE } from '@/constants/chat';
@@ -19,12 +22,13 @@ export function ChatRoster({
   return (
     <div className="space-y-3">
       <p className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>Your squad</span>
+        <span>{commonStrings.yourSquad}</span>
         <span>
-          {members.length} / {SQUAD_SIZE} players
+          {members.length} / {SQUAD_SIZE}
+          {chatStrings.players}
         </span>
       </p>
-      <ul className="grid grid-cols-3 gap-2" aria-label="Squad members">
+      <ul className="grid grid-cols-3 gap-2" aria-label={chatStrings.squadMembers}>
         {Array.from({ length: SQUAD_SIZE }, (_, index) => {
           const member = ordered[index];
           return (
@@ -33,7 +37,7 @@ export function ChatRoster({
                 <button
                   type="button"
                   onClick={() => onMention(member.name)}
-                  aria-label={`Mention ${member.name}${member.userId === userId ? ' (you)' : ''}`}
+                  aria-label={chatStrings.mentionMember(member.name, member.userId === userId)}
                   className={cn(
                     'flex h-full min-h-28 w-full min-w-0 flex-col items-start gap-2 rounded-xl border bg-background p-3 text-left transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transform-none motion-reduce:transition-none',
                     member.userId === userId ? 'border-primary' : 'border-border',
@@ -47,17 +51,17 @@ export function ChatRoster({
                   </span>
                   <span className="w-full break-words text-xs font-medium">
                     <span className="line-clamp-2 min-h-8">
-                      {member.userId === userId ? 'You' : member.name}
+                      {member.userId === userId ? commonStrings.you : member.name}
                     </span>
                     <span className="mt-1 block text-xs font-normal text-muted-foreground">
-                      {member.role ? roleLabels[member.role] : 'Role at briefing'}
+                      {member.role ? roleLabels[member.role] : chatStrings.roleAtBriefing}
                     </span>
                   </span>
                 </button>
               ) : (
                 <div className="flex h-full min-h-28 flex-col items-start gap-2 rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">
                   <UserRound className="size-8" aria-hidden="true" />
-                  <span>Waiting for a teammate</span>
+                  <span>{chatStrings.waitingForATeammate}</span>
                 </div>
               )}
             </li>

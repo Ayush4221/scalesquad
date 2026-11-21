@@ -36,6 +36,8 @@ for (const types of Object.values(allowed)) types.push('utils', 'constants');
 export default tseslint.config(
   {
     ignores: [
+      'mobile/**',
+      '.flutter-sdk/**',
       '**/node_modules/**',
       '**/.next/**',
       '**/dist/**',

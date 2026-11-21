@@ -1,4 +1,7 @@
 'use client';
+import { commonStrings } from '@/constants/strings/common';
+import { lobbyStrings } from '@/constants/strings/lobby';
+
 import Link from 'next/link';
 import { ArrowLeft, ShieldCheck, Timer, TrendingUp } from 'lucide-react';
 import type { PublicMatchView } from '@scalesquad/shared';
@@ -31,20 +34,20 @@ export function LobbyScreen({
   const goals = [
     {
       icon: ShieldCheck,
-      label: 'Correctness',
-      value: 'One admission per pass',
+      label: commonStrings.correctness,
+      value: lobbyStrings.oneAdmissionPerPass,
       color: 'text-primary',
     },
     {
       icon: TrendingUp,
-      label: 'Load target',
-      value: `${view.scenario.requiredValidAdmissions.toLocaleString()} confirmed admissions`,
+      label: lobbyStrings.loadTarget,
+      value: lobbyStrings.admissionCount(view.scenario.requiredValidAdmissions.toLocaleString()),
       color: 'text-primary',
     },
     {
       icon: Timer,
-      label: 'Deadline',
-      value: `${view.scenario.deadlineSeconds} seconds`,
+      label: lobbyStrings.deadline,
+      value: lobbyStrings.deadlineSeconds(view.scenario.deadlineSeconds),
       color: 'text-warning',
     },
   ];
@@ -55,9 +58,11 @@ export function LobbyScreen({
           <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-8">
             <div className="status-bar flex flex-wrap items-center gap-4 text-xs" role="status">
               <span className="rounded-md border border-border bg-card px-3 py-1.5 font-mono font-semibold">
-                LOBBY
+                {lobbyStrings.lobby}
               </span>
-              <span className="hidden text-muted-foreground sm:inline">Editor: Not assigned</span>
+              <span className="hidden text-muted-foreground sm:inline">
+                {lobbyStrings.editorNotAssigned}
+              </span>
               <span className={connection === 'connected' ? 'text-primary' : 'text-warning'}>
                 {connection}
               </span>
@@ -67,7 +72,7 @@ export function LobbyScreen({
               className="inline-flex min-h-11 items-center gap-2 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:rounded focus-visible:outline-2 focus-visible:outline-ring"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Back to squads
+              {lobbyStrings.backToSquads}
             </Link>
           </div>
         </header>
@@ -77,14 +82,13 @@ export function LobbyScreen({
               <BrandLogo />
               <p className="pt-2 text-sm text-muted-foreground">
                 {view.scenario.title} <span aria-hidden="true">/</span>{' '}
-                <span className="text-primary">Squad lobby</span>
+                <span className="text-primary">{lobbyStrings.squadLobby}</span>
               </p>
               <h1 className="text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">
-                Assemble your squad.
+                {lobbyStrings.assembleYourSquad}
               </h1>
               <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-                Bring three engineers together. Mark ready when your squad is here. Your private
-                roles reveal at briefing.
+                {lobbyStrings.bringThreeEngineersTogetherMarkReady}
               </p>
             </div>
             <dl className="flex flex-wrap gap-3">
@@ -127,8 +131,8 @@ export function LobbyScreen({
             </aside>
           </div>
           <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border py-5 text-xs text-muted-foreground">
-            <p>Three engineers. Private clues. One shared repair.</p>
-            <p>Chat is available while you assemble your squad.</p>
+            <p>{lobbyStrings.threeEngineersPrivateCluesOneShared}</p>
+            <p>{lobbyStrings.chatIsAvailableWhileYouAssemble}</p>
           </footer>
         </main>
       </div>

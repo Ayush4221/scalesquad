@@ -1,10 +1,11 @@
+import { networkStrings } from '@/constants/strings/network';
 import { AppError, ErrorCode } from '@scalesquad/shared';
 import { errorMessages } from '@/constants/errorMessages';
 
 /** Friendly fallbacks also cover older servers that send raw enum names. */
 export function clientErrorMessage(
   error: unknown,
-  fallback = 'Something went wrong. Please try again.',
+  fallback: string = networkStrings.somethingWentWrongPleaseTryAgain,
 ): string {
   if (
     error instanceof AppError &&

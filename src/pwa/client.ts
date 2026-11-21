@@ -1,19 +1,34 @@
+import { pwaStrings } from '@/constants/strings/pwa';
+import { api } from '@/lib/api/client';
+import { withDeadline } from '@/utils/deadline';
+import { lifecyclePolicy } from '@/constants/lifecycle';
 export async function purgeCaches(): Promise<void> {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.getRegistration();
+      const registration = await withDeadline(
+        navigator.serviceWorker.getRegistration(),
+        lifecyclePolicy.browserReadTimeoutMs,
+      );
       const worker = navigator.serviceWorker.controller ?? registration?.active;
       if (worker)
         await new Promise<void>((resolve) => {
           const channel = new MessageChannel();
+          let settled = false;
           const finish = () => {
+            if (settled) return;
+            settled = true;
             clearTimeout(timeout);
             channel.port1.close();
+            channel.port2.close();
             resolve();
           };
-          const timeout = setTimeout(finish, 1000);
+          const timeout = setTimeout(finish, lifecyclePolicy.workerPurgeAckMs);
           channel.port1.onmessage = finish;
-          worker.postMessage({ type: 'PURGE' }, [channel.port2]);
+          try {
+            worker.postMessage({ type: 'PURGE' }, [channel.port2]);
+          } catch {
+            finish();
+          }
         });
     } catch {
       /* Direct cache removal still runs when worker storage is unavailable. */
@@ -21,17 +36,24 @@ export async function purgeCaches(): Promise<void> {
   }
   if ('caches' in window) await Promise.all((await caches.keys()).map((key) => caches.delete(key)));
 }
-export async function disableNotifications(): Promise<void> {
+export async function disableNotifications(options: { signal?: AbortSignal } = {}): Promise<void> {
   if (!('serviceWorker' in navigator)) return;
-  const subscription = await (
-    await navigator.serviceWorker.getRegistration()
-  )?.pushManager?.getSubscription();
+  const registration = await withDeadline(
+    navigator.serviceWorker.getRegistration(),
+    lifecyclePolicy.browserReadTimeoutMs,
+  );
+  const subscription = await withDeadline(
+    Promise.resolve(registration?.pushManager?.getSubscription()),
+    lifecyclePolicy.browserReadTimeoutMs,
+  );
   if (!subscription) return;
-  const response = await fetch('/api/game/push/subscription', {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ endpoint: subscription.endpoint }),
-  });
-  if (!response.ok) throw new Error('Could not disable notifications');
-  await subscription.unsubscribe();
+  // Keep the browser endpoint until server removal succeeds, so retry is possible.
+  await api(
+    '/push/subscription',
+    { endpoint: subscription.endpoint },
+    { method: 'DELETE', ...options },
+  );
+  const removed = await subscription.unsubscribe();
+  if (!removed && (await registration?.pushManager.getSubscription()))
+    throw new Error(pwaStrings.couldNotDisableNotifications);
 }

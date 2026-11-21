@@ -7,28 +7,44 @@ Companion to `scalesquad-deep-design.md` (game rules, Version 2 revision). Where
 
 ## 1. Decisions summary
 
-| Area                | Decision                                                                                                                                                                                                                                                                                 |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Language            | TypeScript everywhere (`strict`)                                                                                                                                                                                                                                                         |
-| Repo                | Single npm package; one root `package.json` and lockfile. App and shared-code folders are organized by responsibility                                                                                                                                                                    |
-| Web framework       | **Next.js** (App Router)                                                                                                                                                                                                                                                                 |
-| Server              | **Custom Node server** (`src/server`) that mounts Next and a `ws` WebSocket gateway in one process                                                                                                                                                                                       |
-| Realtime game state | WebSocket (`ws`), server-authoritative                                                                                                                                                                                                                                                   |
-| Database            | **PostgreSQL** (Neon or Supabase, hosted)                                                                                                                                                                                                                                                |
-| ORM                 | **Prisma**                                                                                                                                                                                                                                                                               |
-| Auth                | **Email + password (primary, own endpoints, database sessions)**; **Auth.js (NextAuth v5)** OAuth (Google, GitHub) optional; one `Session` table. See `plan/11-email-password-auth.md`                                                                                                   |
-| UI                  | **Tailwind CSS + shadcn/ui**                                                                                                                                                                                                                                                             |
-| Chat                | **Nexconn** group messaging (core collaboration layer). Voice deferred                                                                                                                                                                                                                   |
-| Private evidence    | **Postgres is source of truth**, delivered via authenticated API. Nexconn DM is notification/display only until DM privacy is verified                                                                                                                                                   |
-| Validation          | zod at every boundary                                                                                                                                                                                                                                                                    |
-| Tests               | Vitest                                                                                                                                                                                                                                                                                   |
-| Mobile              | **PWA first** (Android, iOS, desktop from one Next.js codebase): manifest, security-safe service worker (static assets only, never API/evidence), content-free Web Push, mobile-first UI. Native app only if push or store presence proves necessary. See `plan/10-pwa-and-mobile-ui.md` |
-| Deploy              | VPS, Docker, Caddy (TLS + WS upgrade)                                                                                                                                                                                                                                                    |
-| Architecture style  | MVC with a service and repository layer, one-way dependencies                                                                                                                                                                                                                            |
+Owner release update (2026-11-21): Android production packaging uses the `prod`
+flavor, `com.ayushdhoot.scalesquad`, and the ScaleSquad label. Signed APK and AAB
+builds run only on `master`, after required CI succeeds, with signing credentials
+from the `android-production` GitHub environment. The CLI and Gradle also reject
+release builds from other branches. `dev` retains its development identity.
+This packages the existing native preview; native authentication, gameplay and
+Nexconn integration remain separate work. See [Android release setup](ANDROID_RELEASE.md).
+
+| Area                | Decision                                                                                                                                                                               |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Language            | TypeScript for web/backend; Dart for the Flutter Android foundation (owner update 2026-11-07)                                                                                          |
+| Repo                | One root npm package for web/backend; single Flutter package at `mobile/` with its own pubspec/lockfile                                                                                |
+| Web framework       | **Next.js** (App Router)                                                                                                                                                               |
+| Server              | **Custom Node server** (`src/server`) that mounts Next and a `ws` WebSocket gateway in one process                                                                                     |
+| Realtime game state | WebSocket (`ws`), server-authoritative                                                                                                                                                 |
+| Database            | **PostgreSQL** (Neon or Supabase, hosted)                                                                                                                                              |
+| ORM                 | **Prisma**                                                                                                                                                                             |
+| Auth                | **Email + password (primary, own endpoints, database sessions)**; **Auth.js (NextAuth v5)** OAuth (Google, GitHub) optional; one `Session` table. See `plan/11-email-password-auth.md` |
+| UI                  | **Tailwind CSS + shadcn/ui**                                                                                                                                                           |
+| Chat                | **Nexconn** group messaging (core collaboration layer). Voice deferred                                                                                                                 |
+| Private evidence    | **Postgres is source of truth**, delivered via authenticated API. Nexconn DM is notification/display only until DM privacy is verified                                                 |
+| Validation          | zod at every boundary                                                                                                                                                                  |
+| Tests               | Vitest                                                                                                                                                                                 |
+| Mobile              | Web PWA retained. Owner requested an Android-first Flutter client on 2026-11-07; this supersedes conditional PWA-only native deferral. See decision 0001 and plan 14                   |
+| Deploy              | VPS, Docker, Caddy (TLS + WS upgrade)                                                                                                                                                  |
+| Architecture style  | MVC with a service and repository layer, one-way dependencies                                                                                                                          |
 
 ---
 
 ## 2. Principles
+
+Owner native-platform decision (2026-11-07): see
+[decision 0001](decisions/0001-flutter-android.md) and
+[Android plan](plan/14-flutter-android.md). The SDK-only Flutter Android foundation is implemented at `mobile/`; native
+authentication, live gameplay and provider integration remain planned. The owner approved authored Flutter tests in `mobile/test` and
+`mobile/integration_test`; shared TS/Dart fixtures stay in `tests/contracts`,
+and existing web/server tests stay in root `tests/`. There is no test-copy layer.
+Only the new emulator CI job starts advisory; existing Playwright remains required.
 
 Owner home-page update (2026-11-06): unauthenticated visitors at `/` see the
 public Hallmark landing page before signup/sign-in. Authenticated visitors still
@@ -394,10 +410,14 @@ are never recorded in traces or uploaded as artifacts. See `e2e.md` for coverage
 local setup and remaining physical-device/live-provider checks.
 
 GitHub Actions checks root lint, types, coverage, database integrations, build,
-production dependency audit and redacted secret scanning. Separate browser jobs
-are initially advisory per plan 12. Actions are commit-pinned; Dependabot checks
-npm and Actions weekly. Manual configured-account checks use environment secrets
-and upload no artifacts.
+production dependency audit and redacted secret scanning. Browser failures now
+fail CI (owner update, 2026-11-07). The aggregate `CI required` check requires all
+routine jobs to pass, including all three browser projects; GitHub must activate
+the development ruleset to enforce it before merging. See `e2e.md` and the import
+template `.github/rulesets/development.json`. Actions are commit-pinned;
+Dependabot checks npm and Actions weekly and targets `development` for version
+updates. Security updates still follow GitHub's default-branch policy. Manual
+configured-account checks use environment secrets and upload no artifacts.
 
 ## 15. Deployment (VPS)
 
@@ -600,3 +620,105 @@ Domain contracts live in `src/server/domain`. Infrastructure adapters live in
 under `src/server/utils`; server constants use `src/server/constants`. ESLint
 keeps these runtime boundaries so browser imports cannot pull Node helpers.
 The old middleware rate-limit re-export shim is removed.
+
+### Shared display text and helpers (2026-11-07)
+
+Web display text lives in `src/constants/strings/`, split by feature with
+`common.ts` for shared labels. Existing scenario metadata, validation messages
+and safe server error defaults remain in their established canonical modules.
+Dynamic display messages use typed builders beside their feature's text.
+Android preview text lives in `mobile/lib/core/constants/app_strings.dart`.
+Keep wording and accessible labels out of view/transport implementations.
+Routes, wire values, CSS classes and environment keys are not display copy.
+
+Reusable web helpers stay under `src/utils`, including metric and person-name
+formatting. Keep helpers focused; do not mix UI text into a catch-all utilities
+file. Helpers also consumed by the compiled simulator use relative imports.
+The PWA build inlines its display constants into the standalone worker and
+HTML-escapes constants inserted into the offline shell.
+
+Android feature views receive navigation callbacks from app composition. Mobile
+asset drift verification covers all exported palettes, icons, logo, fonts and
+licences, using decoded PNG pixels to tolerate platform compression differences.
+
+### Mobile presentation and local development update (2026-11-11)
+
+The SDK-only native preview retains its home and mission routes. App composition
+adds a finite, skippable startup introduction and safe recovery for unknown
+routes. Shared `app_tokens.dart` owns native spacing, radii, font families and
+motion; `PageBody` owns safe-area scrolling and the maximum content width.
+`app_assets.dart` centralizes asset paths. See `mobile/DESIGN.md` for the retained
+brand and state inventory. Native networking milestones remain planned.
+
+Flutter widget tests cover semantics, contrast, tap targets, large text, reduced
+motion and visual baselines. The native smoke test can run on a connected
+emulator. Separate root `tests/android` Playwright checks drive the actual dev
+APK through Android accessibility, restore emulator settings and remain separate
+from the existing required web matrix. They add no application dependency.
+
+By explicit owner request, request quotas, the daily match-creation quota and password-failure backoff are
+bypassed only when the validated server environment is exactly `development`.
+Production, test, missing and unknown environments retain enforcement. Password
+verification, auditing, authentication/authorization, Host/Origin validation,
+payload caps and concurrency/resource limits retain their normal rules.
+
+### Lifecycle ownership and recovery update (2026-11-14)
+
+The 73-family inventory is tracked in `IMPLICIT_STATE_MACHINES.md`, with a
+per-family disposition. Small guarded selectors and browser/framework protocols
+retain their existing owners; they do not each require a new reducer.
+
+Browser match/evidence requests belong to a cancellable match lifetime. Match ID,
+revision and evidence request ordering prevent stale replies from publishing into
+a replacement screen. A command's accepted result is distinct from its refresh;
+a failed refresh offers synchronization feedback without claiming the command
+failed. Match presentation state resets on match/account change. Chat send cleanup
+belongs to the draft version that was sent, and the installed Nexconn connection
+handler supplies reconnect/disconnect state. SDK handlers are removed on release.
+
+`runStateMachine.ts` owns begin/settle transitions for execution and restart
+recovery. Completion requires every result in the requested stage. Partial retries
+reuse saved results only after validating their input hashes; scenario inputs,
+configuration authority and comparison rules remain as specified by the design.
+
+Chat provisioning and membership changes journal a deterministic resource reference
+before remote work in `ChatReconciliation`. No foreign key to Match is intentional:
+the cleanup record must survive a failed match insertion. Service reconciliation
+uses current persisted membership, then removes only the matching journal version.
+Ready/start waits for pending member repair. Bounded maintenance retries failures
+after the configured delay; process restart retains those intents. This uses the
+existing single-server membership queue. Multi-process distributed locking and
+provider-specific success codes for already-absent resources are not assumed.
+
+Migration `20261114000000_chat_reconciliation` must be deployed before running this
+version. Automated database tests use only isolated databases named `*_test`.
+The verified local development database also received the additive migration;
+normal application data is not used by the tests.
+
+Notification permission, browser endpoint and confirmed account registration are
+separate states. Existing endpoints are unconfirmed until explicitly registered;
+failed rollback remains visible with retry/removal controls. Operations have one
+owner, worker readiness has a deadline, and optional logout cleanup cannot block
+session revocation indefinitely. Non-cancellable browser work is reconciled when
+it settles; a timeout is not proof a remote mutation never happened.
+
+Socket timers and worker settlement have one live owner. Shutdown starts once and
+drains scheduled maintenance before database disposal. Native startup uses explicit
+idle/animating/ready phases, including reduced-motion bypass; Material press updates
+coalesce into one pending frame and safely ignore disposal.
+
+### Theme and live demonstration update (2026-11-14)
+
+Web colours remain centralized in `src/styles/palette.ts`. Semantic tokens in
+`palette.css` support light and dark root classes. `ThemeToggle` lives beside
+the shared brand link. A non-sensitive `scalesquad-theme` cookie preserves the
+choice; RootLayout allowlists it to light or dark during server rendering.
+Shared native colour assets are regenerated from the same exported palette.
+
+The default E2E server still uses isolated test databases and fake chat. Only
+`tests/media/startLiveServer.ts` explicitly opts into real Nexconn for the
+three-device recording, loading just its existing provider configuration.
+The capture verifies composer completion and receipt in each conversation log,
+then dismisses its own demo channel. No credentials or browser session state
+are saved with the media. Phone and tablet recordings are browser viewport
+emulations, separate from the native Android test suite.

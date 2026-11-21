@@ -4,6 +4,7 @@ import { assertComparable, InputBundleSchema, makeBundle, type InputBundle } fro
 import type { GameRepository, MatchRecord } from '../domain/models';
 import type { Clock, DomainEvents } from '../domain/ports';
 import { audit, currentConfig, member, phase } from './guards';
+import { beginRun, repairPhase, runsCompleted, settleRun } from './runStateMachine';
 
 export class RunService {
   private readonly inFlight = new Map<string, { runNumber: 1 | 3; job: Promise<void> }>();
@@ -26,14 +27,14 @@ export class RunService {
     const m = await this.repo.find(id);
     if (!m) throw new AppError('NOT_FOUND', 404);
     this.authorizeRunner(m, userId);
-    if (m.runs.some((r) => r.runNumber === (runNumber === 1 ? 2 : 3))) {
+    if (runsCompleted(m, runNumber)) {
       // Also repair records left by an earlier restart after results were saved.
-      const repairPhase = runNumber === 1 ? 'REPAIR_1' : 'REPAIR_2';
-      if (!m.simulationLocked && m.phase === repairPhase) {
+      const repair = repairPhase(runNumber);
+      if (!m.simulationLocked && m.phase === repair) {
         await this.repo.mutate(id, (current) => {
           this.authorizeRunner(current, userId);
-          if (!current.simulationLocked && current.phase === repairPhase)
-            this.finish(current, runNumber);
+          if (!current.simulationLocked && current.phase === repair)
+            settleRun(current, runNumber, this.clock.now());
         });
         this.events.changed(id);
       }
@@ -84,11 +85,7 @@ export class RunService {
           throw new AppError('COMPARISON_INPUT_MISMATCH', 500);
         assertComparable(previous, inputs[0]!);
       }
-      m.phase = runNumber === 1 ? 'RUNS_1_2' : 'RUN_3';
-      m.simulationLocked = true;
-      m.runStartedAt = this.clock.now();
-      m.runError = false;
-      m.deadlineAt = null;
+      beginRun(m, runNumber, this.clock.now());
       audit(m, userId, 'run.start', { runNumber, configurationVersion: config.version });
       return inputs;
     });
@@ -96,6 +93,15 @@ export class RunService {
     try {
       for (const [index, bundle] of bundles.entries()) {
         const n = (runNumber === 1 ? index + 1 : 3) as RunNumber;
+        const saved = (await this.repo.find(id))?.runs.find((run) => run.runNumber === n);
+        if (saved) {
+          if (
+            saved.result.inputHash !== contentHash(bundle) ||
+            contentHash(saved.input) !== saved.result.inputHash
+          )
+            throw new AppError('COMPARISON_INPUT_MISMATCH', 500);
+          continue;
+        }
         this.events.runStarted(id, n);
         const result = await this.execute(bundle, bundle.scenario.match.runTimeoutMs);
         if (result.inputHash !== contentHash(bundle)) throw new AppError('INTERNAL', 500);
@@ -112,21 +118,13 @@ export class RunService {
         this.events.runCompleted(id, n, result);
       }
       await this.repo.mutate(id, (m) => {
-        this.finish(m, runNumber);
+        settleRun(m, runNumber, this.clock.now());
       });
       this.events.changed(id);
     } catch (error) {
       let completed = false;
       await this.repo.mutate(id, (m) => {
-        completed = m.runs.some((r) => r.runNumber === (runNumber === 1 ? 2 : 3));
-        if (completed) {
-          this.finish(m, runNumber);
-          return;
-        }
-        m.simulationLocked = false;
-        m.runStartedAt = null;
-        m.runError = true;
-        m.phase = runNumber === 1 ? 'REPAIR_1' : 'REPAIR_2';
+        completed = settleRun(m, runNumber, this.clock.now());
       });
       this.events.changed(id);
       if (completed) return;
@@ -135,29 +133,13 @@ export class RunService {
         : new AppError('INTERNAL', 500, 'Simulation failed; retry is available');
     }
   }
-  private finish(m: MatchRecord, runNumber: 1 | 3) {
-    const scenario = loadScenario(m.scenarioId, m.scenarioVersion);
-    m.simulationLocked = false;
-    m.runStartedAt = null;
-    m.runError = false;
-    m.phase = runNumber === 3 ? 'COMPARE' : 'RUNS_1_2';
-    m.deadlineAt =
-      this.clock.now() +
-      (runNumber === 3 ? scenario.match.compareDurationMs : scenario.match.incidentDurationMs);
-  }
   async recover(m: MatchRecord) {
     if (!m.simulationLocked) return;
     await this.repo.mutate(m.id, (current) => {
       if (!current.simulationLocked) return;
+      phase(current, 'RUNS_1_2', 'RUN_3');
       const runNumber = current.phase === 'RUN_3' ? 3 : 1;
-      if (current.runs.some((r) => r.runNumber === (runNumber === 1 ? 2 : 3))) {
-        this.finish(current, runNumber);
-        return;
-      }
-      current.simulationLocked = false;
-      current.runStartedAt = null;
-      current.runError = true;
-      current.phase = current.phase === 'RUN_3' ? 'REPAIR_2' : 'REPAIR_1';
+      settleRun(current, runNumber, this.clock.now());
     });
   }
 }

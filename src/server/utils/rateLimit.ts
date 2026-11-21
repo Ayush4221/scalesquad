@@ -2,6 +2,11 @@ import { AppError } from '@scalesquad/shared';
 import { createHmac, randomBytes } from 'node:crypto';
 import { rateLimitIp } from './clientIp';
 type Bucket = { tokens: number; updated: number };
+
+// Only the validated local development environment bypasses request quotas.
+// Missing/unknown environments keep enforcement, as do production and tests.
+export const rateLimitsEnabled = () => process.env.NODE_ENV !== 'development';
+
 export class RateLimiter {
   private readonly buckets = new Map<string, Bucket>();
   private readonly overflow = new Map<number, Bucket>();
@@ -15,6 +20,7 @@ export class RateLimiter {
     private readonly maxBuckets = 10000,
   ) {}
   take(key: string) {
+    if (!rateLimitsEnabled()) return;
     key = rateLimitIp(key);
     const now = this.now();
     let overflowKey: number | undefined;

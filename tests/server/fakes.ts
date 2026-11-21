@@ -2,7 +2,12 @@ import { AppError } from '@scalesquad/shared';
 import { loadScenario } from '@scalesquad/scenario';
 import { runSimulation } from '@scalesquad/sim';
 import { FakeChatProvider } from '@scalesquad/nexconn/fake';
-import type { GameRepository, MatchRecord, UserRepository } from '../../src/server/domain/models';
+import type {
+  ChatReconciliation,
+  GameRepository,
+  MatchRecord,
+  UserRepository,
+} from '../../src/server/domain/models';
 import { silentEvents, type DomainEvents } from '../../src/server/domain/ports';
 import { MatchService } from '../../src/server/services/matchService';
 import { ConfigService } from '../../src/server/services/configService';
@@ -10,6 +15,27 @@ import { EditLockService } from '../../src/server/services/editLockService';
 import { EvidenceService } from '../../src/server/services/evidenceService';
 import { RunService } from '../../src/server/services/runService';
 export class MemoryRepository implements GameRepository {
+  readonly chatTasks = new Map<string, ChatReconciliation>();
+  async saveChatTask(task: ChatReconciliation) {
+    this.chatTasks.set(task.id, structuredClone(task));
+  }
+  async findChatTask(id: string) {
+    return structuredClone(this.chatTasks.get(id) ?? null);
+  }
+  async pendingChatTasks(now: number, limit: number) {
+    return [...this.chatTasks.values()]
+      .filter((task) => task.retryAt <= now)
+      .sort((a, b) => a.retryAt - b.retryAt || a.id.localeCompare(b.id))
+      .slice(0, limit)
+      .map((task) => structuredClone(task));
+  }
+  async completeChatTask(id: string, version: string) {
+    if (this.chatTasks.get(id)?.version === version) this.chatTasks.delete(id);
+  }
+  async deferChatTask(id: string, version: string, retryAt: number) {
+    const task = this.chatTasks.get(id);
+    if (task?.version === version) task.retryAt = retryAt;
+  }
   readonly data = new Map<string, MatchRecord>();
   private chain = Promise.resolve();
   async create(m: MatchRecord) {

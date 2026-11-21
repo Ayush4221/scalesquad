@@ -1,4 +1,7 @@
 'use client';
+import { commonStrings } from '@/constants/strings/common';
+import { lobbyStrings } from '@/constants/strings/lobby';
+
 import { layoutClassName } from '@/styles/layout';
 
 import { JOIN_CODE_LENGTH } from '@/constants/joinCode';
@@ -35,8 +38,7 @@ export function PlayLobby({ name }: { name: string }) {
     if (action === 'join' && !join.success) {
       setError({
         action,
-        message:
-          'Enter the 8-character code from your host. Codes use letters and numbers, without I, O, 0 or 1.',
+        message: lobbyStrings.enterThe8CharacterCodeFrom,
       });
       codeInput.current?.focus();
       return;
@@ -55,7 +57,7 @@ export function PlayLobby({ name }: { name: string }) {
     } catch (cause) {
       setError({
         action,
-        message: cause instanceof Error ? cause.message : 'Could not enter squad. Try again.',
+        message: cause instanceof Error ? cause.message : lobbyStrings.couldNotEnterSquadTryAgain,
       });
       pending.current = false;
       setBusy(null);
@@ -65,8 +67,12 @@ export function PlayLobby({ name }: { name: string }) {
   return (
     <div className={styles.content}>
       <section className={styles.heading} aria-labelledby="dashboard-title">
-        <h1 id="dashboard-title">Your squad starts here.</h1>
-        <p>Welcome, {name}. Bring two teammates. Solve one incident together.</p>
+        <h1 id="dashboard-title">{lobbyStrings.yourSquadStartsHere}</h1>
+        <p>
+          {lobbyStrings.welcome}
+          {name}
+          {lobbyStrings.bringTwoTeammatesSolveOneIncident}
+        </p>
       </section>
       <ScenarioPicker
         value={scenarioId}
@@ -76,8 +82,12 @@ export function PlayLobby({ name }: { name: string }) {
       <div className={styles.actions}>
         <section className={styles.host} aria-labelledby="host-title">
           <Users className={styles.hostIcon} aria-hidden="true" />
-          <h2 id="host-title">Open a control room</h2>
-          <p>Host {mission.title}, then share your invite code.</p>
+          <h2 id="host-title">{lobbyStrings.openAControlRoom}</h2>
+          <p>
+            {lobbyStrings.hostPrefix}
+            {mission.title}
+            {lobbyStrings.thenShareYourInviteCode}
+          </p>
           <Button
             className={styles.actionButton}
             disabled={!hydrated || busy !== null}
@@ -85,7 +95,7 @@ export function PlayLobby({ name }: { name: string }) {
             aria-busy={busy === 'create'}
           >
             {busy === 'create' && <LoaderCircle className={styles.spinner} aria-hidden="true" />}
-            {busy === 'create' ? 'Creating squad…' : 'Create squad'}
+            {busy === 'create' ? lobbyStrings.creatingSquad : lobbyStrings.createSquad}
           </Button>
           {error?.action === 'create' && (
             <p className={layoutClassName(`error ${styles.error}`)} role="alert">
@@ -94,8 +104,8 @@ export function PlayLobby({ name }: { name: string }) {
           )}
         </section>
         <section className={styles.join} aria-labelledby="join-title">
-          <h2 id="join-title">Got an invite?</h2>
-          <p>Your host has the code. Your squad needs you.</p>
+          <h2 id="join-title">{lobbyStrings.gotAnInvite}</h2>
+          <p>{lobbyStrings.yourHostHasTheCodeYour}</p>
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -103,13 +113,13 @@ export function PlayLobby({ name }: { name: string }) {
             }}
             noValidate
           >
-            <label htmlFor="squad-code">Join code</label>
+            <label htmlFor="squad-code">{lobbyStrings.joinCode}</label>
             <div className={styles.joinControls}>
               <Input
                 ref={codeInput}
                 id="squad-code"
                 disabled={!hydrated || busy !== null}
-                placeholder="8-character code"
+                placeholder={lobbyStrings.text8CharacterCode}
                 maxLength={JOIN_CODE_LENGTH}
                 value={code}
                 autoComplete="off"
@@ -130,11 +140,11 @@ export function PlayLobby({ name }: { name: string }) {
                 aria-busy={busy === 'join'}
               >
                 {busy === 'join' && <LoaderCircle className={styles.spinner} aria-hidden="true" />}
-                {busy === 'join' ? 'Joining…' : 'Join'}
+                {busy === 'join' ? lobbyStrings.joining : lobbyStrings.join}
               </Button>
             </div>
             <p id="join-help" className={styles.hint}>
-              Eight letters and numbers. No spaces.
+              {lobbyStrings.eightLettersAndNumbersNoSpaces}
             </p>
             {error?.action === 'join' && (
               <p id="join-error" className={layoutClassName(`error ${styles.error}`)} role="alert">
@@ -146,25 +156,22 @@ export function PlayLobby({ name }: { name: string }) {
       </div>
       <p className="sr-only" role="status">
         {busy === 'create'
-          ? 'Creating your squad. Please wait.'
+          ? lobbyStrings.creatingYourSquadPleaseWait
           : busy === 'join'
-            ? 'Joining your squad. Please wait.'
+            ? lobbyStrings.joiningYourSquadPleaseWait
             : ''}
       </p>
       <section className={styles.mission} aria-labelledby="mission-title">
         <div className={styles.missionIntro}>
           <h2 id="mission-title">{mission.title}</h2>
-          <p>One pass. One admission.</p>
+          <p>{lobbyStrings.onePassOneAdmission}</p>
           <span>{mission.description}</span>
           {mission.source && (
             <p className={styles.source}>
               <a href={mission.source.url} target="_blank" rel="noreferrer">
                 {mission.source.label}
               </a>
-              <small>
-                Inspired by the failure pattern. Fictional check-in simulation; not a
-                reconstruction.
-              </small>
+              <small>{lobbyStrings.inspiredByTheFailurePatternFictional}</small>
             </p>
           )}
         </div>
@@ -172,22 +179,22 @@ export function PlayLobby({ name }: { name: string }) {
           <li>
             <Activity aria-hidden="true" />
             <div>
-              <h3>Traffic</h3>
-              <p>Handle the surge.</p>
+              <h3>{commonStrings.traffic}</h3>
+              <p>{lobbyStrings.handleTheSurge}</p>
             </div>
           </li>
           <li>
             <Database aria-hidden="true" />
             <div>
-              <h3>Data</h3>
-              <p>Protect single-use passes.</p>
+              <h3>{commonStrings.data}</h3>
+              <p>{commonStrings.protectSingleUsePasses}</p>
             </div>
           </li>
           <li>
             <ShieldCheck aria-hidden="true" />
             <div>
-              <h3>Operations</h3>
-              <p>Keep the system reliable.</p>
+              <h3>{commonStrings.operations}</h3>
+              <p>{lobbyStrings.keepTheSystemReliable}</p>
             </div>
           </li>
         </ul>

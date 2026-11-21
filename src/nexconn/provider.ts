@@ -64,7 +64,7 @@ export class NexconnChatProvider implements ChatProvider {
     );
   }
   async createGroup(matchId: string, members: string[]) {
-    const channelId = `m${contentHash(matchId).slice(0, 48)}`;
+    const channelId = this.groupReference(matchId);
     await this.register(this.systemUser);
     for (const id of members) await this.register(chatUserId(id));
     try {
@@ -90,6 +90,9 @@ export class NexconnChatProvider implements ChatProvider {
       throw error;
     }
     return channelId;
+  }
+  groupReference(matchId: string) {
+    return `m${contentHash(matchId).slice(0, 48)}`;
   }
   async addMember(groupRef: string, userId: string) {
     await this.register(chatUserId(userId));

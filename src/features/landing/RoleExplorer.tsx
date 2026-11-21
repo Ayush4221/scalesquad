@@ -1,4 +1,7 @@
 'use client';
+import { commonStrings } from '@/constants/strings/common';
+import { landingStrings } from '@/constants/strings/landing';
+
 import { landingClassName } from './landingStyles';
 
 import { useState } from 'react';
@@ -6,22 +9,22 @@ import { Database, RadioTower, Settings } from 'lucide-react';
 
 const roles = [
   {
-    name: 'Traffic',
+    name: commonStrings.traffic,
     icon: RadioTower,
-    title: 'Read the\nsurge.',
-    description: 'Understand the pressure. Bring your private evidence to the squad.',
+    title: landingStrings.readTheSurge,
+    description: landingStrings.understandThePressureBringYourPrivate,
   },
   {
-    name: 'Data',
+    name: commonStrings.data,
     icon: Database,
-    title: 'Protect\nevery pass.',
-    description: 'Follow the correctness risks. Help your squad protect single-use admissions.',
+    title: landingStrings.protectEveryPass,
+    description: landingStrings.followTheCorrectnessRisksHelpYour,
   },
   {
-    name: 'Operations',
+    name: commonStrings.operations,
     icon: Settings,
-    title: 'Own the\ntrade-offs.',
-    description: 'Weigh reliability and cost. Bring your perspective to the repair.',
+    title: landingStrings.ownTheTradeOffs,
+    description: landingStrings.weighReliabilityAndCostBringYour,
   },
 ] as const;
 
@@ -29,8 +32,14 @@ export function RoleExplorer() {
   const [selected, setSelected] = useState(0);
   const role = roles[selected] ?? roles[0];
   return (
-    <div className={landingClassName('hm-role-explorer')} aria-label="Explore engineering roles">
-      <div className={landingClassName('hm-role-controls')} aria-label="Your squad’s perspectives">
+    <div
+      className={landingClassName('hm-role-explorer')}
+      aria-label={landingStrings.exploreEngineeringRoles}
+    >
+      <div
+        className={landingClassName('hm-role-controls')}
+        aria-label={landingStrings.yourSquadsPerspectives}
+      >
         {roles.map(({ name, icon: Icon }, index) => (
           <button
             key={name}
@@ -53,9 +62,7 @@ export function RoleExplorer() {
           <p>{role.description}</p>
         </div>
       </div>
-      <p className={landingClassName('hm-caption')}>
-        Explore each role. In a match, roles reveal when play begins.
-      </p>
+      <p className={landingClassName('hm-caption')}>{landingStrings.exploreEachRoleInAMatch}</p>
     </div>
   );
 }

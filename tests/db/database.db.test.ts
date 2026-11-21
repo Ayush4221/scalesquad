@@ -40,6 +40,7 @@ describe('isolated Postgres integration', () => {
       await prisma.user.create({ data: { id, name: id, emailVerified: new Date() } });
   });
   afterAll(async () => {
+    await prisma.chatReconciliation.deleteMany({ where: { matchId: prefix } });
     await prisma.match.deleteMany({ where: { id: prefix } });
     await prisma.user.deleteMany({ where: { id: { in: users } } });
     await prisma.$disconnect();
@@ -47,6 +48,30 @@ describe('isolated Postgres integration', () => {
   it('enums match the shared contracts', () => {
     expect(Object.values(DbRole)).toEqual(Role.options);
     expect(Object.values(DbPhase)).toEqual(MatchPhase.options);
+  });
+  it('persists orphan cleanup without a match and protects newer versions from stale completion', async () => {
+    const id = `${prefix}-cleanup`,
+      task = {
+        id,
+        version: 'old',
+        matchId: prefix,
+        groupRef: 'test-group',
+        userId: null,
+        retryAt: 1000,
+      };
+    await repo.saveChatTask(task);
+    expect(await new PrismaMatchRepository(prisma).findChatTask(id)).toEqual(task);
+    await repo.saveChatTask({ ...task, version: 'new' });
+    await repo.completeChatTask(id, 'old');
+    await repo.deferChatTask(id, 'old', 9000);
+    expect(await repo.findChatTask(id)).toEqual({ ...task, version: 'new' });
+    await repo.deferChatTask(id, 'new', 2000);
+    expect((await repo.pendingChatTasks(1500, 100)).some((item) => item.id === id)).toBe(false);
+    expect((await repo.pendingChatTasks(2000, 100)).find((item) => item.id === id)?.retryAt).toBe(
+      2000,
+    );
+    await repo.completeChatTask(id, 'new');
+    expect(await repo.findChatTask(id)).toBeNull();
   });
   it('persists and completes a real match; constraints and transaction rollback hold', async () => {
     const view = await match.createMatch(users[0]!);

@@ -2,8 +2,31 @@ import { describe, expect, it, vi } from 'vitest';
 import { SessionService } from '../../../src/server/services/sessionService';
 import { fixture } from '../fakes';
 import type { SessionRepository } from '../../../src/server/domain/models';
+import { deferred } from '../../helpers/deferred';
 
 describe('socket authorization and batched projections', () => {
+  it('waits for an in-flight forced revocation check instead of using the fresh cache', async () => {
+    const pending = deferred<Awaited<ReturnType<SessionRepository['find']>>>();
+    const find = vi
+      .fn<SessionRepository['find']>()
+      .mockResolvedValueOnce({ userId: 'a', name: 'A', expires: 10000 })
+      .mockReturnValueOnce(pending.promise);
+    const connection = (await new SessionService({ find }, { now: () => 1000 }).openSocket(
+      'authjs.session-token=token',
+    ))!;
+    const forced = connection.authorize(true);
+    let finished = false;
+    const outbound = connection.authorize().then((value) => {
+      finished = true;
+      return value;
+    });
+    await Promise.resolve();
+    expect(finished).toBe(false);
+    pending.resolve(null);
+    expect(await forced).toBe(false);
+    expect(await outbound).toBe(false);
+    expect(find).toHaveBeenCalledTimes(2);
+  });
   it('reuses outbound authorization and forces fresh checks for inbound revocation', async () => {
     const clock = {
       value: 1000,

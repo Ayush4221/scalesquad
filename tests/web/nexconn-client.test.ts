@@ -6,12 +6,20 @@ const sdk = vi.hoisted(() => ({
   disconnect: vi.fn(async () => {}),
   addMessageHandler: vi.fn(),
   removeMessageHandler: vi.fn(),
+  addConnectionStatusHandler: vi.fn(),
+  removeConnectionStatusHandler: vi.fn(),
   history: vi.fn(async () => ({ code: 0, data: { data: [] } })),
   send: vi.fn(async (_value: unknown) => ({ code: 0 })),
 }));
 vi.mock('@nexconn/chat', () => ({
   AreaCode: { SG: 'SG', NA: 'NA', SA: 'SA' },
   LogLevel: { ERROR: 'ERROR' },
+  ConnectionStatus: { CONNECTED: 0, CONNECTING: 1, DISCONNECTED: 2, SUSPENDED: 3 },
+  ConnectionStatusHandler: class {
+    constructor(
+      readonly callbacks: { onConnectionStatusChanged: (event: { status: number }) => void },
+    ) {}
+  },
   NCEngine: { initialize: vi.fn(), ...sdk },
   GroupChannel: class {
     constructor(readonly id: string) {}
@@ -43,6 +51,28 @@ afterEach(async () => {
 });
 
 describe('single-engine chat lifecycle', () => {
+  it('reports SDK reconnect/disconnect states and ignores an obsolete owner handler', async () => {
+    const old = client(),
+      next = client(),
+      oldStatus = vi.fn(),
+      nextStatus = vi.fn();
+    await old.connect(access('old'), vi.fn(), oldStatus);
+    const handler = sdk.addConnectionStatusHandler.mock.calls[0]![1] as {
+      callbacks: { onConnectionStatusChanged: (event: { status: number }) => void };
+    };
+    handler.callbacks.onConnectionStatusChanged({ status: 3 });
+    expect(oldStatus).toHaveBeenLastCalledWith('connecting');
+    handler.callbacks.onConnectionStatusChanged({ status: 0 });
+    expect(oldStatus).toHaveBeenLastCalledWith('connected');
+    await next.connect(access('next'), vi.fn(), nextStatus);
+    expect(oldStatus).toHaveBeenLastCalledWith('unavailable');
+    handler.callbacks.onConnectionStatusChanged({ status: 0 });
+    expect(oldStatus).toHaveBeenLastCalledWith('unavailable');
+    const current = sdk.addConnectionStatusHandler.mock.calls[1]![1] as typeof handler;
+    current.callbacks.onConnectionStatusChanged({ status: 2 });
+    expect(nextStatus).toHaveBeenLastCalledWith('unavailable');
+    expect(sdk.removeConnectionStatusHandler).toHaveBeenCalledOnce();
+  });
   it('finishes old cleanup before connecting a replacement and ignores repeated old cleanup', async () => {
     let release!: (value: { code: number }) => void;
     sdk.connect.mockImplementationOnce(

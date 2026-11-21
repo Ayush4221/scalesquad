@@ -1,0 +1,4 @@
+# Generated text assets use deterministic LF line endings on every runner.
+mobile/lib/core/theme/app_colors.g.dart text eol=lf
+mobile/android/app/src/main/res/values/colors.xml text eol=lf
+mobile/assets/licenses/*.txt text eol=lf

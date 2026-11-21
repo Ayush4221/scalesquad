@@ -1,7 +1,10 @@
 'use client';
+import { authStrings } from '@/constants/strings/auth';
+import { commonStrings } from '@/constants/strings/common';
+
 import { layoutClassName } from '@/styles/layout';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { api } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +17,7 @@ import {
 import { PasswordRequirements } from './PasswordRequirements';
 export function ChangePasswordForm() {
   const hydrated = useHydrated();
+  const submitting = useRef(false);
   const [password, setPassword] = useState(''),
     [current, setCurrent] = useState(''),
     [show, setShow] = useState(false),
@@ -22,6 +26,7 @@ export function ChangePasswordForm() {
     [error, setError] = useState('');
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (!hydrated || submitting.current) return;
     const parsed = ChangePasswordSchema.safeParse({
       currentPassword: current,
       newPassword: password,
@@ -30,10 +35,11 @@ export function ChangePasswordForm() {
       setError(
         parsed.error.issues.some((issue) => issue.path[0] === 'newPassword')
           ? PASSWORD_REQUIREMENTS
-          : 'Enter your current password.',
+          : authStrings.enterYourCurrentPassword,
       );
       return;
     }
+    submitting.current = true;
     setBusy(true);
     setError('');
     try {
@@ -42,23 +48,24 @@ export function ChangePasswordForm() {
       setCurrent('');
       setDone(true);
     } catch {
-      setError('Could not complete this step. Check the form and try again.');
+      setError(authStrings.couldNotCompleteThisStepCheck);
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }
   if (done)
     return (
       <div role="status" className="space-y-4">
-        <p>Password changed. Other sessions signed out.</p>
-        <a href="/signin">Back to sign in</a>
+        <p>{authStrings.passwordChangedOtherSessionsSignedOut}</p>
+        <a href="/signin">{authStrings.backToSignIn}</a>
       </div>
     );
   return (
     <form className="auth-form space-y-4" onSubmit={(event) => void submit(event)}>
-      <h2 className="text-xl font-bold">Change password</h2>
+      <h2 className="text-xl font-bold">{authStrings.changePassword}</h2>
       <label>
-        Current password
+        {authStrings.currentPassword}
         <Input
           type={show ? 'text' : 'password'}
           autoComplete="current-password"
@@ -70,7 +77,7 @@ export function ChangePasswordForm() {
         />
       </label>
       <label>
-        New password
+        {authStrings.newPassword}
         <Input
           type={show ? 'text' : 'password'}
           autoComplete="new-password"
@@ -90,7 +97,7 @@ export function ChangePasswordForm() {
         disabled={!hydrated || busy}
         onClick={() => setShow((v) => !v)}
       >
-        {show ? 'Hide password' : 'Show password'}
+        {show ? commonStrings.hidePassword : commonStrings.showPassword}
       </Button>
       <PasswordRequirements password={password} id="change-password-requirements" />
       {error && (
@@ -99,7 +106,7 @@ export function ChangePasswordForm() {
         </p>
       )}
       <Button className="w-full" type="submit" disabled={!hydrated || busy}>
-        {busy ? 'Please wait…' : 'Change password'}
+        {busy ? authStrings.pleaseWait : authStrings.changePassword}
       </Button>
     </form>
   );

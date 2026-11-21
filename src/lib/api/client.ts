@@ -1,10 +1,11 @@
+import { networkStrings } from '@/constants/strings/network';
 import { AppError, ErrorCode } from '@scalesquad/shared';
 import { errorMessages } from '@/constants/errorMessages';
 
 export async function api<T>(
   path: string,
   body?: unknown,
-  options: { timeoutMs?: number; signal?: AbortSignal } = {},
+  options: { timeoutMs?: number; signal?: AbortSignal; method?: 'POST' | 'DELETE' } = {},
 ): Promise<T> {
   const controller = new AbortController();
   const abort = () => controller.abort();
@@ -12,8 +13,9 @@ export async function api<T>(
   options.signal?.addEventListener('abort', abort, { once: true });
   const timer = setTimeout(abort, options.timeoutMs ?? (path.endsWith('/runs') ? 60000 : 30000));
   try {
+    if (options.signal?.aborted) throw new DOMException('Request cancelled', 'AbortError');
     const response = await fetch(`/api/game${path}`, {
-      method: body === undefined ? 'GET' : 'POST',
+      method: options.method ?? (body === undefined ? 'GET' : 'POST'),
       credentials: 'same-origin',
       headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -22,7 +24,8 @@ export async function api<T>(
     let data: unknown;
     try {
       data = await response.json();
-    } catch {
+    } catch (error) {
+      if (controller.signal.aborted) throw error;
       const code =
         response.status === 401
           ? 'UNAUTHENTICATED'
@@ -35,7 +38,7 @@ export async function api<T>(
         response.ok ? 502 : response.status,
         response.status === 429 || response.status === 401
           ? errorMessages[code]
-          : 'The service returned an unreadable response. Please try again.',
+          : networkStrings.theServiceReturnedAnUnreadableResponse,
         Number.isFinite(seconds) && seconds > 0
           ? { retryAfterSeconds: Math.min(seconds, 86400) }
           : {},
@@ -82,13 +85,14 @@ export async function api<T>(
     }
     return data as T;
   } catch (error) {
+    if (options.signal?.aborted) throw new DOMException('Request cancelled', 'AbortError');
     if (error instanceof AppError) throw error;
     throw new AppError(
       'UPSTREAM_UNAVAILABLE',
       503,
       controller.signal.aborted
-        ? 'The request took too long. Please try again.'
-        : 'Cannot reach the service. Check your connection and try again.',
+        ? networkStrings.theRequestTookTooLongPlease
+        : networkStrings.cannotReachTheServiceCheckYour,
     );
   } finally {
     clearTimeout(timer);

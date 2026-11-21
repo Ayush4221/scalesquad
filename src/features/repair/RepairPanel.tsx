@@ -1,4 +1,7 @@
 'use client';
+import { commonStrings } from '@/constants/strings/common';
+import { repairStrings } from '@/constants/strings/repair';
+
 import { layoutClassName } from '@/styles/layout';
 
 import { useId, useState } from 'react';
@@ -65,53 +68,57 @@ export function RepairPanel({
     <Card>
       <CardHeader className={layoutClassName('repair-header')}>
         <div className="flex flex-wrap justify-between gap-2">
-          <CardTitle>Repair the system</CardTitle>
-          <Badge variant="outline">v{view.configuration.version}</Badge>
+          <CardTitle>{repairStrings.repairTheSystem}</CardTitle>
+          <Badge variant="outline">
+            {repairStrings.v}
+            {view.configuration.version}
+          </Badge>
         </div>
         <p className={layoutClassName('muted text-sm')}>
-          Editor:{' '}
-          {view.members.find((u) => u.userId === view.lock?.holderUserId)?.name ?? 'Not assigned'}
-          {holder ? ' (you)' : ''}
+          {repairStrings.editor}{' '}
+          {view.members.find((u) => u.userId === view.lock?.holderUserId)?.name ??
+            repairStrings.notAssigned}
+          {holder ? commonStrings.youSuffix : ''}
         </p>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="controls-grid grid grid-cols-1 gap-5 md:grid-cols-2">
           {choice(
-            'App capacity',
+            commonStrings.appCapacity,
             values.appCapacity,
             view.scenario.choices.capacity,
             (v) => onChange({ appCapacity: ConfigurationValues.shape.appCapacity.parse(v) }),
-            'Higher capacity handles more requests and costs more credits.',
+            repairStrings.higherCapacityHandlesMoreRequestsAnd,
           )}
           {choice(
-            'Database capacity',
+            commonStrings.databaseCapacity,
             values.dbCapacity,
             view.scenario.choices.capacity,
             (v) => onChange({ dbCapacity: ConfigurationValues.shape.dbCapacity.parse(v) }),
-            'Write capacity limits how many check-ins can be confirmed.',
+            repairStrings.writeCapacityLimitsHowManyCheck,
           )}
           {choice(
-            'Retry policy',
+            commonStrings.retryPolicy,
             values.retryPolicy,
             view.scenario.choices.retryPolicy,
             (v) => onChange({ retryPolicy: ConfigurationValues.shape.retryPolicy.parse(v) }),
-            'The same key lets the server recognize a repeated request; a new identity starts a new attempt.',
+            repairStrings.theSameKeyLetsTheServer,
           )}
           {choice(
-            'Read cache',
+            repairStrings.readCache,
             values.cache,
             view.scenario.choices.cache,
             (v) => onChange({ cache: ConfigurationValues.shape.cache.parse(v) }),
-            'Cached reads can be faster. Only the database can confirm admission.',
+            repairStrings.cachedReadsCanBeFasterOnly,
           )}
         </div>
         <div className="toggle-row flex items-center justify-between gap-4 border-y border-border py-4">
           <div>
             <label className="mb-2 block text-xs text-muted-foreground" htmlFor="atomic">
-              Atomic check-in
+              {commonStrings.atomicCheckIn}
             </label>
             <p className={layoutClassName('muted text-sm')}>
-              One indivisible check-and-accept operation.
+              {repairStrings.oneIndivisibleCheckAndAcceptOperation}
             </p>
           </div>
           <Switch
@@ -124,18 +131,18 @@ export function RepairPanel({
         {!editable && (
           <p className={layoutClassName('muted text-sm')}>
             {view.simulationLocked
-              ? 'Simulation in progress. Configuration is locked.'
-              : 'Only the active editor can change the configuration during repair.'}
+              ? repairStrings.simulationInProgressConfigurationIsLocked
+              : repairStrings.onlyTheActiveEditorCanChange}
           </p>
         )}
-        <div className="flex flex-wrap gap-2">
-          <div className="control">
+        <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+          <div className="control min-w-0">
             <label className="mb-2 block text-xs text-muted-foreground" htmlFor={`${prefix}-pass`}>
-              Pass control to
+              {repairStrings.passControlTo}
             </label>
             <ResponsiveSelect
               id={`${prefix}-pass`}
-              label="Pass control to"
+              label={repairStrings.passControlTo}
               value={target}
               disabled={!editable}
               onChange={setTarget}
@@ -144,8 +151,17 @@ export function RepairPanel({
                 .map((u) => ({ value: u.userId, label: u.name }))}
             />
           </div>
-          <Button variant="outline" disabled={!editable || !target} onClick={() => onPass(target)}>
-            Pass control
+          <Button
+            variant="outline"
+            className="min-h-11 w-full sm:w-auto"
+            disabled={
+              !editable ||
+              !target ||
+              !view.members.some((member) => member.userId === target && member.userId !== userId)
+            }
+            onClick={() => onPass(target)}
+          >
+            {repairStrings.passControl}
           </Button>
           {view.hostUserId === userId && (
             <Button
@@ -155,7 +171,7 @@ export function RepairPanel({
               }
               onClick={onReclaim}
             >
-              Reclaim control
+              {repairStrings.reclaimControl}
             </Button>
           )}
         </div>

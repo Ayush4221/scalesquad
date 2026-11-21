@@ -1,4 +1,7 @@
 'use client';
+import { authStrings } from '@/constants/strings/auth';
+import { commonStrings } from '@/constants/strings/common';
+
 import { Database, Server, Settings } from 'lucide-react';
 import type { PointerEvent } from 'react';
 import { cn } from '@/utils/classNames';
@@ -6,9 +9,9 @@ import styles from './auth.module.css';
 import motion from './login.module.css';
 
 const roles = [
-  { name: 'Traffic', description: 'Follow the surge', icon: Server },
-  { name: 'Data', description: 'Protect the data', icon: Database },
-  { name: 'Operations', description: 'Keep it running', icon: Settings },
+  { name: commonStrings.traffic, description: authStrings.followTheSurge, icon: Server },
+  { name: commonStrings.data, description: authStrings.protectTheData, icon: Database },
+  { name: commonStrings.operations, description: authStrings.keepItRunning, icon: Settings },
 ];
 
 function tilt(event: PointerEvent<HTMLLIElement>) {
@@ -38,7 +41,7 @@ export function AuthRoleCards({ animated }: { animated: boolean }) {
       {animated && <span className={motion.connection} aria-hidden="true" />}
       <ul
         className={cn(styles.roles, animated && motion.roles)}
-        aria-label="Your squad’s three roles"
+        aria-label={authStrings.yourSquadsThreeRoles}
       >
         {roles.map(({ name, description, icon: Icon }) => (
           <li

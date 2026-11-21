@@ -7,7 +7,7 @@ import {
   RunNumber,
   type EvidencePhase,
 } from '@scalesquad/shared';
-import type { GameRepository, MatchRecord } from '../domain/models';
+import type { ChatReconciliation, GameRepository, MatchRecord } from '../domain/models';
 import { withTransaction } from './unitOfWork';
 
 const include = {
@@ -194,6 +194,35 @@ const fields = (m: MatchRecord) => ({
 });
 export class PrismaMatchRepository implements GameRepository {
   constructor(private readonly client = getPrisma()) {}
+  async saveChatTask(task: ChatReconciliation) {
+    const data = { ...task, retryAt: new Date(task.retryAt) };
+    await this.client.chatReconciliation.upsert({
+      where: { id: task.id },
+      create: data,
+      update: data,
+    });
+  }
+  async findChatTask(id: string) {
+    const task = await this.client.chatReconciliation.findUnique({ where: { id } });
+    return task ? { ...task, retryAt: task.retryAt.getTime() } : null;
+  }
+  async pendingChatTasks(now: number, limit: number) {
+    const tasks = await this.client.chatReconciliation.findMany({
+      where: { retryAt: { lte: new Date(now) } },
+      orderBy: [{ retryAt: 'asc' }, { id: 'asc' }],
+      take: limit,
+    });
+    return tasks.map((task) => ({ ...task, retryAt: task.retryAt.getTime() }));
+  }
+  async completeChatTask(id: string, version: string) {
+    await this.client.chatReconciliation.deleteMany({ where: { id, version } });
+  }
+  async deferChatTask(id: string, version: string, retryAt: number) {
+    await this.client.chatReconciliation.updateMany({
+      where: { id, version },
+      data: { retryAt: new Date(retryAt) },
+    });
+  }
   async create(m: MatchRecord) {
     await withTransaction(async (tx) => {
       await tx.match.create({

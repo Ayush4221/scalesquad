@@ -1,4 +1,6 @@
 'use client';
+import { briefStrings } from '@/constants/strings/brief';
+
 import { layoutClassName } from '@/styles/layout';
 
 import type { EvidenceCard } from '@scalesquad/shared';
@@ -22,18 +24,19 @@ export function BriefPanel({
     <Card>
       <CardHeader className={layoutClassName('brief-header')}>
         <div className="flex items-center justify-between">
-          <CardTitle>Your evidence</CardTitle>
-          <Badge variant="outline">◇ Private · only you</Badge>
+          <CardTitle>{briefStrings.yourEvidence}</CardTitle>
+          <Badge variant="outline">{briefStrings.privateOnlyYou}</Badge>
         </div>
         {!acknowledged && cards.some((card) => card.phase === 'INCIDENT_EVIDENCE') && (
-          <p role="status">New private evidence. Read your update before continuing.</p>
+          <p role="status">{briefStrings.newPrivateEvidenceReadYourUpdate}</p>
         )}
       </CardHeader>
       <CardContent className="space-y-5">
         {cards.map((card) => (
           <section key={card.id}>
             <p className={layoutClassName('eyebrow')}>
-              {card.role} / {card.phase === 'BRIEFING' ? 'OPENING BRIEF' : 'INCIDENT UPDATE'}
+              {card.role} /{' '}
+              {card.phase === 'BRIEFING' ? briefStrings.openingBrief : briefStrings.incidentUpdate}
             </p>
             <ul className="fact-list list-disc pl-5 text-sm leading-7">
               {card.facts.map((f) => (
@@ -41,7 +44,7 @@ export function BriefPanel({
                   {f.text}
                   {onShare && (
                     <Button variant="ghost" onClick={() => onShare(f.text)}>
-                      Share to squad…
+                      {briefStrings.shareToSquad}
                     </Button>
                   )}
                 </li>
@@ -50,17 +53,17 @@ export function BriefPanel({
           </section>
         ))}
         {cards.length === 0 && (
-          <p className={layoutClassName('muted')}>Your brief will arrive when the host starts.</p>
+          <p className={layoutClassName('muted')}>{briefStrings.yourBriefWillArriveWhenThe}</p>
         )}
         <p className={layoutClassName('muted text-sm')}>
-          Tell your squad what matters. Your evidence is never shared automatically.
+          {briefStrings.tellYourSquadWhatMattersYour}
         </p>
         <Button
           className={layoutClassName('brief-action')}
           disabled={busy || acknowledged || cards.length === 0}
           onClick={onAcknowledge}
         >
-          {acknowledged ? 'Acknowledged ✓' : 'I’ve read my evidence'}
+          {acknowledged ? briefStrings.acknowledged : briefStrings.iveReadMyEvidence}
         </Button>
       </CardContent>
     </Card>

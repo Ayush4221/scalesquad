@@ -4,4 +4,5 @@ export const runtimePolicy = Object.freeze({
   maxMatchesPerDay: 10,
   inactiveMatchMs: 30 * 60 * 1000,
   maintenanceBatch: 100,
+  chatReconciliationRetryMs: 60000,
 });

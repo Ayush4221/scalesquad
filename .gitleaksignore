@@ -1,0 +1,3 @@
+# False positive: public A0 Android planning prose, not a credential.
+# Ignore only this historical rule/file/line fingerprint; keep full-history scanning.
+62e5b5f6a7953917b5c90e43430a66799ea3ed8b:docs/plan/14-flutter-android.md:generic-api-key:486

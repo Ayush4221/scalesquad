@@ -1,4 +1,7 @@
 'use client';
+import { commonStrings } from '@/constants/strings/common';
+import { chatStrings } from '@/constants/strings/chat';
+
 import { layoutClassName } from '@/styles/layout';
 
 import type { MatchPhase } from '@scalesquad/shared';
@@ -15,11 +18,25 @@ export function BottomNav({
   unread?: number;
 }) {
   return (
-    <nav className={layoutClassName('bottom-nav')} aria-label="Match sections">
-      {(['Brief', 'Squad', 'Repair', 'Results', 'Chat'] as const).map((tab) => (
+    <nav className={layoutClassName('bottom-nav')} aria-label={commonStrings.matchSections}>
+      {(
+        [
+          commonStrings.brief,
+          commonStrings.squad,
+          commonStrings.repair,
+          commonStrings.results,
+          commonStrings.chat,
+        ] as const
+      ).map((tab) => (
         <button
           key={tab}
           type="button"
+          aria-label={tab}
+          aria-description={
+            tab === commonStrings.chat && unread > 0
+              ? chatStrings.unreadMessages(unread)
+              : undefined
+          }
           aria-current={active === tab ? 'page' : undefined}
           disabled={
             (tab === 'Brief' && phase === 'LOBBY') ||
@@ -29,7 +46,7 @@ export function BottomNav({
           onClick={() => onSelect(tab)}
         >
           {tab}
-          {tab === 'Chat' && unread > 0 ? ` (${unread})` : ''}
+          {tab === commonStrings.chat && unread > 0 ? ` (${unread})` : ''}
         </button>
       ))}
     </nav>

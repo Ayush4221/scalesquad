@@ -84,6 +84,43 @@ describe('safe API client errors', () => {
     await pending;
     expect(vi.getTimerCount()).toBe(0);
   });
+  it('distinguishes caller cancellation from timeout and never starts a pre-cancelled request', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const fetch = vi.fn();
+    vi.stubGlobal('fetch', fetch);
+    await expect(api('/matches/a', undefined, { signal: controller.signal })).rejects.toMatchObject(
+      { name: 'AbortError' },
+    );
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it('keeps timeout semantics when the response body stalls after headers arrive', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: unknown, options: RequestInit) => {
+        const response = new Response('{}');
+        vi.spyOn(response, 'json').mockImplementation(
+          () =>
+            new Promise((_resolve, reject) => {
+              options.signal?.addEventListener(
+                'abort',
+                () => reject(new DOMException('Aborted', 'AbortError')),
+                { once: true },
+              );
+            }),
+        );
+        return response;
+      }),
+    );
+    const outcome = expect(api('/matches/a', undefined, { timeoutMs: 100 })).rejects.toMatchObject({
+      code: 'UPSTREAM_UNAVAILABLE',
+      message: expect.stringContaining('too long'),
+    });
+    await vi.advanceTimersByTimeAsync(101);
+    await outcome;
+    expect(vi.getTimerCount()).toBe(0);
+  });
   it('does not expose network exception details', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('private URL or OS exception')));
     await expect(api('/matches/a')).rejects.toMatchObject({

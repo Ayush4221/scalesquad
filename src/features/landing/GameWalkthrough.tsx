@@ -1,4 +1,7 @@
 'use client';
+import { commonStrings } from '@/constants/strings/common';
+import { landingStrings } from '@/constants/strings/landing';
+
 import { landingClassName } from './landingStyles';
 
 import { useEffect, useState } from 'react';
@@ -7,19 +10,19 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 const scenes = [
   {
-    label: 'Clues',
-    title: 'Nobody has the whole picture.',
-    copy: 'Each engineer gets a private brief. Connect your evidence through the squad’s conversation.',
+    label: landingStrings.clues,
+    title: landingStrings.nobodyHasTheWholePicture,
+    copy: landingStrings.eachEngineerGetsAPrivateBrief,
   },
   {
-    label: 'Repair',
-    title: 'Make the call together.',
-    copy: 'Discuss the trade-offs, adjust your design, and pass edit control when another perspective helps.',
+    label: commonStrings.repair,
+    title: landingStrings.makeTheCallTogether,
+    copy: landingStrings.discussTheTradeOffsAdjustYour,
   },
   {
-    label: 'Compare',
-    title: 'Same incident. New evidence.',
-    copy: 'Test the repair under the same conditions. Compare correctness, throughput and cost to understand what changed.',
+    label: landingStrings.compare,
+    title: landingStrings.sameIncidentNewEvidence,
+    copy: landingStrings.testTheRepairUnderTheSame,
   },
 ] as const;
 const SCENE_DURATION = 4200;
@@ -63,16 +66,19 @@ export function GameWalkthrough() {
   }
   const label = reduced
     ? finished
-      ? 'Restart walkthrough'
-      : 'Next scene'
+      ? landingStrings.restartWalkthrough
+      : landingStrings.nextScene
     : playing
-      ? 'Pause walkthrough'
+      ? landingStrings.pauseWalkthrough
       : finished
-        ? 'Replay walkthrough'
-        : 'Play the walkthrough';
+        ? landingStrings.replayWalkthrough
+        : landingStrings.playTheWalkthrough;
   return (
     <>
-      <div className={landingClassName('hm-round-controls')} aria-label="Explore the game loop">
+      <div
+        className={landingClassName('hm-round-controls')}
+        aria-label={landingStrings.exploreTheGameLoop}
+      >
         {scenes.map((item, index) => (
           <button
             key={item.label}
@@ -106,7 +112,10 @@ export function GameWalkthrough() {
           <span>{label}</span>
         </button>
         <span>
-          Scene {scene + 1} of {scenes.length}
+          {landingStrings.scene}
+          {scene + 1}
+          {landingStrings.of}
+          {scenes.length}
         </span>
       </div>
     </>

@@ -1,4 +1,7 @@
 'use client';
+import { authStrings } from '@/constants/strings/auth';
+import { commonStrings } from '@/constants/strings/common';
+
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CircleCheck, LockKeyhole, Mail, Zap } from 'lucide-react';
 import { AppError, LoginSchema, type LoginDto } from '@scalesquad/shared';
@@ -15,8 +18,8 @@ import motion from './login.module.css';
 type Field = keyof LoginDto;
 type FieldErrors = Partial<Record<Field, string>>;
 const messages: Record<Field, string> = {
-  email: 'Enter a valid email address.',
-  password: 'Enter your password (up to 128 characters).',
+  email: authStrings.enterAValidEmailAddress,
+  password: authStrings.enterYourPasswordUpTo128,
 };
 
 export function LoginForm() {
@@ -101,10 +104,10 @@ export function LoginForm() {
       if (!mounted.current) return;
       setServerError(
         error instanceof AppError && error.httpStatus === 401
-          ? 'Could not sign in with those details. Check your email and password.'
+          ? authStrings.couldNotSignInWithThose
           : error instanceof AppError && error.code === 'RATE_LIMITED'
-            ? `Too many sign-in attempts. ${error.retryAfterSeconds ? `Try again in ${error.retryAfterSeconds} seconds.` : 'Wait a little, then try again.'}`
-            : 'Sign-in is temporarily unavailable. Please try again shortly.',
+            ? authStrings.retrySignIn(error.retryAfterSeconds)
+            : authStrings.signInIsTemporarilyUnavailablePlease,
       );
       submitting.current = false;
       setState('idle');
@@ -117,10 +120,10 @@ export function LoginForm() {
       <div className={cn(styles.formHeader, motion.header)}>
         <span className={cn(styles.badge, motion.badge)}>
           <Zap aria-hidden="true" />
-          Back to the control room
+          {authStrings.backToTheControlRoom}
         </span>
-        <h1 className={styles.formHeading}>Sign in</h1>
-        <p className={styles.formDescription}>Your next incident starts here.</p>
+        <h1 className={styles.formHeading}>{commonStrings.signIn}</h1>
+        <p className={styles.formDescription}>{authStrings.yourNextIncidentStartsHere}</p>
       </div>
       <form
         className={cn(styles.form, motion.form)}
@@ -128,7 +131,7 @@ export function LoginForm() {
         noValidate
         aria-busy={busy}
       >
-        <FormField id="login-email" label="Email address" error={errors.email}>
+        <FormField id="login-email" label={authStrings.emailAddress} error={errors.email}>
           <div className={motion.control} data-valid={emailValid}>
             <span className={motion.leading} aria-hidden="true">
               <Mail />
@@ -140,7 +143,7 @@ export function LoginForm() {
               autoComplete="email"
               autoCapitalize="none"
               spellCheck={false}
-              placeholder="you@example.com"
+              placeholder={authStrings.youExampleCom}
               required
               maxLength={254}
               className={cn(styles.input, motion.input)}
@@ -156,12 +159,12 @@ export function LoginForm() {
             </span>
           </div>
         </FormField>
-        <FormField id="login-password" label="Password" error={errors.password}>
+        <FormField id="login-password" label={authStrings.password} error={errors.password}>
           <PasswordInput
             id="login-password"
             name="password"
             autoComplete="current-password"
-            placeholder="Enter your password"
+            placeholder={authStrings.enterYourPassword}
             required
             maxLength={128}
             className={cn(styles.input, motion.input)}
@@ -181,7 +184,7 @@ export function LoginForm() {
           />
           {capsLock && (
             <p id="login-caps-lock" className={motion.capsLock} role="status">
-              Caps Lock is on
+              {authStrings.capsLockIsOn}
             </p>
           )}
         </FormField>
@@ -193,13 +196,13 @@ export function LoginForm() {
         <LoginSubmitButton state={state} disabled={disabled} />
         <p className="sr-only" role="status">
           {state === 'loading'
-            ? 'Signing in. Please wait.'
+            ? authStrings.signingInPleaseWait
             : state === 'success'
-              ? 'Signed in. Opening your control room.'
+              ? authStrings.signedInOpeningYourControlRoom
               : ''}
         </p>
         <p className={styles.signin}>
-          New to ScaleSquad?{' '}
+          {authStrings.newToScalesquad}{' '}
           <a
             href="/register"
             aria-disabled={busy}
@@ -207,7 +210,7 @@ export function LoginForm() {
               if (busy) event.preventDefault();
             }}
           >
-            Create account
+            {authStrings.createAccount}
           </a>
         </p>
       </form>

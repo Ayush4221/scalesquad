@@ -41,7 +41,8 @@ Specs (each uses 3 browser contexts for 3 players):
 7. `pwa.spec.ts`: manifest served and valid; service worker registers in production build; offline navigation shows `/offline`; after a full match, Cache Storage contains no `/api` or evidence entries; sign-out purges caches.
 8. `mobile-layout.spec.ts`: at 360px width no horizontal scroll, bottom nav visible, repair drawer opens, comparison renders as cards.
 
-`npm run test:e2e` runs the suite; CI job separate and non-blocking until stable.
+`npm run test:e2e` runs the suite. Owner update (2026-11-07): all browser projects
+are blocking CI jobs and feed the required `CI required` gate; no advisory bypass.
 
 ### 10.3 Container and deploy (VPS)
 Files:
@@ -53,7 +54,7 @@ Files:
 - Trusted proxy setting: app trusts only Caddy for client IP (rate limiter).
 
 ### 10.4 CI (GitHub Actions assumed)
-Jobs: `lint`, `typecheck`, `unit` (with coverage thresholds), `db-tests` (service Postgres), `build`, `audit`, `secrets-scan`; `e2e` job added last, initially allowed to fail. Branch protection recommended but owner's choice.
+Jobs: `lint`, `typecheck`, `unit` (with coverage thresholds), `db-tests` (service Postgres), `build`, `audit`, `secrets-scan`, and blocking `e2e` projects. The aggregate `CI required` gate requires all routine jobs to succeed. The development ruleset import and Dependabot/default-branch behavior are documented in `docs/e2e.md`; repository settings must activate merge enforcement.
 
 ### 10.5 Playtest (design section 6)
 - Add `docs/playtest.md` with the 10-step procedure, observation table, and success criteria copied from the design doc.

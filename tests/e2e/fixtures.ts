@@ -123,8 +123,16 @@ export async function briefing(s: Squad) {
   await lobby(s);
   for (const p of s.players) {
     await selectTab(p.page, 'Squad');
+    const saved = p.page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        new URL(response.url()).pathname === `/api/game/matches/${s.matchId}/ready`,
+    );
     await p.page.getByRole('button', { name: 'Ready up', exact: true }).click();
+    expect((await saved).ok()).toBe(true);
+    await expect(p.page.getByRole('button', { name: 'Not ready', exact: true })).toBeEnabled();
   }
+  await expect(s.players[0].page.getByRole('button', { name: 'Start match' })).toBeEnabled();
   await s.players[0].page.getByRole('button', { name: 'Start match' }).click();
   for (const p of s.players) await expect(p.page.locator('.status-bar')).toContainText('BRIEFING');
 }

@@ -1,4 +1,7 @@
 'use client';
+import { authStrings } from '@/constants/strings/auth';
+import { commonStrings } from '@/constants/strings/common';
+
 import { useRef, useState, type FormEvent } from 'react';
 import { ArrowRight, Check, LoaderCircle } from 'lucide-react';
 import {
@@ -19,8 +22,8 @@ import { PasswordRequirements } from './PasswordRequirements';
 type Field = keyof RegisterDto;
 type FieldErrors = Partial<Record<Field, string>>;
 const messages: Record<Field, string> = {
-  name: 'Enter your full name (up to 60 characters).',
-  email: 'Enter a valid email address.',
+  name: authStrings.enterYourFullNameUpTo,
+  email: authStrings.enterAValidEmailAddress,
   password: PASSWORD_REQUIREMENTS,
 };
 
@@ -75,7 +78,7 @@ export function SignupForm() {
       setValues((previous) => ({ ...previous, password: '' }));
       setDone(true);
     } catch {
-      setServerError('We couldn’t create your account. Check your details and try again.');
+      setServerError(authStrings.weCouldntCreateYourAccountCheck);
     } finally {
       submitting.current = false;
       setBusy(false);
@@ -88,10 +91,11 @@ export function SignupForm() {
         <span className={styles.successIcon}>
           <Check aria-hidden="true" />
         </span>
-        <h1 className={styles.formHeading}>You’re ready to sign in.</h1>
-        <p className={styles.formDescription}>Registration complete. You can sign in now.</p>
+        <h1 className={styles.formHeading}>{authStrings.youreReadyToSignIn}</h1>
+        <p className={styles.formDescription}>{authStrings.registrationCompleteYouCanSignIn}</p>
         <a className={styles.continueLink} href="/signin">
-          Continue to sign in <ArrowRight aria-hidden="true" />
+          {authStrings.continueToSignIn}
+          <ArrowRight aria-hidden="true" />
         </a>
       </div>
     );
@@ -101,9 +105,9 @@ export function SignupForm() {
   return (
     <>
       <div className={styles.formHeader}>
-        <span className={styles.badge}>Join the squad</span>
-        <h1 className={styles.formHeading}>Create your account</h1>
-        <p className={styles.formDescription}>One account. A whole squad of possibilities.</p>
+        <span className={styles.badge}>{authStrings.joinTheSquad}</span>
+        <h1 className={styles.formHeading}>{authStrings.createYourAccount}</h1>
+        <p className={styles.formDescription}>{authStrings.oneAccountAWholeSquadOf}</p>
       </div>
       <form
         className={styles.form}
@@ -111,12 +115,12 @@ export function SignupForm() {
         noValidate
         aria-busy={busy}
       >
-        <FormField id="signup-name" label="Full name" error={errors.name}>
+        <FormField id="signup-name" label={authStrings.fullName} error={errors.name}>
           <Input
             id="signup-name"
             name="name"
             autoComplete="name"
-            placeholder="Enter your full name"
+            placeholder={authStrings.enterYourFullName}
             required
             maxLength={60}
             className={styles.input}
@@ -127,7 +131,7 @@ export function SignupForm() {
             onChange={(event) => change('name', event.target.value)}
           />
         </FormField>
-        <FormField id="signup-email" label="Email address" error={errors.email}>
+        <FormField id="signup-email" label={authStrings.emailAddress} error={errors.email}>
           <Input
             id="signup-email"
             name="email"
@@ -135,7 +139,7 @@ export function SignupForm() {
             autoComplete="email"
             autoCapitalize="none"
             spellCheck={false}
-            placeholder="Enter your email address"
+            placeholder={authStrings.enterYourEmailAddress}
             required
             maxLength={254}
             className={styles.input}
@@ -148,7 +152,7 @@ export function SignupForm() {
         </FormField>
         <FormField
           id="signup-password"
-          label="Password"
+          label={authStrings.password}
           error={errors.password}
           hint="Up to 128 characters. Avoid common passwords and your email name."
         >
@@ -156,7 +160,7 @@ export function SignupForm() {
             id="signup-password"
             name="password"
             autoComplete="new-password"
-            placeholder="Create a password"
+            placeholder={authStrings.createAPassword}
             required
             minLength={PASSWORD_MIN_LENGTH}
             maxLength={128}
@@ -177,16 +181,19 @@ export function SignupForm() {
         <Button type="submit" className={styles.submit} disabled={disabled}>
           {busy ? (
             <>
-              Creating account <LoaderCircle className={styles.spinner} aria-hidden="true" />
+              {authStrings.creatingAccount}
+              <LoaderCircle className={styles.spinner} aria-hidden="true" />
             </>
           ) : (
             <>
-              Create account <ArrowRight aria-hidden="true" />
+              {authStrings.createAccountWithIcon}
+              <ArrowRight aria-hidden="true" />
             </>
           )}
         </Button>
         <p className={styles.signin}>
-          Already playing? <a href="/signin">Sign in</a>
+          {authStrings.alreadyPlaying}
+          <a href="/signin">{commonStrings.signIn}</a>
         </p>
       </form>
     </>

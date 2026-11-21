@@ -10,7 +10,7 @@ import type {
 import type { Clock } from '../domain/ports';
 import { SESSION_SECONDS } from '../../constants/auth';
 import { ipPrefix } from '../utils/clientIp';
-import { RateLimiter } from '../utils/rateLimit';
+import { RateLimiter, rateLimitsEnabled } from '../utils/rateLimit';
 import { validatePassword, type PasswordHasher } from './passwordService';
 
 export const REGISTERED = Object.freeze({ message: 'Registration complete. You can sign in now.' });
@@ -64,7 +64,10 @@ export class AuthService {
     email = normalizeEmail(email);
     const key = createHash('sha256').update(email).digest('hex');
     const slot = Number.parseInt(key.slice(0, 8), 16) % this.failures.length;
-    const previous = this.clock.now() - this.failedAt[slot]! < 900000 ? this.failures[slot]! : 0;
+    const previous =
+      rateLimitsEnabled() && this.clock.now() - this.failedAt[slot]! < 900000
+        ? this.failures[slot]!
+        : 0;
     if (previous) await this.pause(Math.min(2000, previous * 250));
     const user = await this.users.byEmail(email),
       valid = await this.hasher.verify(user?.passwordHash ?? DUMMY_HASH, password);

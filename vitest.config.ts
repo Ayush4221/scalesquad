@@ -24,7 +24,15 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   test: {
-    exclude: ['**/node_modules/**', '**/.next/**', '**/*.db.test.ts'],
+    // Keep Windows TCP/coverage workers stable without dropping tests or gates.
+    ...(process.platform === 'win32' ? { pool: 'threads' as const, maxWorkers: 2 } : {}),
+    exclude: [
+      'mobile/**',
+      '.flutter-sdk/**',
+      '**/node_modules/**',
+      '**/.next/**',
+      '**/*.db.test.ts',
+    ],
     projects: [
       ...['shared', 'scenario', 'sim', 'db', 'nexconn'].map((name) => ({
         extends: true,
@@ -59,6 +67,8 @@ export default defineConfig({
         'src/pwa/**/*.tsx',
       ],
       exclude: [
+        'mobile/**',
+        '.flutter-sdk/**',
         '**/dist/**',
         '**/*.test.ts',
         '**/types.ts',

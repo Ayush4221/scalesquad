@@ -79,18 +79,19 @@ describe('lobby and authorization', () => {
       release = resolve;
     });
     vi.spyOn(f.chat, 'addMember').mockImplementationOnce(async () => {
-      await f.match.setReady('c', view.id, true);
       entered();
       await pendingChat;
       throw new AppError('UPSTREAM_UNAVAILABLE', 503);
     });
     const joinResult = f.match.joinMatch('c', view.joinCode!).catch((error: unknown) => error);
     await enteredChat;
+    const readyResult = f.match.setReady('c', view.id, true).catch((error: unknown) => error);
     const startResult = f.match.startMatch('a', view.id).catch((error: unknown) => error);
     await new Promise<void>((resolve) => setImmediate(resolve));
     expect((await f.repo.find(view.id))?.phase).toBe('LOBBY');
     release();
     expect(await joinResult).toMatchObject({ code: 'UPSTREAM_UNAVAILABLE' });
+    expect(await readyResult).toMatchObject({ code: 'FORBIDDEN' });
     expect(await startResult).toMatchObject({ code: 'PHASE_INVALID' });
     expect((await f.repo.find(view.id))?.members.map((m) => m.userId)).toEqual(['a', 'b']);
   });

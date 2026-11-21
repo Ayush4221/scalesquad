@@ -1,11 +1,13 @@
+import { appStrings } from '@/constants/strings/app';
+import { commonStrings } from '@/constants/strings/common';
 import type { MetadataRoute } from 'next';
 import { palette } from '@/styles/palette';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
-    name: 'ScaleSquad',
-    short_name: 'ScaleSquad',
-    description: 'Solve system failures with your squad.',
+    name: commonStrings.scalesquad,
+    short_name: commonStrings.scalesquad,
+    description: appStrings.solveSystemFailuresWithYourSquad,
     start_url: '/play',
     scope: '/',
     display: 'standalone',
