@@ -22,4 +22,16 @@ abstract final class AppColors {
   static const warning = Color(0xfff0c878);
   static const pageOverlay = Color(0xf5090c10);
   static const dialogOverlay = Color(0xcc090c10);
+  static const paper = Color(0xfff5f7fb);
+  static const white = Color(0xffffffff);
+  static const lightRaised = Color(0xffeaf0f8);
+  static const lightLine = Color(0xffb8c5d8);
+  static const lightInput = Color(0xff8191a8);
+  static const lightText = Color(0xff17243a);
+  static const lightMuted = Color(0xff4c5f79);
+  static const lightPrimary = Color(0xff2b6415);
+  static const lightDanger = Color(0xffb5233d);
+  static const lightWarning = Color(0xff805415);
+  static const lightSuccessTint = Color(0xffe4f3d9);
+  static const lightErrorTint = Color(0xfffff0f2);
 }

@@ -24,6 +24,8 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   test: {
+    // Keep Windows TCP/coverage workers stable without dropping tests or gates.
+    ...(process.platform === 'win32' ? { pool: 'threads' as const, maxWorkers: 2 } : {}),
     exclude: [
       'mobile/**',
       '.flutter-sdk/**',

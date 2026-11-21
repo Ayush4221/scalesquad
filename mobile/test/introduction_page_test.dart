@@ -4,6 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:scalesquad_mobile/app/app.dart';
 import 'package:scalesquad_mobile/core/theme/app_theme.dart';
 import 'package:scalesquad_mobile/core/widgets/squad_button.dart';
+import 'package:scalesquad_mobile/core/widgets/brand_mark.dart';
+import 'package:scalesquad_mobile/core/widgets/app_icon.dart';
+import 'package:scalesquad_mobile/core/constants/app_assets.dart';
+import 'package:scalesquad_mobile/app/recovery_page.dart';
 
 Future<void> loadFonts() async {
   for (final font in ['Chivo', 'Bungee']) {
@@ -11,6 +15,19 @@ Future<void> loadFonts() async {
       ..addFont(rootBundle.load('assets/fonts/${font.toLowerCase()}.ttf'));
     await loader.load();
   }
+}
+
+Future<void> loadImages(WidgetTester tester) async {
+  final context = tester.element(find.byType(Navigator).first);
+  await tester.runAsync(() async {
+    for (final asset in [
+      AppAssets.brandMark,
+      ...AppGlyph.values.map((glyph) => AppAssets.icon(glyph.asset)),
+    ]) {
+      await precacheImage(AssetImage(asset), context);
+    }
+  });
+  await tester.pump();
 }
 
 void main() {
@@ -39,7 +56,7 @@ void main() {
         find.widgetWithText(FilledButton, 'Join voice'),
       );
       expect(button.onPressed, isNull);
-      expect(find.text('BETA'), findsOneWidget);
+      expect(find.text('Beta'), findsOneWidget);
       await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
       expect(find.text('Explore the mission'), findsOneWidget);
@@ -104,9 +121,44 @@ void main() {
       const RepaintBoundary(key: Key('home-golden'), child: ScaleSquadApp()),
     );
     await tester.pumpAndSettle();
+    await loadImages(tester);
+    expect(tester.getSize(find.byType(BrandMark)).width, greaterThan(150));
     await expectLater(
       find.byKey(const Key('home-golden')),
       matchesGoldenFile('goldens/introduction.png'),
     );
   });
+
+  for (final screen in ['splash', 'mission', 'recovery']) {
+    testWidgets('$screen visual baseline', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: const Key('screen-golden'),
+          child: screen == 'recovery'
+              ? MaterialApp(
+                  debugShowCheckedModeBanner: false,
+                  theme: appTheme,
+                  home: RecoveryPage(onReturnHome: () {}),
+                )
+              : const ScaleSquadApp(),
+        ),
+      );
+      await loadImages(tester);
+      if (screen == 'mission') {
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Explore the mission'));
+        await tester.pumpAndSettle();
+      } else if (screen != 'splash') {
+        await tester.pumpAndSettle();
+      }
+      await expectLater(
+        find.byKey(const Key('screen-golden')),
+        matchesGoldenFile('goldens/$screen.png'),
+      );
+    });
+  }
 }

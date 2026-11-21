@@ -1,5 +1,6 @@
 'use client';
 import { commonStrings } from '@/constants/strings/common';
+import { chatStrings } from '@/constants/strings/chat';
 
 import { layoutClassName } from '@/styles/layout';
 
@@ -30,6 +31,12 @@ export function BottomNav({
         <button
           key={tab}
           type="button"
+          aria-label={tab}
+          aria-description={
+            tab === commonStrings.chat && unread > 0
+              ? chatStrings.unreadMessages(unread)
+              : undefined
+          }
           aria-current={active === tab ? 'page' : undefined}
           disabled={
             (tab === 'Brief' && phase === 'LOBBY') ||

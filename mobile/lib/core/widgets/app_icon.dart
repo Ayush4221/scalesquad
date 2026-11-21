@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.g.dart';
+import '../constants/app_assets.dart';
 
 enum AppGlyph {
   arrowLeft('arrow_left'),
@@ -33,7 +34,7 @@ class AppIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ExcludeSemantics(
     child: Image.asset(
-      'assets/icons/${glyph.asset}.png',
+      AppAssets.icon(glyph.asset),
       width: size,
       height: size,
       color: color,

@@ -2,10 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { contentHash } from '@scalesquad/shared';
 import { ChatPanel } from '../../src/features/chat/ChatPanel';
-import type { ChatMessage } from '../../src/lib/nexconn/client';
+import type { ChatConnectionState, ChatMessage } from '../../src/lib/nexconn/client';
+import { deferred } from '../helpers/deferred';
 
 const chat = vi.hoisted(() => ({
   receive: null as ((messages: ChatMessage[]) => void) | null,
+  status: null as ((state: ChatConnectionState) => void) | null,
   close: vi.fn(async () => {}),
   send: vi.fn(async (_text: string) => {}),
   connect: vi.fn(async () => {}),
@@ -15,8 +17,13 @@ vi.mock('../../src/lib/api/client', () => ({
 }));
 vi.mock('../../src/lib/nexconn/client', () => ({
   NexconnClient: class {
-    async connect(_access: unknown, receive: (messages: ChatMessage[]) => void) {
+    async connect(
+      _access: unknown,
+      receive: (messages: ChatMessage[]) => void,
+      status?: (state: ChatConnectionState) => void,
+    ) {
       chat.receive = receive;
+      chat.status = status ?? null;
       await chat.connect();
     }
     close = chat.close;
@@ -29,6 +36,55 @@ afterEach(() => {
 });
 
 describe('chat availability changes', () => {
+  it('disables sends while the SDK reconnects, recovers, and ignores old-room status', async () => {
+    const view = render(<ChatPanel matchId="old" available />);
+    await screen.findByText('Connected');
+    const oldStatus = chat.status!;
+    fireEvent.change(screen.getByRole('textbox', { name: 'Message your squad' }), {
+      target: { value: 'Keep my draft' },
+    });
+    act(() => oldStatus('connecting'));
+    expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+    act(() => oldStatus('connected'));
+    expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled();
+    act(() => oldStatus('unavailable'));
+    expect(screen.getByRole('button', { name: 'Reconnect chat' })).toBeInTheDocument();
+    view.rerender(<ChatPanel matchId="new" available />);
+    await screen.findByText('Connected');
+    act(() => oldStatus('unavailable'));
+    expect(screen.queryByRole('button', { name: 'Reconnect chat' })).toBeNull();
+    expect(screen.getByRole('textbox', { name: 'Message your squad' })).toHaveValue('');
+  });
+  it('does not clear a draft edited away and back while an older send is pending', async () => {
+    const pending = deferred<void>();
+    chat.send.mockReturnValueOnce(pending.promise);
+    render(
+      <ChatPanel
+        matchId="room"
+        available
+        cards={[
+          {
+            id: 'clue',
+            role: 'OPS',
+            phase: 'BRIEFING',
+            private: true,
+            facts: [{ id: 'fact', text: 'same text' }],
+          },
+        ]}
+      />,
+    );
+    await screen.findByText('Connected');
+    const input = screen.getByRole('textbox', { name: 'Message your squad' });
+    fireEvent.change(input, { target: { value: 'same text' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a clue' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add to draft' }));
+    await act(async () => {
+      pending.resolve();
+      await pending.promise;
+    });
+    expect(input).toHaveValue('same text');
+  });
   const members = [
     { userId: 'a', name: 'Ayush', role: 'OPS' as const },
     { userId: 'b', name: 'Maya', role: 'TRAFFIC' as const },

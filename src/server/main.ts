@@ -216,13 +216,17 @@ async function main() {
     { development },
   );
   for (const m of await repo.active()) await run.recover(m);
-  const maintenance = new MaintenanceService(repo, systemClock, events, chat);
+  const maintenance = new MaintenanceService(repo, systemClock, events, chat, () =>
+    match.reconcileChat(),
+  );
   let checking = false,
     sweeping = false;
+  let phaseCheck = Promise.resolve(),
+    cleanupCheck = Promise.resolve();
   const timer = setInterval(() => {
     if (checking) return;
     checking = true;
-    void maintenance
+    phaseCheck = maintenance
       .due()
       .then(async (ids) => {
         for (const id of ids) await match.expire(id);
@@ -236,7 +240,7 @@ async function main() {
   const sweep = setInterval(() => {
     if (sweeping) return;
     sweeping = true;
-    void maintenance
+    cleanupCheck = maintenance
       .sweep()
       .catch(() => logger.error('Match cleanup failed'))
       .finally(() => {
@@ -246,7 +250,10 @@ async function main() {
   sweep.unref();
   const port = Number(origin.port || (origin.protocol === 'https:' ? 3000 : 80));
   server.listen(port, '127.0.0.1', () => logger.info({ port }, 'ScaleSquad ready'));
+  let shuttingDown = false;
   const shutdown = () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
     clearInterval(timer);
     clearInterval(sweep);
     const force = setTimeout(() => process.exit(1), 10000);
@@ -254,12 +261,18 @@ async function main() {
     void Promise.all([
       gateway.close(),
       new Promise<void>((resolve) => server.close(() => resolve())),
+      phaseCheck,
+      cleanupCheck,
     ])
       .then(() => disconnectDatabase())
       .then(() => app.close())
       .then(() => {
         clearTimeout(force);
         process.exitCode = 0;
+      })
+      .catch(() => {
+        logger.error('Shutdown failed');
+        process.exitCode = 1;
       });
   };
   process.once('SIGTERM', shutdown);

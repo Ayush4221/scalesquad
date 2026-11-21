@@ -2,7 +2,12 @@ import { AppError, PublicMatchView, requireUser, type EvidencePhase } from '@sca
 import { loadScenario, toPublicScenario } from '@scalesquad/scenario';
 import { ENGINE_VERSION, compareRuns } from '@scalesquad/sim';
 import type { ChatProvider } from '@scalesquad/nexconn';
-import type { GameRepository, MatchRecord, UserRepository } from '../domain/models';
+import type {
+  ChatReconciliation,
+  GameRepository,
+  MatchRecord,
+  UserRepository,
+} from '../domain/models';
 import type { Clock, DomainEvents } from '../domain/ports';
 import { audit, currentConfig, host, member, phase } from './guards';
 import { canTransition } from './matchStateMachine';
@@ -11,11 +16,14 @@ import { ensureEvidence } from './evidenceService';
 import { normalizeCode, uniqueJoinCode } from '../utils/joinCode';
 import { runtimePolicy } from '../constants/runtimePolicy';
 import { KeyedQueue } from '../utils/keyedQueue';
+import { rateLimitsEnabled } from '../utils/rateLimit';
+import { ChatReconciliationService } from './chatReconciliationService';
 
 export class MatchService {
   private readonly creations = new KeyedQueue();
   // Keep lobby membership and upstream chat changes together before starting.
   private readonly memberships = new KeyedQueue();
+  private readonly reconciliation: ChatReconciliationService;
   constructor(
     private readonly repo: GameRepository,
     private readonly users: UserRepository,
@@ -23,7 +31,12 @@ export class MatchService {
     private readonly clock: Clock,
     private readonly events: DomainEvents,
     private readonly id: () => string,
-  ) {}
+  ) {
+    this.reconciliation = new ChatReconciliationService(repo, chat, clock, this.memberships);
+  }
+  reconcileChat() {
+    return this.reconciliation.sweep();
+  }
   async createMatch(userId: string | null, scenarioId = 'campuspass') {
     requireUser(userId);
     loadScenario(scenarioId);
@@ -33,7 +46,7 @@ export class MatchService {
       const counts = await this.repo.countHosted(userId, this.clock.now() - 86400000);
       if (
         counts.active >= runtimePolicy.maxActiveMatchesPerHost ||
-        counts.recent >= runtimePolicy.maxMatchesPerDay
+        (rateLimitsEnabled() && counts.recent >= runtimePolicy.maxMatchesPerDay)
       )
         throw new AppError('RATE_LIMITED', 429, 'Match creation limit reached');
       return this.createReservedMatch(userId, scenarioId);
@@ -81,18 +94,32 @@ export class MatchService {
       chatAvailable: false,
     };
     audit(m, userId, 'match.create');
-    // A provider explicitly disabled by configuration allows the documented degraded mode.
-    if (this.chat.available) {
-      m.groupRef = await this.chat.createGroup(id, [userId]);
-      m.chatAvailable = true;
-    }
-    try {
-      await this.repo.create(m);
-    } catch (error) {
-      if (m.groupRef) await this.chat.deleteGroup(m.groupRef).catch(() => {});
-      throw error;
-    }
-    return this.getPublicView(userId, id);
+    return this.memberships.run(id, async () => {
+      let task: ChatReconciliation | null = null;
+      try {
+        // Journal the deterministic reference before an ambiguous remote response.
+        if (this.chat.available) {
+          const reference = this.chat.groupReference(id);
+          task = await this.reconciliation.record(id, reference, null);
+          m.groupRef = await this.chat.createGroup(id, [userId]);
+          m.chatAvailable = true;
+        }
+        await this.repo.create(m);
+      } catch (error) {
+        // A failed insert may have committed. Re-read before deleting remote access.
+        const committed = await this.repo.find(id).catch(() => null);
+        if (committed?.hostUserId === userId && committed.joinCode === code) {
+          if (task) await this.reconciliation.complete(task).catch(() => {});
+          return this.publicView(committed, userId);
+        }
+        if (task) await this.reconciliation.settle(task).catch(() => {});
+        throw error;
+      }
+      // If deletion fails, the durable intent is harmless: reconciliation keeps
+      // the group owned by the committed match instead of provisioning it again.
+      if (task) await this.reconciliation.complete(task).catch(() => {});
+      return this.getPublicView(userId, id);
+    });
   }
   async joinMatch(userId: string | null, rawCode: string) {
     requireUser(userId);
@@ -104,11 +131,17 @@ export class MatchService {
     const found = await this.repo.findByCode(normalizeCode(rawCode));
     if (!found) throw new AppError('NOT_FOUND', 404, 'Invalid join code');
     return this.memberships.run(found.id, async () => {
+      const current = await this.repo.find(found.id);
+      if (!current) throw new AppError('NOT_FOUND', 404);
+      phase(current, 'LOBBY');
       if (
-        !found.members.some((m) => m.userId === userId) &&
+        !current.members.some((m) => m.userId === userId) &&
         (await this.repo.countMemberships(userId)) >= runtimePolicy.maxActiveMembershipsPerUser
       )
         throw new AppError('RATE_LIMITED', 429, 'Match limit reached');
+      const task = current.groupRef
+        ? await this.reconciliation.record(found.id, current.groupRef, userId)
+        : null;
       let added = false;
       await this.repo.mutate(found.id, (m) => {
         phase(m, 'LOBBY');
@@ -129,16 +162,16 @@ export class MatchService {
         added = true;
         audit(m, userId, 'match.join');
       });
-      if (found.groupRef) {
+      if (current.groupRef) {
         try {
-          await this.chat.addMember(found.groupRef, userId);
+          await this.chat.addMember(current.groupRef, userId);
         } catch (error) {
           if (added) {
             // A timed-out response may still have added the upstream member. Only
             // release the local membership after chat access is confirmed removed.
             let removed = false;
             try {
-              await this.chat.removeMember(found.groupRef, userId);
+              await this.chat.removeMember(current.groupRef, userId);
               removed = true;
             } catch {
               /* Keep the reservation so upstream access still has an owner. */
@@ -155,27 +188,41 @@ export class MatchService {
           throw error;
         }
       }
+      if (task) await this.reconciliation.complete(task).catch(() => {});
       this.events.changed(found.id);
       return this.getPublicView(userId, found.id);
     });
   }
   async setReady(userId: string | null, id: string, ready: boolean) {
-    await this.repo.mutate(id, (m) => {
-      const user = member(m, userId);
-      phase(m, 'LOBBY');
-      user.ready = ready;
+    await this.memberships.run(id, async () => {
+      // Authorize before inspecting or repairing another account's journal.
+      const current = await this.repo.find(id);
+      if (!current) throw new AppError('NOT_FOUND', 404);
+      member(current, userId);
+      phase(current, 'LOBBY');
+      if (ready) await this.reconciliation.member(id, userId!);
+      await this.repo.mutate(id, (m) => {
+        const user = member(m, userId);
+        phase(m, 'LOBBY');
+        user.ready = ready;
+      });
     });
     this.events.changed(id);
   }
   async startMatch(userId: string | null, id: string) {
-    await this.memberships.run(id, () =>
-      this.repo.mutate(id, (m) => {
+    await this.memberships.run(id, async () => {
+      const current = await this.repo.find(id);
+      if (!current) throw new AppError('NOT_FOUND', 404);
+      host(current, userId);
+      phase(current, 'LOBBY');
+      for (const user of current.members) await this.reconciliation.member(id, user.userId);
+      await this.repo.mutate(id, (m) => {
         host(m, userId);
         phase(m, 'LOBBY');
         this.transition(m, 'BRIEFING');
         audit(m, userId!, 'match.start');
-      }),
-    );
+      });
+    });
     await this.notifyPhase(id, 'BRIEFING');
   }
   private transition(m: MatchRecord, to: MatchRecord['phase'], timerElapsed = false) {
@@ -272,6 +319,7 @@ export class MatchService {
       phase(m, 'LOBBY');
       if (m.hostUserId === userId)
         throw new AppError('FORBIDDEN', 403, 'The host must stay in the lobby');
+      const task = m.groupRef ? await this.reconciliation.record(id, m.groupRef, userId!) : null;
       if (m.groupRef) await this.chat.removeMember(m.groupRef, userId!);
       try {
         await this.repo.mutate(id, (current) => {
@@ -281,9 +329,12 @@ export class MatchService {
           audit(current, userId!, 'match.leave');
         });
       } catch (error) {
-        if (m.groupRef) await this.chat.addMember(m.groupRef, userId!).catch(() => {});
-        throw error;
+        // Reconcile against persisted membership, including an ambiguous commit.
+        if (task) await this.reconciliation.settle(task).catch(() => {});
+        const committed = await this.repo.find(id).catch(() => null);
+        if (!committed || committed.members.some((user) => user.userId === userId)) throw error;
       }
+      if (task) await this.reconciliation.complete(task).catch(() => {});
       this.events.changed(id);
     });
   }

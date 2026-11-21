@@ -1,7 +1,8 @@
 'use client';
 import { lobbyStrings } from '@/constants/strings/lobby';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { lifecyclePolicy } from '@/constants/lifecycle';
 import { Check, Copy, Eye, EyeOff, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 export function InviteCode({
@@ -11,15 +12,39 @@ export function InviteCode({
   code: string | null;
   onError: (message: string) => void;
 }) {
+  return <InviteCodeSession key={code} code={code} onError={onError} />;
+}
+function InviteCodeSession({
+  code,
+  onError,
+}: {
+  code: string | null;
+  onError: (message: string) => void;
+}) {
+  const active = useRef(false);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
   const [masked, setMasked] = useState(false),
     [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), lifecyclePolicy.copiedFeedbackMs);
+    return () => clearTimeout(timer);
+  }, [copied]);
   async function copy() {
+    if (!code) return;
     try {
       await navigator.clipboard.writeText(code ?? '');
-      setCopied(true);
-      onError('');
+      if (active.current) {
+        setCopied(true);
+        onError('');
+      }
     } catch {
-      onError(lobbyStrings.couldNotCopyCodeSelectThe);
+      if (active.current) onError(lobbyStrings.couldNotCopyCodeSelectThe);
     }
   }
   async function share() {
@@ -31,7 +56,7 @@ export function InviteCode({
           text: lobbyStrings.shareCode(code),
         });
       } catch (error) {
-        if (!(error instanceof Error && error.name === 'AbortError'))
+        if (active.current && !(error instanceof Error && error.name === 'AbortError'))
           onError(lobbyStrings.couldNotShareUseCopyCode);
       }
     } else await copy();

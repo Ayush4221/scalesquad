@@ -3,10 +3,12 @@ import { act, cleanup, render, screen, fireEvent, waitFor } from '@testing-libra
 import { PwaBoot } from '../../src/pwa/PwaBoot';
 import { NotificationSettings } from '../../src/pwa/NotificationSettings';
 import { disableNotifications, purgeCaches } from '../../src/pwa/client';
+import { deferred } from '../helpers/deferred';
 const route = vi.hoisted(() => ({ pathname: '/play' }));
 vi.mock('next/navigation', () => ({ usePathname: () => route.pathname }));
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
@@ -24,7 +26,12 @@ function browser() {
     getSubscription: vi.fn(async () => null as typeof subscription | null),
     subscribe: vi.fn(async () => subscription),
   };
-  const worker = { postMessage: vi.fn(), addEventListener: vi.fn(), state: 'installed' },
+  const worker = {
+      postMessage: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      state: 'installed',
+    },
     events: Record<string, () => void> = {};
   const registration = {
     waiting: worker,
@@ -33,6 +40,7 @@ function browser() {
     addEventListener: vi.fn((type: string, fn: () => void) => {
       events[type] = fn;
     }),
+    removeEventListener: vi.fn(),
   };
   const serviceWorker = {
     controller: worker,
@@ -40,6 +48,7 @@ function browser() {
     register: vi.fn(async () => registration),
     ready: Promise.resolve(registration),
     addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
   };
   const permission = {
     permission: 'default' as NotificationPermission,
@@ -75,6 +84,224 @@ function browser() {
   };
 }
 describe('worker lifecycle and explicit notification permissions', () => {
+  it('releases a failed update attempt so the user can retry it', async () => {
+    const b = browser();
+    vi.stubEnv('NODE_ENV', 'production');
+    b.worker.postMessage.mockImplementationOnce(() => {
+      throw new Error('worker replaced');
+    });
+    render(<PwaBoot />);
+    const reload = await screen.findByRole('button', { name: 'Reload' });
+    fireEvent.click(reload);
+    fireEvent.click(reload);
+    expect(b.worker.postMessage).toHaveBeenCalledTimes(2);
+    expect(b.serviceWorker.removeEventListener).toHaveBeenCalledWith(
+      'controllerchange',
+      expect.any(Function),
+    );
+  });
+  it('ignores registration and browser-status responses after teardown', async () => {
+    const b = browser(),
+      registration = deferred<typeof b.registration>();
+    vi.stubEnv('NODE_ENV', 'production');
+    b.serviceWorker.register.mockReturnValueOnce(registration.promise);
+    const boot = render(<PwaBoot />);
+    boot.unmount();
+    await act(async () => {
+      registration.resolve(b.registration);
+    });
+    expect(b.registration.addEventListener).not.toHaveBeenCalled();
+    const status = deferred<typeof b.registration>();
+    b.serviceWorker.getRegistration.mockReturnValueOnce(status.promise);
+    const settings = render(<NotificationSettings />);
+    settings.unmount();
+    await act(async () => {
+      status.resolve(b.registration);
+    });
+    expect(b.permission.requestPermission).not.toHaveBeenCalled();
+  });
+  it('does not roll back an existing endpoint when account registration fails', async () => {
+    const b = browser();
+    b.permission.permission = 'granted';
+    b.pushManager.getSubscription.mockResolvedValue(b.subscription);
+    b.fetch.mockImplementation(
+      async (_url, options) =>
+        new Response(JSON.stringify({ publicKey: 'B'.repeat(87) }), {
+          status: options?.method === 'POST' ? 500 : 200,
+        }),
+    );
+    render(<NotificationSettings />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Enable on this device' }));
+    await screen.findByRole('alert');
+    expect(b.unsubscribe).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Disable notifications' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Disable notifications' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Disable notifications' })).toBeNull(),
+    );
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+  it('retains unconfirmed state when a newly created endpoint refuses rollback', async () => {
+    const b = browser();
+    b.unsubscribe.mockResolvedValueOnce(false);
+    b.fetch.mockImplementation(
+      async (_url, options) =>
+        new Response(JSON.stringify({ publicKey: 'B'.repeat(87) }), {
+          status: options?.method === 'POST' ? 500 : 200,
+        }),
+    );
+    render(<NotificationSettings />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Enable notifications' }));
+    await screen.findByRole('alert');
+    expect(screen.getByText(/needs notification sync/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Disable notifications' })).toBeEnabled();
+  });
+  it('cleans a newly created endpoint if registration fails after leaving settings', async () => {
+    const b = browser(),
+      post = deferred<Response>();
+    b.fetch.mockImplementation(async (_url, options) =>
+      options?.method === 'POST'
+        ? post.promise
+        : new Response(JSON.stringify({ publicKey: 'B'.repeat(87) })),
+    );
+    const view = render(<NotificationSettings />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Enable notifications' }));
+    await waitFor(() =>
+      expect(b.fetch.mock.calls.some(([, options]) => options?.method === 'POST')).toBe(true),
+    );
+    view.unmount();
+    await act(async () => {
+      post.reject(new Error('cancelled'));
+    });
+    expect(b.unsubscribe).toHaveBeenCalledOnce();
+  });
+  it('handles an absent installing worker and ignores saved callbacks after teardown', async () => {
+    const b = browser();
+    vi.stubEnv('NODE_ENV', 'production');
+    b.registration.installing = null as unknown as typeof b.worker;
+    const view = render(<PwaBoot />);
+    await screen.findByRole('button', { name: 'Reload' });
+    expect(b.worker.addEventListener).not.toHaveBeenCalled();
+    view.unmount();
+    act(() => b.events.updatefound!());
+    expect(b.worker.addEventListener).not.toHaveBeenCalled();
+  });
+  it('falls back to direct purge when sending to the worker fails', async () => {
+    const b = browser(),
+      deleted = vi.fn(async () => true);
+    b.worker.postMessage.mockImplementationOnce(() => {
+      throw new Error('worker stopped');
+    });
+    vi.stubGlobal('caches', { keys: async () => ['old'], delete: deleted });
+    await purgeCaches();
+    expect(deleted).toHaveBeenCalledOnce();
+  });
+  it('serializes permission taps and keeps a later status read from overwriting successful registration', async () => {
+    const b = browser(),
+      permission = deferred<NotificationPermission>();
+    const initial = deferred<typeof b.subscription | null>();
+    b.pushManager.getSubscription.mockReturnValueOnce(initial.promise);
+    b.permission.requestPermission.mockReturnValueOnce(permission.promise);
+    render(<NotificationSettings />);
+    const enable = await screen.findByRole('button', { name: 'Enable notifications' });
+    act(() => {
+      fireEvent.click(enable);
+      fireEvent.click(enable);
+    });
+    expect(b.permission.requestPermission).toHaveBeenCalledOnce();
+    await act(async () => {
+      permission.resolve('granted');
+    });
+    await screen.findByRole('button', { name: 'Disable notifications' });
+    await act(async () => {
+      initial.resolve(null);
+    });
+    expect(screen.getByText('Notifications on for this device.')).toBeInTheDocument();
+  });
+  it('shows an existing endpoint as unconfirmed and reuses it for account registration', async () => {
+    const b = browser();
+    b.permission.permission = 'granted';
+    b.pushManager.getSubscription.mockResolvedValue(b.subscription);
+    render(<NotificationSettings />);
+    await screen.findByText(/needs notification sync/);
+    expect(screen.queryByText('Notifications on for this device.')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Enable on this device' }));
+    await screen.findByText('Notifications on for this device.');
+    expect(b.pushManager.subscribe).not.toHaveBeenCalled();
+    expect(b.unsubscribe).not.toHaveBeenCalled();
+  });
+  it('keeps failed rollback visible and lets the next enable repair the same endpoint', async () => {
+    const b = browser();
+    b.fetch.mockImplementation(
+      async (_url, options) =>
+        new Response(JSON.stringify({ publicKey: 'B'.repeat(87) }), {
+          status: options?.method === 'POST' ? 500 : 200,
+        }),
+    );
+    b.unsubscribe.mockRejectedValueOnce(new Error('storage blocked'));
+    render(<NotificationSettings />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Enable notifications' }));
+    await screen.findByRole('alert');
+    expect(screen.getByRole('button', { name: 'Disable notifications' })).toBeInTheDocument();
+    b.pushManager.getSubscription.mockResolvedValue(b.subscription);
+    b.fetch.mockResolvedValue(new Response('{}'));
+    fireEvent.click(screen.getByRole('button', { name: 'Enable on this device' }));
+    await screen.findByText('Notifications on for this device.');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(b.pushManager.subscribe).toHaveBeenCalledOnce();
+  });
+  it('times out worker readiness, allows retry, and ignores permission completion after unmount', async () => {
+    const b = browser(),
+      ready = deferred<typeof b.registration>();
+    b.serviceWorker.ready = ready.promise;
+    const view = render(<NotificationSettings />);
+    const enable = await screen.findByRole('button', { name: 'Enable notifications' });
+    vi.useFakeTimers();
+    fireEvent.click(enable);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10001);
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not enable');
+    expect(b.pushManager.subscribe).not.toHaveBeenCalled();
+    vi.useRealTimers();
+    const permission = deferred<NotificationPermission>();
+    b.permission.requestPermission.mockReturnValueOnce(permission.promise);
+    fireEvent.click(screen.getByRole('button', { name: 'Enable on this device' }));
+    view.unmount();
+    await act(async () => {
+      permission.resolve('granted');
+      ready.resolve(b.registration);
+    });
+    expect(b.pushManager.subscribe).not.toHaveBeenCalled();
+  });
+  it('does not hide a failed browser unsubscribe after the server accepted removal', async () => {
+    const b = browser();
+    b.pushManager.getSubscription.mockResolvedValue(b.subscription);
+    b.unsubscribe.mockResolvedValueOnce(false);
+    await expect(disableNotifications()).rejects.toThrow('Could not disable');
+    await expect(disableNotifications()).resolves.toBeUndefined();
+  });
+  it('removes worker listeners on teardown and sends an update request only once', async () => {
+    const b = browser();
+    vi.stubEnv('NODE_ENV', 'production');
+    const view = render(<PwaBoot />);
+    const reload = await screen.findByRole('button', { name: 'Reload' });
+    act(() => {
+      fireEvent.click(reload);
+      fireEvent.click(reload);
+    });
+    expect(b.worker.postMessage).toHaveBeenCalledOnce();
+    view.unmount();
+    expect(b.registration.removeEventListener).toHaveBeenCalledWith(
+      'updatefound',
+      expect.any(Function),
+    );
+    expect(b.worker.removeEventListener).toHaveBeenCalledWith('statechange', expect.any(Function));
+    expect(b.serviceWorker.removeEventListener).toHaveBeenCalledWith(
+      'controllerchange',
+      expect.any(Function),
+    );
+  });
   it('keeps the first-visit home clear of install prompts and offers them in the app', async () => {
     const b = browser();
     route.pathname = '/';

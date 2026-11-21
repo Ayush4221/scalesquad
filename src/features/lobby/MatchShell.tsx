@@ -32,6 +32,9 @@ const directions: Record<string, string> = {
   FINISHED: lobbyStrings.matchCompleteReviewTheEvidenceAnd,
 };
 export function MatchShell({ matchId, userId }: { matchId: string; userId: string }) {
+  return <MatchSession key={`${matchId}:${userId}`} matchId={matchId} userId={userId} />;
+}
+function MatchSession({ matchId, userId }: { matchId: string; userId: string }) {
   const { view, cards, connection, error, busy, pendingAction, action, setError } =
     useMatch(matchId);
   const [tab, setTab] = useState<MatchTab>(commonStrings.squad),

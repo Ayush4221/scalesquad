@@ -72,7 +72,8 @@ describe('mobile asset CI checks', () => {
       await writeFile(file, (await readFile(file, 'utf8')).replace(/\r?\n/g, '\r\n'));
     }
     expect(check().status).toBe(0);
-  });
+    // This case runs three exporter processes, each bounded to 15 seconds.
+  }, 45000);
 
   it.each([
     ...textOutputs,

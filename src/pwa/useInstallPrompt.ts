@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 interface InstallEvent extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -12,6 +12,7 @@ export function isStandalone(): boolean {
   );
 }
 export function useInstallPrompt() {
+  const promptOwner = useRef<InstallEvent | null>(null);
   const [prompt, setPrompt] = useState<InstallEvent | null>(null),
     [ios, setIos] = useState(false),
     [dismissed, setDismissed] = useState(true);
@@ -26,15 +27,20 @@ export function useInstallPrompt() {
     setIos(/iPad|iPhone|iPod/.test(navigator.userAgent) && !isStandalone());
     const before = (event: Event) => {
       event.preventDefault();
-      if (!isStandalone()) setPrompt(event as InstallEvent);
+      if (!isStandalone()) {
+        promptOwner.current = event as InstallEvent;
+        setPrompt(event as InstallEvent);
+      }
     };
     const installed = () => {
+      promptOwner.current = null;
       setPrompt(null);
       setIos(false);
     };
     window.addEventListener('beforeinstallprompt', before);
     window.addEventListener('appinstalled', installed);
     return () => {
+      promptOwner.current = null;
       window.removeEventListener('beforeinstallprompt', before);
       window.removeEventListener('appinstalled', installed);
     };
@@ -51,11 +57,16 @@ export function useInstallPrompt() {
       }
     },
     async promptInstall() {
-      const event = prompt;
+      const event = promptOwner.current;
+      promptOwner.current = null;
       setPrompt(null);
       if (event) {
-        await event.prompt();
-        await event.userChoice;
+        try {
+          await event.prompt();
+          await event.userChoice;
+        } catch {
+          /* Browser prompts are single-use. A later install event permits retry. */
+        }
       }
     },
   };

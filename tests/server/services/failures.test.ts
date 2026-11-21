@@ -37,6 +37,40 @@ describe('missing records fail closed', () => {
   });
 });
 describe('run authorization, crash recovery and input integrity', () => {
+  it('refuses a corrupted partial result instead of silently skipping it on retry', async () => {
+    const f = fixture(),
+      id = await f.repair();
+    const execute = vi
+      .fn()
+      .mockImplementationOnce(async (bundle) => runSimulation(bundle))
+      .mockRejectedValueOnce(new Error('interrupted'))
+      .mockImplementation(async (bundle) => runSimulation(bundle));
+    const run = new RunService(f.repo, f.clock, silentEvents, execute);
+    await expect(run.start('a', id, 1)).rejects.toMatchObject({ code: 'INTERNAL' });
+    await f.repo.mutate(id, (match) => {
+      match.runs[0]!.result.inputHash = '0'.repeat(64);
+    });
+    await expect(run.start('a', id, 1)).rejects.toMatchObject({
+      code: 'COMPARISON_INPUT_MISMATCH',
+    });
+    expect(execute).toHaveBeenCalledTimes(2);
+    expect(await f.repo.find(id)).toMatchObject({
+      phase: 'REPAIR_1',
+      simulationLocked: false,
+      runError: true,
+    });
+  });
+  it('does not invent a repair transition from a corrupted locked lobby record', async () => {
+    const f = fixture(),
+      view = await f.match.createMatch('a');
+    await f.repo.mutate(view.id, (match) => {
+      match.simulationLocked = true;
+    });
+    await expect(f.run.recover((await f.repo.find(view.id))!)).rejects.toMatchObject({
+      code: 'PHASE_INVALID',
+    });
+    expect((await f.repo.find(view.id))?.phase).toBe('LOBBY');
+  });
   it('rechecks editor authority when repairing a saved completion', async () => {
     const f = fixture(),
       id = await f.repair();
@@ -189,6 +223,7 @@ describe('run authorization, crash recovery and input integrity', () => {
     expect((await f.repo.find(id))?.runs).toHaveLength(1);
     await run.start('b', id, 1);
     expect((await f.repo.find(id))?.runs).toHaveLength(2);
+    expect(execute).toHaveBeenCalledTimes(3);
     await run.recover((await f.repo.find(id))!);
     await f.repo.mutate(id, (m) => {
       m.phase = 'RUNS_1_2';

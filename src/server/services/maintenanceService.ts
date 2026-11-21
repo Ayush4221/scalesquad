@@ -8,11 +8,13 @@ export class MaintenanceService {
     private readonly clock: Clock,
     private readonly events: DomainEvents,
     private readonly chat: ChatProvider,
+    private readonly reconcileChat: () => Promise<void> = async () => {},
   ) {}
   async due() {
     return this.repo.dueIds(this.clock.now(), runtimePolicy.maintenanceBatch);
   }
   async sweep() {
+    await this.reconcileChat();
     const now = this.clock.now(),
       before = now - runtimePolicy.inactiveMatchMs;
     for (const id of await this.repo.inactiveIds(before, runtimePolicy.maintenanceBatch))

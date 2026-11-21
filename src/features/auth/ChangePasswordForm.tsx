@@ -4,7 +4,7 @@ import { commonStrings } from '@/constants/strings/common';
 
 import { layoutClassName } from '@/styles/layout';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { api } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import {
 import { PasswordRequirements } from './PasswordRequirements';
 export function ChangePasswordForm() {
   const hydrated = useHydrated();
+  const submitting = useRef(false);
   const [password, setPassword] = useState(''),
     [current, setCurrent] = useState(''),
     [show, setShow] = useState(false),
@@ -25,6 +26,7 @@ export function ChangePasswordForm() {
     [error, setError] = useState('');
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (!hydrated || submitting.current) return;
     const parsed = ChangePasswordSchema.safeParse({
       currentPassword: current,
       newPassword: password,
@@ -37,6 +39,7 @@ export function ChangePasswordForm() {
       );
       return;
     }
+    submitting.current = true;
     setBusy(true);
     setError('');
     try {
@@ -47,6 +50,7 @@ export function ChangePasswordForm() {
     } catch {
       setError(authStrings.couldNotCompleteThisStepCheck);
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }

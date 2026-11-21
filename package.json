@@ -38,7 +38,9 @@
     "mobile:assets:check": "node scripts/mobile-assets.mjs --check",
     "mobile:check": "node scripts/mobile-tool.mjs check",
     "mobile:test": "node scripts/mobile-tool.mjs test",
-    "mobile:build": "node scripts/mobile-tool.mjs build"
+    "mobile:test:android": "playwright test --config tests/android/playwright.config.ts",
+    "mobile:build": "node scripts/mobile-tool.mjs build",
+    "mobile:release": "node scripts/mobile-tool.mjs release"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",
@@ -92,7 +94,8 @@
   "overrides": {
     "minimatch": "11.0.1",
     "@prisma/config": {
-      "deepmerge-ts": "8.0.0"
+      "deepmerge-ts": "8.0.0",
+      "effect": "3.22.1"
     }
   }
 }

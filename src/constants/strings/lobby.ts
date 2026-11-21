@@ -119,4 +119,5 @@ export const lobbyStrings = {
   cannotLoadMatch: 'Cannot load match',
   couldNotLoadPrivateEvidence: 'Could not load private evidence',
   requestFailed: 'Request failed',
+  savedSyncPending: 'Action saved. Reconnecting to load the latest squad state.',
 } as const;

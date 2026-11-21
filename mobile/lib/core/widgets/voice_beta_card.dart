@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_strings.dart';
 
 import '../theme/app_colors.g.dart';
+import '../theme/app_tokens.dart';
 import 'app_icon.dart';
 import 'squad_button.dart';
 
@@ -12,10 +13,10 @@ class VoiceBetaCard extends StatelessWidget {
   Widget build(BuildContext context) => const Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Row(
+      Row(
         children: [
           AppIcon(AppGlyph.headphones, size: 18),
-          SizedBox(width: 8),
+          SizedBox(width: AppTokens.spaceSm),
           Expanded(
             child: Text(
               AppStrings.squadVoice,
@@ -25,22 +26,27 @@ class VoiceBetaCard extends StatelessWidget {
           DecoratedBox(
             decoration: BoxDecoration(
               color: AppColors.raised,
-              borderRadius: BorderRadius.all(Radius.circular(5)),
+              borderRadius: BorderRadius.all(
+                Radius.circular(AppTokens.spaceSm),
+              ),
             ),
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Text(AppStrings.beta, style: TextStyle(fontSize: 11)),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppTokens.spaceSm,
+                vertical: AppTokens.spaceXs,
+              ),
+              child: Text(AppStrings.beta, style: TextStyle(fontSize: 13)),
             ),
           ),
         ],
       ),
-      const SizedBox(height: 8),
-      const Text(
+      SizedBox(height: AppTokens.spaceSm),
+      Text(
         AppStrings.comingSoonTextChatWillStay,
-        style: TextStyle(color: AppColors.muted, fontSize: 12),
+        style: TextStyle(color: AppColors.muted, fontSize: 13),
       ),
-      const SizedBox(height: 12),
-      const SquadButton(
+      SizedBox(height: AppTokens.spaceMd),
+      SquadButton(
         label: AppStrings.joinVoice,
         secondary: true,
         glyph: AppGlyph.mic,

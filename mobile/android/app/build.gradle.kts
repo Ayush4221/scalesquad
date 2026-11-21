@@ -4,6 +4,11 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val releaseKeystorePath = providers.environmentVariable("ANDROID_KEYSTORE_PATH").orNull
+val releaseStorePassword = providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull
+
 android {
     namespace = "com.example.scalesquad_mobile"
     compileSdk = flutter.compileSdkVersion
@@ -15,9 +20,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.scalesquad"
-        // TODO(owner): production application ID; docs/plan/14-flutter-android.md section 2.
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 26
@@ -36,6 +39,26 @@ android {
             dimension = "environment"
             applicationIdSuffix = ".dev"
         }
+        create("prod") {
+            dimension = "environment"
+            applicationId = "com.ayushdhoot.scalesquad"
+        }
+    }
+
+    signingConfigs {
+        create("production") {
+            if (!releaseKeystorePath.isNullOrBlank()) storeFile = file(releaseKeystorePath)
+            storePassword = releaseStorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releaseKeyPassword
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            isDebuggable = false
+            signingConfig = signingConfigs.getByName("production")
+        }
     }
 
 }
@@ -50,9 +73,34 @@ flutter {
     source = "../.."
 }
 
-// This foundation is not a publishable release. No signing material belongs here.
 gradle.taskGraph.whenReady {
     if (allTasks.any { it.name.contains("Release", ignoreCase = true) }) {
-        throw GradleException("Release disabled: owner production ID and signing are not configured.")
+        if (allTasks.any { it.name.contains("DevRelease", ignoreCase = true) }) {
+            throw GradleException("Release builds require the prod flavor.")
+        }
+        fun gitValue(vararg arguments: String): String {
+            val process = ProcessBuilder(listOf("git") + arguments)
+                .directory(rootProject.projectDir.parentFile.parentFile)
+                .redirectError(ProcessBuilder.Redirect.DISCARD)
+                .start()
+            val value = process.inputStream.bufferedReader().readText().trim()
+            if (process.waitFor() != 0) throw GradleException("Cannot verify the release Git context.")
+            return value
+        }
+        val branch = gitValue("branch", "--show-current")
+        val env = System.getenv()
+        val trustedMasterCheckout = branch.isEmpty() &&
+            env["GITHUB_ACTIONS"] == "true" &&
+            env["GITHUB_REF"] == "refs/heads/master" &&
+            env["GITHUB_EVENT_NAME"] in listOf("push", "workflow_dispatch") &&
+            !env["GITHUB_SHA"].isNullOrBlank() &&
+            gitValue("rev-parse", "HEAD") == env["GITHUB_SHA"]
+        if (branch != "master" && !trustedMasterCheckout) {
+            throw GradleException("Android release builds are allowed only on master.")
+        }
+        if (listOf(releaseKeystorePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword)
+                .any { it.isNullOrBlank() } || !file(releaseKeystorePath!!).isFile) {
+            throw GradleException("Release signing is missing. See docs/ANDROID_RELEASE.md.")
+        }
     }
 }

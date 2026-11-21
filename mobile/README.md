@@ -1,8 +1,9 @@
 # ScaleSquad Android foundation
 
 Android-first Flutter app in the same repository as the existing web/backend.
-This is the A1 development preview: guest home, mission/role walkthrough, shared
-components and the disabled BETA voice card. No account, game, chat, push or
+This is the A1 development preview: finite splash, guest home, mission/role
+walkthrough, navigation recovery, shared controls and disabled Beta voice.
+No account, game, chat, push or
 production network connection is simulated. Native authentication/backend work
 is the next milestone, not a completed part of this preview.
 
@@ -17,10 +18,13 @@ is the next milestone, not a completed part of this preview.
 - Direct dependencies are Flutter SDK, SDK `flutter_test` and `integration_test`.
   Their normal SDK-managed transitive packages are locked in `pubspec.lock`.
 
-Only the `dev` flavor exists. Its placeholder application ID is
-`com.example.scalesquad.dev` and display name is **ScaleSquad Dev**. Release tasks
-are deliberately disabled until owner identifiers/signing are configured.
-No signing material is committed. Do not use this placeholder for a store release.
+The `dev` flavor uses `com.example.scalesquad.dev` and **ScaleSquad Dev**.
+The owner-approved `prod` flavor uses `com.ayushdhoot.scalesquad` and **ScaleSquad**.
+Signed release APK/AAB builds require `master` and externally supplied signing
+material. GitHub Actions builds them only after routine CI passes on `master`.
+See [Android release setup](../docs/ANDROID_RELEASE.md). Production packaging
+contains the current native preview; it does not add native account/game/chat
+integration. No signing material is committed.
 
 ## Commands
 
@@ -54,15 +58,35 @@ cd mobile
 flutter test integration_test/introduction_test.dart --flavor dev -d <device-id>
 ```
 
-The smoke test is authored but needs a device/emulator. It does not establish
-real authentication, Nexconn delivery, notifications or full gameplay.
+The smoke test also runs on an Android emulator. It does not establish real
+authentication, Nexconn delivery, notifications or full native gameplay.
+
+For native Playwright checks, build the normal app again after running an
+integration test (which produces its own test-entry APK). Choose a dedicated
+running emulator explicitly:
+
+```powershell
+npm run mobile:build
+$env:ANDROID_SERIAL = 'emulator-5554'
+npm run mobile:test:android
+```
+
+These checks install only the dev APK on that emulator, read fresh Android
+accessibility hierarchies through Playwright's ADB transport, and exercise all
+role choices, disabled voice, Android back, 200% text,
+landscape and reduced system animation. They restore the emulator's text,
+rotation and animation settings. Reports and screenshots go under
+`.cache/android-native/report` and `.cache/android-native/results`, separate from
+the web suite's output folders.
+The separate existing web Playwright suite still tests sign-in, chat and the
+complete game loop. See `DESIGN.md` and `../docs/MOBILE_REDESIGN_VERIFICATION.md`.
 
 ## Code and tests
 
-- `lib/app`: bootstrap, licence registration and the single Navigator route boundary.
+- `lib/app`: bootstrap, licence registration, finite startup, route boundary and recovery.
 - `lib/features/introduction`: presentation models, local controller and views.
-- `lib/core/theme`: generated palette and shared Flutter theme.
-- `lib/core/constants/app_strings.dart`: user-facing text and accessible labels.
+- `lib/core/theme`: generated palette, shared Flutter theme and layout/motion tokens.
+- `lib/core/constants`: user-facing text, accessible labels and asset paths.
 - `lib/core/widgets`: licensed Lucide icons, logo, buttons, panels and voice BETA card.
 - `test`: controller, widget, large-text, reduced-motion and golden checks.
 - `integration_test`: standard native Flutter smoke-test entry.

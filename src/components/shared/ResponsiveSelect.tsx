@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -29,13 +29,16 @@ export function ResponsiveSelect({
 }) {
   const desktop = useMediaQuery('(min-width: 768px)'),
     [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (disabled || desktop) setOpen(false);
+  }, [disabled, desktop]);
   if (desktop)
     return (
       <Select
         value={value}
         disabled={disabled}
         onValueChange={(v) => {
-          if (v) onChange(v);
+          if (!disabled && v && choices.some((choice) => choice.value === v)) onChange(v);
         }}
       >
         <SelectTrigger id={id} aria-describedby={describedBy} aria-label={label} className="w-full">
@@ -43,7 +46,7 @@ export function ResponsiveSelect({
             {choices.find((choice) => choice.value === value)?.label ?? label}
           </SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent align="start" alignItemWithTrigger={false} sideOffset={8}>
           {choices.map((c) => (
             <SelectItem key={c.value} value={c.value}>
               {c.label}
@@ -65,13 +68,15 @@ export function ResponsiveSelect({
       >
         {choices.find((c) => c.value === value)?.label ?? label} ▾
       </Button>
-      <ResponsiveDialog open={open} onOpenChange={setOpen} title={label}>
+      <ResponsiveDialog open={open && !disabled} onOpenChange={setOpen} title={label}>
         <div className="grid gap-2">
           {choices.map((c) => (
             <Button
               key={c.value}
               variant={c.value === value ? 'default' : 'outline'}
+              disabled={disabled}
               onClick={() => {
+                if (disabled) return;
                 onChange(c.value);
                 setOpen(false);
               }}

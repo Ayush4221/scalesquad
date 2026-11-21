@@ -254,6 +254,84 @@ jobs:
           console.log('All required CI jobs passed.');
           NODE
 
+  android-release:
+    name: Android production APK and AAB
+    if: >-
+      github.ref == 'refs/heads/master' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: required
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: android-production
+    env:
+      ANDROID_BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: flutter/flutter
+          ref: 6655482ec06e547f90abf8ae7590466f4415978d # Flutter 3.47.1
+          fetch-tags: true
+          path: .flutter-sdk
+          persist-credentials: false
+      - name: Select pinned Flutter and JDK 21
+        run: |
+          echo "$GITHUB_WORKSPACE/.flutter-sdk/bin" >> "$GITHUB_PATH"
+          echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
+      - name: Prepare release signing
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing $name in the android-production environment. See docs/ANDROID_RELEASE.md."
+              exit 1
+            fi
+          done
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/scalesquad-upload.jks"
+          chmod 600 "$RUNNER_TEMP/scalesquad-upload.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/scalesquad-upload.jks" >> "$GITHUB_ENV"
+      - run: npm ci
+      - run: flutter config --no-analytics
+      - run: flutter pub get --enforce-lockfile
+        working-directory: mobile
+      - run: npm run mobile:assets:check
+      - run: npm run mobile:release
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      - name: Verify APK and bundle signatures
+        shell: bash
+        run: |
+          build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          "$build_tools/apksigner" verify --verbose mobile/build/app/outputs/flutter-apk/app-prod-release.apk
+          jar tf mobile/build/app/outputs/bundle/prodRelease/app-prod-release.aab | grep -Eq '^META-INF/[^/]+\.SF$'
+          jarsigner -verify mobile/build/app/outputs/bundle/prodRelease/app-prod-release.aab
+      - name: Upload signed Android release
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: scalesquad-android-release-${{ github.run_number }}
+          path: |
+            mobile/build/app/outputs/flutter-apk/app-prod-release.apk
+            mobile/build/app/outputs/bundle/prodRelease/app-prod-release.aab
+          if-no-files-found: error
+          retention-days: 30
+      - name: Remove temporary signing material
+        if: always()
+        shell: bash
+        run: rm -f -- "$RUNNER_TEMP/scalesquad-upload.jks"
+
   configured-users:
     name: Configured account checks (manual only)
     if: github.event_name == 'workflow_dispatch' && inputs.configured_users

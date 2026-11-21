@@ -1,7 +1,7 @@
 'use client';
 import { chatStrings } from '@/constants/strings/chat';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type SetStateAction } from 'react';
 import { z } from '../../utils/validation';
 import { api } from '@/lib/api/client';
 import type { ChatClient, ChatMessage } from '@/lib/nexconn/client';
@@ -15,7 +15,12 @@ export function useSquadChat(
   onIncoming?: () => void,
 ) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [text, setText] = useState('');
+  const [text, updateText] = useState('');
+  const draftVersion = useRef(0);
+  const setText = useCallback((value: SetStateAction<string>) => {
+    draftVersion.current++;
+    updateText(value);
+  }, []);
   const [status, setStatus] = useState<'Connecting' | 'Connected' | 'Unavailable'>(
     chatStrings.connecting,
   );
@@ -29,10 +34,10 @@ export function useSquadChat(
   useEffect(() => {
     setText('');
     setSendError('');
-  }, [matchId]);
+  }, [matchId, setText]);
   useEffect(() => {
     if (draft) setText(draft.text.slice(0, CHAT_MESSAGE_MAX_LENGTH));
-  }, [draft]);
+  }, [draft, setText]);
   useEffect(() => {
     setMessages([]);
     setStatus(available ? chatStrings.connecting : chatStrings.unavailable);
@@ -40,6 +45,7 @@ export function useSquadChat(
     pending.current = false;
     if (!available) return;
     let stopped = false;
+    const controller = new AbortController();
     let instance: ChatClient | null = null;
     void (async () => {
       const access = z
@@ -49,31 +55,47 @@ export function useSquadChat(
           groupRef: z.string(),
           region: z.enum(['SG', 'NA', 'SA']),
         })
-        .parse(await api('/nexconn/token', { matchId }));
+        .parse(await api('/nexconn/token', { matchId }, { signal: controller.signal }));
       const { NexconnClient } = await import('@/lib/nexconn/client');
       if (stopped) return;
       instance = new NexconnClient();
       client.current = instance;
-      await instance.connect(access, (values) => {
-        if (stopped) return;
-        if (values.length) incoming.current?.();
-        setMessages((old) =>
-          [...new Map([...old, ...values].map((message) => [message.id, message])).values()]
-            .sort((a, b) => a.sentAt - b.sentAt)
-            .slice(-CHAT_HISTORY_LIMIT),
-        );
-      });
+      let observed = false;
+      await instance.connect(
+        access,
+        (values) => {
+          if (stopped) return;
+          if (values.length) incoming.current?.();
+          setMessages((old) =>
+            [...new Map([...old, ...values].map((message) => [message.id, message])).values()]
+              .sort((a, b) => a.sentAt - b.sentAt)
+              .slice(-CHAT_HISTORY_LIMIT),
+          );
+        },
+        (state) => {
+          if (stopped) return;
+          observed = true;
+          setStatus(
+            state === 'connected'
+              ? chatStrings.connected
+              : state === 'connecting'
+                ? chatStrings.connecting
+                : chatStrings.unavailable,
+          );
+        },
+      );
       if (stopped) {
         await instance.close();
         return;
       }
-      setStatus(chatStrings.connected);
+      if (!observed) setStatus(chatStrings.connected);
     })().catch(() => {
       if (!stopped) setStatus(chatStrings.unavailable);
       void instance?.close().catch(() => {});
     });
     return () => {
       stopped = true;
+      controller.abort();
       client.current = null;
       void instance?.close().catch(() => {});
     };
@@ -81,6 +103,7 @@ export function useSquadChat(
   async function send() {
     const current = client.current;
     const outgoing = text.trim();
+    const version = draftVersion.current;
     if (
       !current ||
       status !== chatStrings.connected ||
@@ -94,8 +117,9 @@ export function useSquadChat(
     setSendError('');
     try {
       await current.send(outgoing);
-      if (client.current === current) setText((value) => (value.trim() === outgoing ? '' : value));
-      return client.current === current;
+      const ownsDraft = client.current === current && draftVersion.current === version;
+      if (ownsDraft) setText('');
+      return ownsDraft;
     } catch {
       if (client.current === current) setSendError(chatStrings.messageNotSentYourDraftIs);
       return false;

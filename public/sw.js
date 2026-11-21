@@ -46,6 +46,7 @@ const pwaStrings = {
     notificationsAreUnavailable: 'Notifications are unavailable.',
     notificationsBlockedChangeThisInYour: 'Notifications blocked. Change this in your browser settings.',
     notificationsOnForThisDevice: 'Notifications on for this device.',
+    subscriptionNeedsSync: 'This device needs notification sync. Enable to retry, or disable to remove it.',
     getANudgeWhenYourSquad: 'Get a nudge when your squad needs you.',
     enableNotifications: 'Enable notifications',
     enableOnThisDevice: 'Enable on this device',

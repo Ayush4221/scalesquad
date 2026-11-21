@@ -61,10 +61,14 @@ graphify-out/
 mobile/.dart_tool/
 mobile/build/
 mobile/coverage/
+mobile/test/failures/
 mobile/.flutter-plugins-dependencies
 mobile/android/.gradle/
 mobile/android/.kotlin/
 mobile/android/local.properties
 mobile/android/key.properties
+mobile/android/.release-signing/
+*.jks
+*.keystore
 mobile/**/*.iml
 .flutter-sdk/

@@ -14,27 +14,29 @@ export async function executeSimulation(
       workerData: bundle,
       execArgv: [],
     });
-    const timer = setTimeout(() => {
-      settled = true;
-      void worker.terminate();
-      reject(new AppError('INTERNAL', 500, 'Simulation timed out; retry is available'));
-    }, timeoutMs);
-    worker.once('message', (value: unknown) => {
+    const finish = (error?: AppError, result?: SimulationResult) => {
+      if (settled) return;
       settled = true;
       clearTimeout(timer);
-      void worker.terminate();
+      void worker.terminate().catch(() => {});
+      if (error) reject(error);
+      else resolve(result!);
+    };
+    const timer = setTimeout(
+      () => finish(new AppError('INTERNAL', 500, 'Simulation timed out; retry is available')),
+      timeoutMs,
+    );
+    worker.once('message', (value: unknown) => {
+      if (settled) return;
       const parsed = SimulationResult.safeParse(value);
-      if (parsed.success) resolve(parsed.data);
-      else reject(new AppError('INTERNAL', 500));
+      if (parsed.success) finish(undefined, parsed.data);
+      else finish(new AppError('INTERNAL', 500));
     });
     worker.once('error', () => {
-      settled = true;
-      clearTimeout(timer);
-      reject(new AppError('INTERNAL', 500));
+      finish(new AppError('INTERNAL', 500));
     });
     worker.once('exit', () => {
-      clearTimeout(timer);
-      if (!settled) reject(new AppError('INTERNAL', 500));
+      finish(new AppError('INTERNAL', 500));
     });
   });
 }

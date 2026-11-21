@@ -6,7 +6,7 @@ abstract final class AppStrings {
   static const squad = 'SQUAD';
   static const working = 'Working…';
   static const squadVoice = 'Squad voice';
-  static const beta = 'BETA';
+  static const beta = 'Beta';
   static const comingSoonTextChatWillStay =
       'Coming soon. Text chat will stay at the heart of your squad.';
   static const joinVoice = 'Join voice';
@@ -22,15 +22,15 @@ abstract final class AppStrings {
   static const keepTheSystemMoving = 'Keep the system moving.';
   static const balanceCapacityReliabilityAndBudgetA =
       'Balance capacity, reliability and budget. A repair needs to hold up under pressure.';
-  static const dev = 'DEV';
-  static const aCooperativeSystemsGame = 'A COOPERATIVE SYSTEMS GAME';
-  static const heroIntroduction = 'Same squad.\nNew incident.\n';
+  static const dev = 'Preview';
+  static const aCooperativeSystemsGame = 'A cooperative systems game.';
+  static const heroIntroduction = 'Same squad.\nNew incident.';
   static const yourNextMove = 'Your next move.';
   static const threeEngineersDifferentCluesOneSystem =
       'Three engineers. Different clues. One system to save.';
   static const exploreTheMission = 'Explore the mission';
   static const androidPreviewAccountSignInIs =
-      'Android preview · Account sign-in is coming next.';
+      'Android preview. Account sign-in is coming next.';
   static const winByThinkingTogether = 'Win by thinking together.';
   static const bringYourSquad = 'Bring your squad';
   static const threeRolesMakeThreePerspectivesEvery =
@@ -43,7 +43,7 @@ abstract final class AppStrings {
       'Compare your fix against the same incident. Let the results do the talking.';
   static const builtForSquadsWhoLikeAsking =
       'Built for squads who like asking “what if?”.';
-  static const missionPreview01 = 'MISSION PREVIEW / 01';
+  static const missionPreview01 = 'Mission preview';
   static const campuspass = 'CampusPass';
   static const theGatesAreOpenTheCrowd =
       'The gates are open. The crowd is building. Can your squad keep every check-in correct?';
@@ -52,7 +52,7 @@ abstract final class AppStrings {
   static const stayWithinBudget = 'Stay within budget';
   static const meetYourSquad = 'Meet your squad';
   static const back = 'Back';
-  static const threeRolesOneSharedRepair = 'THREE ROLES. ONE SHARED REPAIR.';
+  static const threeRolesOneSharedRepair = 'Three roles. One shared repair.';
   static const missionHeadline = 'Different clues.\nBetter decisions.';
   static const exploreEachPerspectiveYourRealRole =
       'Explore each perspective. Your real role and private clues reveal when a match begins.';
@@ -69,6 +69,14 @@ abstract final class AppStrings {
   static const repairRunCompare = 'Repair. Run. Compare.';
   static const changeTheSystemTogetherAndTest =
       'Change the system together and test your repair against the same incident.';
+  static const splashTagline = 'Think together. Repair together.';
+  static const skipIntro = 'Skip intro';
+  static const keepEveryCheckInCorrect = 'Keep every check-in correct.';
+  static const homeRecoveryTitle = 'Let’s get you back.';
+  static const homeRecoveryDescription =
+      'This screen is unavailable. Return home to explore the mission.';
+  static const returnHome = 'Return home';
+  static const aboutTheMission = 'About the mission';
 
   static String roleLabel(String label) => '$label role';
 }

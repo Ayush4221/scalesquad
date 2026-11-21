@@ -2,7 +2,8 @@ import { appStrings } from '@/constants/strings/app';
 import { commonStrings } from '@/constants/strings/common';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
+import { themeCookie } from '@/constants/strings/theme';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { PwaBoot } from '@/pwa/PwaBoot';
 import { palette, paletteVariables } from '@/styles/palette';
@@ -29,8 +30,9 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   // Nonces are request-specific, so every page using this layout must render dynamically.
   await headers();
+  const theme = (await cookies()).get(themeCookie)?.value === 'light' ? 'light' : 'dark';
   return (
-    <html lang="en" className="dark" style={paletteVariables}>
+    <html lang="en" className={theme} style={paletteVariables}>
       <body>
         <TooltipProvider>
           <PwaBoot />

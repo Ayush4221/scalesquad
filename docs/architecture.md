@@ -7,6 +7,14 @@ Companion to `scalesquad-deep-design.md` (game rules, Version 2 revision). Where
 
 ## 1. Decisions summary
 
+Owner release update (2026-11-21): Android production packaging uses the `prod`
+flavor, `com.ayushdhoot.scalesquad`, and the ScaleSquad label. Signed APK and AAB
+builds run only on `master`, after required CI succeeds, with signing credentials
+from the `android-production` GitHub environment. The CLI and Gradle also reject
+release builds from other branches. `dev` retains its development identity.
+This packages the existing native preview; native authentication, gameplay and
+Nexconn integration remain separate work. See [Android release setup](ANDROID_RELEASE.md).
+
 | Area                | Decision                                                                                                                                                                               |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Language            | TypeScript for web/backend; Dart for the Flutter Android foundation (owner update 2026-11-07)                                                                                          |
@@ -632,3 +640,85 @@ HTML-escapes constants inserted into the offline shell.
 Android feature views receive navigation callbacks from app composition. Mobile
 asset drift verification covers all exported palettes, icons, logo, fonts and
 licences, using decoded PNG pixels to tolerate platform compression differences.
+
+### Mobile presentation and local development update (2026-11-11)
+
+The SDK-only native preview retains its home and mission routes. App composition
+adds a finite, skippable startup introduction and safe recovery for unknown
+routes. Shared `app_tokens.dart` owns native spacing, radii, font families and
+motion; `PageBody` owns safe-area scrolling and the maximum content width.
+`app_assets.dart` centralizes asset paths. See `mobile/DESIGN.md` for the retained
+brand and state inventory. Native networking milestones remain planned.
+
+Flutter widget tests cover semantics, contrast, tap targets, large text, reduced
+motion and visual baselines. The native smoke test can run on a connected
+emulator. Separate root `tests/android` Playwright checks drive the actual dev
+APK through Android accessibility, restore emulator settings and remain separate
+from the existing required web matrix. They add no application dependency.
+
+By explicit owner request, request quotas, the daily match-creation quota and password-failure backoff are
+bypassed only when the validated server environment is exactly `development`.
+Production, test, missing and unknown environments retain enforcement. Password
+verification, auditing, authentication/authorization, Host/Origin validation,
+payload caps and concurrency/resource limits retain their normal rules.
+
+### Lifecycle ownership and recovery update (2026-11-14)
+
+The 73-family inventory is tracked in `IMPLICIT_STATE_MACHINES.md`, with a
+per-family disposition. Small guarded selectors and browser/framework protocols
+retain their existing owners; they do not each require a new reducer.
+
+Browser match/evidence requests belong to a cancellable match lifetime. Match ID,
+revision and evidence request ordering prevent stale replies from publishing into
+a replacement screen. A command's accepted result is distinct from its refresh;
+a failed refresh offers synchronization feedback without claiming the command
+failed. Match presentation state resets on match/account change. Chat send cleanup
+belongs to the draft version that was sent, and the installed Nexconn connection
+handler supplies reconnect/disconnect state. SDK handlers are removed on release.
+
+`runStateMachine.ts` owns begin/settle transitions for execution and restart
+recovery. Completion requires every result in the requested stage. Partial retries
+reuse saved results only after validating their input hashes; scenario inputs,
+configuration authority and comparison rules remain as specified by the design.
+
+Chat provisioning and membership changes journal a deterministic resource reference
+before remote work in `ChatReconciliation`. No foreign key to Match is intentional:
+the cleanup record must survive a failed match insertion. Service reconciliation
+uses current persisted membership, then removes only the matching journal version.
+Ready/start waits for pending member repair. Bounded maintenance retries failures
+after the configured delay; process restart retains those intents. This uses the
+existing single-server membership queue. Multi-process distributed locking and
+provider-specific success codes for already-absent resources are not assumed.
+
+Migration `20261114000000_chat_reconciliation` must be deployed before running this
+version. Automated database tests use only isolated databases named `*_test`.
+The verified local development database also received the additive migration;
+normal application data is not used by the tests.
+
+Notification permission, browser endpoint and confirmed account registration are
+separate states. Existing endpoints are unconfirmed until explicitly registered;
+failed rollback remains visible with retry/removal controls. Operations have one
+owner, worker readiness has a deadline, and optional logout cleanup cannot block
+session revocation indefinitely. Non-cancellable browser work is reconciled when
+it settles; a timeout is not proof a remote mutation never happened.
+
+Socket timers and worker settlement have one live owner. Shutdown starts once and
+drains scheduled maintenance before database disposal. Native startup uses explicit
+idle/animating/ready phases, including reduced-motion bypass; Material press updates
+coalesce into one pending frame and safely ignore disposal.
+
+### Theme and live demonstration update (2026-11-14)
+
+Web colours remain centralized in `src/styles/palette.ts`. Semantic tokens in
+`palette.css` support light and dark root classes. `ThemeToggle` lives beside
+the shared brand link. A non-sensitive `scalesquad-theme` cookie preserves the
+choice; RootLayout allowlists it to light or dark during server rendering.
+Shared native colour assets are regenerated from the same exported palette.
+
+The default E2E server still uses isolated test databases and fake chat. Only
+`tests/media/startLiveServer.ts` explicitly opts into real Nexconn for the
+three-device recording, loading just its existing provider configuration.
+The capture verifies composer completion and receipt in each conversation log,
+then dismisses its own demo channel. No credentials or browser session state
+are saved with the media. Phone and tablet recordings are browser viewport
+emulations, separate from the native Android test suite.

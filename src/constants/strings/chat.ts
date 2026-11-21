@@ -1,5 +1,6 @@
 /** User-facing chat text. Keep wording out of rendering and transport code. */
 export const chatStrings = {
+  unreadMessages: (count: number) => `${count} unread ${count === 1 ? 'message' : 'messages'}`,
   mentionMember: (name: string, own: boolean) => `Mention ${name}${own ? ' (you)' : ''}`,
   replyToMember: (name: string) => `Reply to ${name}`,
   onlyYourEvidenceAppearsHere: 'Only your evidence appears here.',

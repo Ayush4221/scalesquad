@@ -65,8 +65,8 @@ export class SessionService {
     const authorize = async (force = false): Promise<boolean> => {
       const now = this.clock.now();
       if (!valid || expires <= now) return false;
-      if (!force && now - checkedAt < 5000) return true;
       if (checking) return checking;
+      if (!force && now - checkedAt < 5000) return true;
       checking = (async () => {
         try {
           const current = await this.repo.find(token);

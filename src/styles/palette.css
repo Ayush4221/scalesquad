@@ -52,3 +52,28 @@
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
 }
+
+.light {
+  color-scheme: light;
+  --background: var(--palette-paper);
+  --foreground: var(--palette-light-text);
+  --card: var(--palette-white);
+  --popover: var(--palette-white);
+  --primary: var(--palette-light-primary);
+  --primary-hover: var(--palette-light-primary);
+  --primary-foreground: var(--palette-white);
+  --secondary-foreground: var(--palette-white);
+  --muted: var(--palette-light-raised);
+  --muted-foreground: var(--palette-light-muted);
+  --subtle-foreground: var(--palette-light-muted);
+  --accent: var(--palette-light-raised);
+  --destructive: var(--palette-light-danger);
+  --warning: var(--palette-light-warning);
+  --border: var(--palette-light-line);
+  --input: var(--palette-light-input);
+  --ring: var(--palette-cobalt);
+  --success-background: var(--palette-light-success-tint);
+  --error-background: var(--palette-light-error-tint);
+  --error-border: var(--palette-light-danger);
+  --page-overlay: var(--palette-paper);
+}

@@ -135,8 +135,8 @@ export function RepairPanel({
               : repairStrings.onlyTheActiveEditorCanChange}
           </p>
         )}
-        <div className="flex flex-wrap gap-2">
-          <div className="control">
+        <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+          <div className="control min-w-0">
             <label className="mb-2 block text-xs text-muted-foreground" htmlFor={`${prefix}-pass`}>
               {repairStrings.passControlTo}
             </label>
@@ -151,7 +151,16 @@ export function RepairPanel({
                 .map((u) => ({ value: u.userId, label: u.name }))}
             />
           </div>
-          <Button variant="outline" disabled={!editable || !target} onClick={() => onPass(target)}>
+          <Button
+            variant="outline"
+            className="min-h-11 w-full sm:w-auto"
+            disabled={
+              !editable ||
+              !target ||
+              !view.members.some((member) => member.userId === target && member.userId !== userId)
+            }
+            onClick={() => onPass(target)}
+          >
             {repairStrings.passControl}
           </Button>
           {view.hostUserId === userId && (

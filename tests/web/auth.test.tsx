@@ -9,6 +9,8 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { LoginForm } from '../../src/features/auth/LoginForm';
+import { ChangePasswordForm } from '../../src/features/auth/ChangePasswordForm';
+import { deferred } from '../helpers/deferred';
 
 afterEach(() => {
   cleanup();
@@ -19,6 +21,34 @@ afterEach(() => {
 });
 
 describe('password forms', () => {
+  it('blocks duplicate password changes and allows retry after failure', async () => {
+    const pending = deferred<Response>(),
+      fetch = vi
+        .fn()
+        .mockReturnValueOnce(pending.promise)
+        .mockResolvedValueOnce(new Response('{}'));
+    vi.stubGlobal('fetch', fetch);
+    render(<ChangePasswordForm />);
+    fireEvent.change(screen.getByLabelText('Current password'), {
+      target: { value: 'old password phrase' },
+    });
+    fireEvent.change(screen.getByLabelText('New password'), {
+      target: { value: 'New unusual sentence 92!' },
+    });
+    const form = screen.getByRole('button', { name: 'Change password' }).closest('form')!;
+    act(() => {
+      fireEvent.submit(form);
+      fireEvent.submit(form);
+    });
+    expect(fetch).toHaveBeenCalledOnce();
+    await act(async () => {
+      pending.resolve(new Response('{}', { status: 500 }));
+    });
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    fireEvent.submit(form);
+    await screen.findByText('Password changed. Other sessions signed out.');
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
   it('reports throttling separately and honors the retry interval', async () => {
     vi.stubGlobal(
       'fetch',

@@ -53,7 +53,20 @@ export interface MatchRecord {
   groupRef: string | null;
   chatAvailable: boolean;
 }
+export interface ChatReconciliation {
+  id: string;
+  version: string;
+  matchId: string;
+  groupRef: string;
+  userId: string | null;
+  retryAt: number;
+}
 export interface GameRepository {
+  saveChatTask(task: ChatReconciliation): Promise<void>;
+  findChatTask(id: string): Promise<ChatReconciliation | null>;
+  pendingChatTasks(now: number, limit: number): Promise<ChatReconciliation[]>;
+  completeChatTask(id: string, version: string): Promise<void>;
+  deferChatTask(id: string, version: string, retryAt: number): Promise<void>;
   create(match: MatchRecord): Promise<void>;
   find(id: string): Promise<MatchRecord | null>;
   findByCode(code: string): Promise<MatchRecord | null>;
