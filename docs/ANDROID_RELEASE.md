@@ -20,6 +20,12 @@ The release job runs only for a `master` push or a manual workflow run on
 Gradle release tasks also require `master`; detached CI checkouts must match
 the exact commit of a master push/manual run. Debug checks continue on branches.
 
+Release builds keep Flutter's `--pub` step enabled for both APK and AAB so native
+plugin registrants are regenerated in release mode. `--no-pub` can reuse the
+development registrant from `flutter pub get`, referencing `integration_test`
+even though Gradle excludes that dev-only plugin from the release classpath.
+Keep `integration_test` in `dev_dependencies`; never edit the generated Java file.
+
 Output paths:
 
 - APK: `mobile/build/app/outputs/flutter-apk/app-prod-release.apk`

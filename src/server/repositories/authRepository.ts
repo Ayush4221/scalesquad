@@ -4,6 +4,11 @@ import { getPrisma } from '@scalesquad/db';
 import { normalizeEmail, type VerifiedOAuthIdentity } from '@scalesquad/shared';
 import { withTransaction } from './unitOfWork';
 
+const authRuntime = globalThis as typeof globalThis & {
+  scaleSquadAuthAdapter?: Adapter;
+  scaleSquadOAuthRecovery?: (identity: VerifiedOAuthIdentity) => Promise<void>;
+};
+
 /** Reserve a fresh verified identity without inheriting the squatter's game data. */
 export async function recoverVerifiedOAuthIdentity(
   identity: VerifiedOAuthIdentity,
@@ -105,13 +110,15 @@ export function createAuthAdapter(
 }
 /** Composition-root injection keeps the View from importing repositories or Prisma. */
 export function installAuthAdapter(revoked?: (token: string) => void) {
-  const target = globalThis as typeof globalThis & {
-    scaleSquadAuthAdapter?: Adapter;
-    scaleSquadOAuthRecovery?: (identity: VerifiedOAuthIdentity) => Promise<void>;
-  };
-  target.scaleSquadAuthAdapter = createAuthAdapter(getPrisma(), revoked);
-  target.scaleSquadOAuthRecovery = (identity) =>
+  authRuntime.scaleSquadAuthAdapter = createAuthAdapter(getPrisma(), revoked);
+  authRuntime.scaleSquadOAuthRecovery = (identity) =>
     recoverVerifiedOAuthIdentity(identity, getPrisma(), revoked);
+}
+
+/** Next's startup hook must preserve the custom server's session revocation hooks. */
+export function ensureAuthAdapter() {
+  authRuntime.scaleSquadAuthAdapter ??= createAuthAdapter();
+  authRuntime.scaleSquadOAuthRecovery ??= (identity) => recoverVerifiedOAuthIdentity(identity);
 }
 export async function purgeUnusedProviderTokens() {
   await getPrisma().account.updateMany({

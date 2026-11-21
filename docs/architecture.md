@@ -73,6 +73,7 @@ scalesquad/
     features/                  lobby, briefs, repair, results and chat
     lib/                       browser API, WebSocket and Nexconn clients
     auth/                      server-only Auth.js configuration
+    instrumentation.ts         Node startup hook for Auth.js persistence dependencies
     proxy.ts                   Next.js route protection convenience layer
     server/
       controllers/             request validation and service delegation
@@ -600,6 +601,15 @@ sessions alone do not coordinate login throttling, broadcasts, group provisionin
 or background maintenance. Scaling requires a shared event bus, distributed
 quotas/command coordination and one coordinated scheduler/worker model, with
 multi-instance tests before adding replicas.
+
+Next's Node startup hook installs Auth.js persistence and OAuth recovery when
+Next starts directly, including on Vercel. It preserves adapters already installed
+by the custom server so session revocation still closes that server's sockets.
+This supports the public homepage and Auth.js routes without the custom entry
+point; it does not mount the custom game/password HTTP routes, WebSocket gateway
+or maintenance scheduler. Full gameplay still requires the single custom Node
+server described above; deploying only the Next output is not a complete game
+deployment.
 
 ### Review hardening (2026-11-06)
 
