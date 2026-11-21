@@ -89,7 +89,9 @@ else if (mode === 'release') {
       '--release',
       '--flavor',
       'prod',
-      '--no-pub',
+      // Flutter must regenerate native registrants without dev-only plugins.
+      // --no-pub skips that step and leaves integration_test in release Java.
+      '--pub',
       ...(number ? [`--build-number=${number}`] : []),
     ]);
 } else if (mode === 'check') {
